@@ -41,7 +41,7 @@
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/osevg/jupyterhub-quickstart:2.0.0"
+            "value": "quay.io/osevg/jupyterhub-quickstart:2.0.1"
         },
         {
             "name": "TERMINAL_IMAGE",
