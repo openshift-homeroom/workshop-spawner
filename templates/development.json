@@ -45,7 +45,7 @@
         },
         {
             "name": "TERMINAL_IMAGE",
-            "value": "quay.io/osevg/workshop-terminals:develop"
+            "value": "quay.io/osevg/workshop-terminal:master"
         },
         {
             "name": "OC_VERSION",

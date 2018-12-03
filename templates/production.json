@@ -31,7 +31,7 @@
         },
         {
             "name": "TERMINAL_IMAGE",
-            "value": "quay.io/osevg/workshop-terminals:master",
+            "value": "quay.io/osevg/workshop-terminal:master",
             "required": true
         },
         {
