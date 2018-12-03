@@ -1,0 +1,448 @@
+{
+    "kind": "Template",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "workshop-terminals-development",
+        "annotations": {
+            "openshift.io/display-name": "Terminal Spawner"
+        }
+    },
+    "parameters": [
+        {
+            "name": "APPLICATION_NAME",
+            "value": "terminal",
+            "required": true
+        },
+        {
+            "name": "GIT_REPOSITORY_URL",
+            "value": "https://github.com/openshift-labs/workshop-terminals.git",
+            "required": true
+        },
+        {
+            "name": "GIT_REPOSITORY_REF",
+            "value": "develop",
+            "required": true
+        },
+        {
+            "name": "MEMORY_SIZE",
+            "value": "512Mi"
+        },
+        {
+            "name": "VOLUME_SIZE",
+            "value": "1Gi"
+        },
+        {
+            "name": "ADMIN_USERS",
+            "value": "opentlc-mgr"
+        },
+        {
+            "name": "IDLE_TIMEOUT",
+            "value": "7200"
+        },
+        {
+            "name": "TERMINAL_IMAGE",
+            "value": ""
+        },
+        {
+            "name": "OC_VERSION",
+            "value": ""
+        },
+        {
+            "name": "ODO_VERSION",
+            "value": ""
+        },
+        {
+            "name": "KUBECTL_VERSION",
+            "value": ""
+        }
+    ],
+    "objects": [
+        {
+            "kind": "ServiceAccount",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-hub",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                },
+                "annotations": {
+                    "serviceaccounts.openshift.io/oauth-redirectreference.first": "{\"kind\":\"OAuthRedirectReference\",\"apiVersion\":\"v1\",\"reference\":{\"kind\":\"Route\",\"name\":\"${APPLICATION_NAME}\"}}",
+                    "serviceaccounts.openshift.io/oauth-redirecturi.first": "hub/oauth_callback",
+                    "serviceaccounts.openshift.io/oauth-want-challenges": "false"
+                }
+            }
+        },
+        {
+            "kind": "RoleBinding",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-edit",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": "${APPLICATION_NAME}-hub"
+                }
+            ],
+            "roleRef": {
+                "name": "edit"
+            }
+        },
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-hub-s2i",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            }
+        },
+        {
+            "kind": "BuildConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-hub-s2i",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange"
+                    }
+                ],
+                "source": {
+                    "type": "Git",
+                    "git": {
+                        "uri": "https://github.com/openshift-labs/jupyterhub-quickstart.git",
+                        "ref": "2.0.0"
+                    }
+                },
+                "strategy": {
+                    "type": "Source",
+                    "sourceStrategy": {
+                        "from": {
+                            "kind": "ImageStreamTag",
+                            "name": "python:3.6",
+                            "namespace": "openshift"
+                        }
+                    }
+                },
+                "output": {
+                    "to": {
+                        "kind": "ImageStreamTag",
+                        "name": "${APPLICATION_NAME}-hub-s2i:latest"
+                    }
+                }
+            }
+        },
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-hub-img",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            }
+        },
+
+        {
+            "kind": "BuildConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-hub-img",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange"
+                    }
+                ],
+                "source": {
+                    "type": "Git",
+                    "git": {
+                        "uri": "${GIT_REPOSITORY_URL}",
+                        "ref": "${GIT_REPOSITORY_REF}"
+                    },
+                    "contextDir": "jupyterhub"
+                },
+                "strategy": {
+                    "type": "Source",
+                    "sourceStrategy": {
+                        "from": {
+                            "kind": "ImageStreamTag",
+                            "name": "${APPLICATION_NAME}-hub-s2i:latest"
+                        }
+                    }
+                },
+                "output": {
+                    "to": {
+                        "kind": "ImageStreamTag",
+                        "name": "${APPLICATION_NAME}-hub-img:latest"
+                    }
+                }
+            }
+        },
+        {
+            "kind": "DeploymentConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "strategy": {
+                    "type": "Recreate"
+                },
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange",
+                        "imageChangeParams": {
+                            "automatic": true,
+                            "containerNames": [
+                                "spawner"
+                            ],
+                            "from": {
+                                "kind": "ImageStreamTag",
+                                "name": "${APPLICATION_NAME}-hub-img:latest"
+                            }
+                        }
+                    }
+                ],
+                "replicas": 1,
+                "selector": {
+                    "app": "${APPLICATION_NAME}",
+                    "deploymentconfig": "${APPLICATION_NAME}"
+                },
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "app": "${APPLICATION_NAME}",
+                            "deploymentconfig": "${APPLICATION_NAME}"
+                        }
+                    },
+                    "spec": {
+                        "serviceAccountName": "${APPLICATION_NAME}-hub",
+                        "containers": [
+                            {
+                                "name": "spawner",
+                                "image": "${APPLICATION_NAME}-hub-img:latest",
+                                "ports": [
+                                    {
+                                        "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "env": [
+                                    {
+                                        "name": "APPLICATION_NAME",
+                                        "value": "${APPLICATION_NAME}"
+                                    },
+                                    {
+                                        "name": "TERMINAL_IMAGE",
+                                        "value": "${TERMINAL_IMAGE}"
+                                    },
+                                    {
+                                        "name": "MEMORY_SIZE",
+                                        "value": "${MEMORY_SIZE}"
+                                    },
+                                    {
+                                        "name": "VOLUME_SIZE",
+                                        "value": "${VOLUME_SIZE}"
+                                    },
+                                    {
+                                        "name": "ADMIN_USERS",
+                                        "value": "${ADMIN_USERS}"
+                                    },
+                                    {
+                                        "name": "IDLE_TIMEOUT",
+                                        "value": "${IDLE_TIMEOUT}"
+                                    },
+                                    {
+                                        "name": "OC_VERSION",
+                                        "value": "${OC_VERSION}"
+                                    },
+                                    {
+                                        "name": "ODO_VERSION",
+                                        "value": "${ODO_VERSION}"
+                                    },
+                                    {
+                                        "name": "KUBECTL_VERSION",
+                                        "value": "${KUBECTL_VERSION}"
+                                    }
+                                ],
+                                "volumeMounts": [
+                                    {
+                                        "mountPath": "/opt/app-root/data",
+                                        "name": "data"
+                                    }
+                                ]
+                            }
+                        ],
+                        "volumes": [
+                            {
+                                "name": "data",
+                                "persistentVolumeClaim": {
+                                    "claimName": "${APPLICATION_NAME}-hub-data"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "PersistentVolumeClaim",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-hub-data",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "accessModes": [
+                    "ReadWriteOnce"
+                ],
+                "resources": {
+                    "requests": {
+                        "storage": "1Gi"
+                    }
+                }
+            }
+        },
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "name": "8080-tcp",
+                        "protocol": "TCP",
+                        "port": 8080,
+                        "targetPort": 8080
+                    },
+                    {
+                        "name": "8081-tcp",
+                        "protocol": "TCP",
+                        "port": 8081,
+                        "targetPort": 8081
+                    }
+                ],
+                "selector": {
+                    "app": "${APPLICATION_NAME}",
+                    "deploymentconfig": "${APPLICATION_NAME}"
+                }
+            }
+        },
+        {
+            "kind": "Route",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "host": "",
+                "to": {
+                    "kind": "Service",
+                    "name": "${APPLICATION_NAME}",
+                    "weight": 100
+                },
+                "port": {
+                    "targetPort": "8080-tcp"
+                },
+                "tls": {
+                    "termination": "edge",
+                    "insecureEdgeTerminationPolicy": "Redirect"
+                }
+            }
+        },
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-app",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "lookupPolicy": {
+                    "local": true
+                }
+            }
+        },
+        {
+            "kind": "BuildConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-app",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange"
+                    }
+                ],
+                "source": {
+                    "type": "Git",
+                    "git": {
+                        "uri": "${GIT_REPOSITORY_URL}",
+                        "ref": "${GIT_REPOSITORY_REF}"
+                    },
+                    "contextDir": "terminal"
+                },
+                "strategy": {
+                    "type": "Docker",
+                    "dockerStrategy": {
+                        "from": {
+                            "kind": "DockerImage",
+                            "name": "centos/s2i-base-centos7:latest"
+                        }
+                    }
+                },
+                "output": {
+                    "to": {
+                        "kind": "ImageStreamTag",
+                        "name": "${APPLICATION_NAME}-app:latest"
+                    }
+                }
+            }
+        }
+    ]
+}
