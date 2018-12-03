@@ -40,6 +40,10 @@
             "value": "7200"
         },
         {
+            "name": "JUPYTERHUB_IMAGE",
+            "value": "quay.io/osevg/jupyterhub-quickstart:2.0.0"
+        },
+        {
             "name": "TERMINAL_IMAGE",
             "value": "quay.io/osevg/workshop-terminals:develop"
         },
@@ -99,49 +103,20 @@
                 "labels": {
                     "app": "${APPLICATION_NAME}"
                 }
-            }
-        },
-        {
-            "kind": "BuildConfig",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}-hub-s2i",
-                "labels": {
-                    "app": "${APPLICATION_NAME}"
-                }
             },
             "spec": {
-                "triggers": [
-                    {
-                        "type": "ConfigChange"
-                    },
-                    {
-                        "type": "ImageChange"
-                    }
-                ],
-                "source": {
-                    "type": "Git",
-                    "git": {
-                        "uri": "https://github.com/openshift-labs/jupyterhub-quickstart.git",
-                        "ref": "2.0.0"
-                    }
+                "lookupPolicy": {
+                    "local": true
                 },
-                "strategy": {
-                    "type": "Source",
-                    "sourceStrategy": {
+                "tags": [
+                    {
+                        "name": "latest",
                         "from": {
-                            "kind": "ImageStreamTag",
-                            "name": "python:3.6",
-                            "namespace": "openshift"
+                            "kind": "DockerImage",
+                            "name": "${JUPYTERHUB_IMAGE}"
                         }
                     }
-                },
-                "output": {
-                    "to": {
-                        "kind": "ImageStreamTag",
-                        "name": "${APPLICATION_NAME}-hub-s2i:latest"
-                    }
-                }
+                ]
             }
         },
         {
@@ -154,7 +129,6 @@
                 }
             }
         },
-
         {
             "kind": "BuildConfig",
             "apiVersion": "v1",
