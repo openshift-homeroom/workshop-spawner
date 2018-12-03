@@ -2,9 +2,9 @@
     "kind": "Template",
     "apiVersion": "v1",
     "metadata": {
-        "name": "workshop-terminals-development",
+        "name": "workshop-jupyterhub-development",
         "annotations": {
-            "openshift.io/display-name": "Terminal Spawner"
+            "openshift.io/display-name": "Workshop Terminal/Dashboard Spawner "
         }
     },
     "parameters": [
@@ -15,7 +15,7 @@
         },
         {
             "name": "GIT_REPOSITORY_URL",
-            "value": "https://github.com/openshift-labs/workshop-terminals.git",
+            "value": "https://github.com/openshift-labs/workshop-jupyterhub.git",
             "required": true
         },
         {
@@ -41,7 +41,7 @@
         },
         {
             "name": "TERMINAL_IMAGE",
-            "value": ""
+            "value": "quay.io/osevg/workshop-terminals:develop"
         },
         {
             "name": "OC_VERSION",
@@ -259,10 +259,6 @@
                                         "value": "${APPLICATION_NAME}"
                                     },
                                     {
-                                        "name": "TERMINAL_IMAGE",
-                                        "value": "${TERMINAL_IMAGE}"
-                                    },
-                                    {
                                         "name": "MEMORY_SIZE",
                                         "value": "${MEMORY_SIZE}"
                                     },
@@ -398,50 +394,16 @@
             "spec": {
                 "lookupPolicy": {
                     "local": true
-                }
-            }
-        },
-        {
-            "kind": "BuildConfig",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}-app",
-                "labels": {
-                    "app": "${APPLICATION_NAME}"
-                }
-            },
-            "spec": {
-                "triggers": [
-                    {
-                        "type": "ConfigChange"
-                    },
-                    {
-                        "type": "ImageChange"
-                    }
-                ],
-                "source": {
-                    "type": "Git",
-                    "git": {
-                        "uri": "${GIT_REPOSITORY_URL}",
-                        "ref": "${GIT_REPOSITORY_REF}"
-                    },
-                    "contextDir": "terminal"
                 },
-                "strategy": {
-                    "type": "Docker",
-                    "dockerStrategy": {
+                "tags": [
+                    {
+                        "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "centos/s2i-base-centos7:latest"
+                            "name": "${TERMINAL_IMAGE}"
                         }
                     }
-                },
-                "output": {
-                    "to": {
-                        "kind": "ImageStreamTag",
-                        "name": "${APPLICATION_NAME}-app:latest"
-                    }
-                }
+                ]
             }
         }
     ]

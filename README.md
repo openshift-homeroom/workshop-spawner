@@ -1,5 +1,5 @@
-Workshop Terminals
-==================
+Workshop Terminal/Dashboard Spawner
+===================================
 
 This repository contains software for deploying a containerised user environment in OpenShift, for the purposes of supporting workshops using OpenShift.
 
@@ -11,7 +11,7 @@ Quick start instructions
 If you don't want to read about how the environments work, nor how they can be customised to include your own additional content and tools, run:
 
 ```
-$ oc new-app https://raw.githubusercontent.com/openshift-labs/workshop-terminals/master/templates/production.json
+$ oc new-app https://raw.githubusercontent.com/openshift-labs/workshop-jupyterhub/master/templates/production.json
 ```
 
 This will create a deployment for the ``terminal`` application. Check the output from ``oc new-app`` for the public URL the application can be accessed with, or run the following command to get details of the route.

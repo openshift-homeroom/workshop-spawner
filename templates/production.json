@@ -2,9 +2,9 @@
     "kind": "Template",
     "apiVersion": "v1",
     "metadata": {
-        "name": "workshop-terminals-production",
+        "name": "workshop-jupyterhub-production",
         "annotations": {
-            "openshift.io/display-name": "Terminal Spawner"
+            "openshift.io/display-name": "Workshop Terminal/Dashboard Spawner "
         }
     },
     "parameters": [
@@ -31,12 +31,12 @@
         },
         {
             "name": "TERMINAL_IMAGE",
-            "value": "quay.io/osevg/terminal-workspace:master",
+            "value": "quay.io/osevg/workshop-terminals:master",
             "required": true
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/osevg/terminal-jupyterhub:master",
+            "value": "quay.io/osevg/workshop-jupyterhub:master",
             "required": true
         },
         {
