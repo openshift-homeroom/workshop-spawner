@@ -1,29 +1,63 @@
 import os
 
-import json
-import requests
+# This file provides common configuration for the different modes that
+# the deployment can run in. The modes are 'workshop' and 'event'.
+# Configuration specific to the different modes will be read from
+# separate files at the end of this configuration file.
 
-from kubernetes.client.rest import ApiException
+# The application name and deployment mode are passed in through the
+# template. The application name should be the value used for the
+# deployment, and more specifically, must match the name of the route.
+# The deployment mode will vary based on the template, as the setup
+# required for each will be different.
 
-from openshift.config import load_incluster_config
-from openshift.client.api_client import ApiClient
-from openshift.dynamic import DynamicClient, ResourceInstance
+application_name = os.environ.get('APPLICATION_NAME')
+deployment_mode = os.environ.get('DEPLOYMENT_MODE', 'workshop')
 
-# Override styling elements for JupyterHub web pages.
+# Override styling elements for the JupyterHub web pages.
 
 c.JupyterHub.logo_file = '/opt/app-root/src/images/OpenShiftBanner.png'
 
-# Override image details with that for the terminal. We need to use a
-# fiddle at the moment and use the internal registry address for where
-# the image policy plugin isn't configured for the cluster.
-
-application_name = os.environ.get('APPLICATION_NAME')
+# Work out the service account name and name of the namespace that the
+# deployment is in.
 
 service_account_name = '%s-hub' %  application_name
+
 service_account_path = '/var/run/secrets/kubernetes.io/serviceaccount'
 
 with open(os.path.join(service_account_path, 'namespace')) as fp:
     namespace = fp.read().strip()
+
+# Override the default name template for the pod so we include both the
+# application name and namespace. Don't change this as 'event' module
+# relies on it being this name to make it easier to match up a pod to
+# the temporary project created for that session.
+
+c.KubeSpawner.pod_name_template = '%s-%s-{username}' % (
+        application_name, namespace)
+
+# Use a higher port number for the terminals spawned by JupyterHub so
+# that secondary applications run from within the terminal can use port
+# 8080 for testing, or so that port can be exposed by a separate route.
+
+c.KubeSpawner.port = 10080
+
+# Initialise the set of environment variables to be empty so we know it
+# is a dict. This is so we can incrementally add values as we go along.
+
+c.Spawner.environment = dict()
+
+# Initialise the set of services to be empty so we know it is a list.
+# This is so we can incrementally add values as we go along.
+
+c.JupyterHub.services = []
+
+# Override the image details with that for the terminal or dashboard
+# image being used. The default is to assume that a image stream with
+# '-app' extension for the application name is used. We need to use a
+# fiddle at the moment and use the internal registry address for where
+# the image policy plugin isn't configured correctly for the cluster
+# such that Kuebernetes resources can use image streams.
 
 terminal_image = os.environ.get('TERMINAL_IMAGE')
 
@@ -34,55 +68,32 @@ if not terminal_image:
 else:
     c.KubeSpawner.image_spec = terminal_image
 
-c.KubeSpawner.image_pull_policy = 'Always'
+# Override the command run in the terminal image as we aren't deploying
+# Jupyter notebooks but our terminal image.
 
 c.KubeSpawner.cmd = ['/usr/libexec/s2i/run']
 
-c.KubeSpawner.pod_name_template = '%s-user-{username}' % (application_name)
+# Set the default amount of memory provided to a pod. This might be
+# overridden on a case by case for images if a profile list is supplied
+# so users have a choice of images when deploying workshop content.
 
-c.Spawner.mem_limit = convert_size_to_bytes(os.environ['MEMORY_SIZE'])
+c.Spawner.mem_limit = convert_size_to_bytes(os.environ.get('MEMORY_SIZE', '512Mi'))
 
-# Use a higher port number for the terminals spawned by JupyterHub so
-# that secondary applications run from within the terminal can use port
-# 8080 for testing if need be.
+# Set the policy that images will always be pulled to the node each
+# time. This is so that during development, changes to the terminal
+# image will always be picked up. May want to put this under deployment
+# environment switch so can set as IfNotPresent when deploying in a
+# production scenario.
 
-c.KubeSpawner.port = 10080
-
-# Work out the public server address for the OpenShift OAuth endpoint.
-# Make sure request is done in a session so connection is closed and
-# later calls against REST API don't attempt to reuse it. This is just
-# to avoid potential for any problems with connection reuse.
-
-server_url = 'https://openshift.default.svc.cluster.local'
-oauth_metadata_url = '%s/.well-known/oauth-authorization-server' % server_url
-
-with requests.Session() as session:
-    response = session.get(oauth_metadata_url, verify=False)
-    data = json.loads(response.content.decode('UTF-8'))
-    address = data['issuer']
-
-# Enable the OpenShift authenticator. The OPENSHIFT_URL environment
-# variable must be set before importing the authenticator as it only
-# reads it when module is first imported.
-
-os.environ['OPENSHIFT_URL'] = address
-
-from oauthenticator.openshift import OpenShiftOAuthenticator
-c.JupyterHub.authenticator_class = OpenShiftOAuthenticator
-
-# Setup authenticator configuration using details from environment.
-
-client_id = 'system:serviceaccount:%s:%s' % (namespace, service_account_name)
-
-c.OpenShiftOAuthenticator.client_id = client_id
-
-with open(os.path.join(service_account_path, 'token')) as fp:
-    client_secret = fp.read().strip()
-
-c.OpenShiftOAuthenticator.client_secret = client_secret
+c.KubeSpawner.image_pull_policy = 'Always'
 
 # Work out hostname for the exposed route of the JupyterHub server. This
-# is tricky as we need to use the REST API to query it.
+# is tricky as we need to use the REST API to query it. We assume that
+# a secure route is always used. This is used when needing to do OAuth.
+
+from openshift.config import load_incluster_config
+from openshift.client.api_client import ApiClient
+from openshift.dynamic import DynamicClient
 
 load_incluster_config()
 
@@ -103,17 +114,12 @@ public_hostname = extract_hostname(routes, application_name)
 if not public_hostname:
     raise RuntimeError('Cannot calculate external host name for JupyterHub.')
 
-c.OpenShiftOAuthenticator.oauth_callback_url = (
-        'https://%s/hub/oauth_callback' % public_hostname)
+c.Spawner.environment['JUPYTERHUB_ROUTE'] = 'https://%s' % public_hostname
 
-c.Authenticator.auto_login = True
-
-c.JupyterHub.admin_access = True
-
-c.Authenticator.admin_users = set(os.environ.get('ADMIN_USERS', '').split())
-
-c.Spawner.environment = dict(
-        JUPYTERHUB_ROUTE='https://%s' % public_hostname)
+# The terminal image will normally work out what versions of OpenShift
+# and Kubernetes command line tools should be used, based on the version
+# of OpenShift which is being used. Allow these to be overridden if
+# necessary.
 
 if os.environ.get('OC_VERSION'):
     c.Spawner.environment['OC_VERSION'] = os.environ.get('OC_VERSION')
@@ -122,60 +128,11 @@ if os.environ.get('ODO_VERSION'):
 if os.environ.get('KUBECTL_VERSION'):
     c.Spawner.environment['KUBECTL_VERSION'] = os.environ.get('KUBECTL_VERSION')
 
-# Override URL prefix for application and copy files to volume.
+# Load configuration corresponding to the deployment mode.
 
-c.KubeSpawner.user_storage_pvc_ensure = True
+config_root = '/opt/app-root/src/.jupyter'
+config_file = '%s/jupyterhub_config-%s.py' % (config_root, deployment_mode)
 
-c.KubeSpawner.pvc_name_template = '%s-user-{username}' % application_name
-
-c.KubeSpawner.user_storage_capacity = os.environ['VOLUME_SIZE']
-
-c.KubeSpawner.user_storage_access_modes = ['ReadWriteOnce']
-
-c.KubeSpawner.volumes = [
-    {
-        'name': 'data',
-        'persistentVolumeClaim': {
-            'claimName': c.KubeSpawner.pvc_name_template
-        }
-    }
-]
-
-c.KubeSpawner.volume_mounts = [
-    {
-        'name': 'data',
-        'mountPath': '/opt/app-root',
-        'subPath': 'workspace'
-    }
-]
-
-c.KubeSpawner.init_containers = [
-    {
-        'name': 'setup-volume',
-        'image': '%s' % c.KubeSpawner.image_spec,
-        'command': [
-            '/opt/workshop/bin/setup-volume.sh',
-            '/opt/app-root',
-            '/mnt/workspace'
-        ],
-        'volumeMounts': [
-            {
-                'name': 'data',
-                'mountPath': '/mnt'
-            }
-        ]
-    }
-]
-
-# Setup culling of front end instance if timeout parameter is supplied.
-
-idle_timeout = os.environ.get('IDLE_TIMEOUT')
-
-if idle_timeout and int(idle_timeout):
-    c.JupyterHub.services = [
-        {
-            'name': 'cull-idle',
-            'admin': True,
-            'command': ['cull-idle-servers', '--timeout=%s' % idle_timeout],
-        }
-    ]
+if os.path.exists(config_file):
+    with open(config_file) as fp:
+        exec(compile(fp.read(), config_file, 'exec'), globals())
