@@ -165,6 +165,10 @@
                                 ],
                                 "env": [
                                     {
+                                        "name": "CONFIGURATION_TYPE",
+                                        "value": "openshift-auth"
+                                    },
+                                    {
                                         "name": "APPLICATION_NAME",
                                         "value": "${APPLICATION_NAME}"
                                     },

@@ -6,10 +6,10 @@ import os
 # will be read from separate files at the end of this configuration
 # file.
 
-# The application name and deployment mode are passed in through the
+# The application name and configuration type are passed in through the
 # template. The application name should be the value used for the
 # deployment, and more specifically, must match the name of the route.
-# The deployment mode will vary based on the template, as the setup
+# The configuration type will vary based on the template, as the setup
 # required for each will be different.
 
 application_name = os.environ.get('APPLICATION_NAME')
@@ -149,7 +149,7 @@ if os.environ.get('KUBECTL_VERSION'):
 # Load configuration corresponding to the deployment mode.
 
 config_root = '/opt/app-root/src/.jupyter'
-config_file = '%s/config-%s.py' % (config_root, deployment_mode)
+config_file = '%s/config-%s.py' % (config_root, configuration_type)
 
 if os.path.exists(config_file):
     with open(config_file) as fp:

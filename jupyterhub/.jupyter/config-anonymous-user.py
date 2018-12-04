@@ -137,7 +137,7 @@ c.KubeSpawner.extra_containers.extend([
             },
             {
                 "name": "BRIDGE_LISTEN",
-                "value": "http://0.0.0.0:8083"
+                "value": "http://0.0.0.0:10083"
             },
             {
                 "name": "BRIDGE_BASE_ADDRESS",
@@ -158,6 +158,8 @@ c.KubeSpawner.extra_containers.extend([
         ],
     }
 ])
+
+c.Spawner.environment['CONSOLE_URL'] = 'http://localhost:10083'
 
 # We need to ensure the service account does actually exist, and also
 # create a project for the user and a role binding which allows the
