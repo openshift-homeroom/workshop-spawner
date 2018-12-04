@@ -124,31 +124,7 @@
             "kind": "ImageStream",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-hub-s2i",
-                "labels": {
-                    "app": "${APPLICATION_NAME}"
-                }
-            },
-            "spec": {
-                "lookupPolicy": {
-                    "local": true
-                },
-                "tags": [
-                    {
-                        "name": "latest",
-                        "from": {
-                            "kind": "DockerImage",
-                            "name": "${JUPYTERHUB_IMAGE}"
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "kind": "ImageStream",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}-hub-img",
+                "name": "${APPLICATION_NAME}-hub",
                 "labels": {
                     "app": "${APPLICATION_NAME}"
                 }
@@ -159,7 +135,7 @@
             "kind": "BuildConfig",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-hub-img",
+                "name": "${APPLICATION_NAME}-hub",
                 "labels": {
                     "app": "${APPLICATION_NAME}"
                 }
@@ -185,15 +161,15 @@
                     "type": "Source",
                     "sourceStrategy": {
                         "from": {
-                            "kind": "ImageStreamTag",
-                            "name": "${APPLICATION_NAME}-hub-s2i:latest"
+                            "kind": "DockerImage",
+                            "name": "${JUPYTERHUB_IMAGE}"
                         }
                     }
                 },
                 "output": {
                     "to": {
                         "kind": "ImageStreamTag",
-                        "name": "${APPLICATION_NAME}-hub-img:latest"
+                        "name": "${APPLICATION_NAME}-hub:latest"
                     }
                 }
             }
@@ -237,7 +213,7 @@
 			    ],
 			    "from": {
 				"kind": "ImageStreamTag",
-				"name": "${APPLICATION_NAME}-hub-img:latest"
+				"name": "${APPLICATION_NAME}-hub:latest"
 			    }
 			}
 		    }
@@ -259,7 +235,6 @@
 			"containers": [
 			    {
 				"name": "spawner",
-				"image": "${APPLICATION_NAME}-hub-img:latest",
 				"ports": [
 				    {
 					"containerPort": 8080,
