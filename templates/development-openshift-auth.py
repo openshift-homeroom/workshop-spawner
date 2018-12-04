@@ -2,9 +2,9 @@
     "kind": "Template",
     "apiVersion": "v1",
     "metadata": {
-        "name": "workshop-jupyterhub-development",
+        "name": "workshop-jupyterhub-development-openshift-auth",
         "annotations": {
-            "openshift.io/display-name": "Workshop Terminal/Dashboard Spawner "
+            "openshift.io/display-name": "Workshop (Development/OpenShift Auth)"
         }
     },
     "parameters": [

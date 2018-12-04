@@ -1,9 +1,10 @@
 import os
 
-# This file provides common configuration for the different modes that
-# the deployment can run in. The modes are 'workshop' and 'event'.
-# Configuration specific to the different modes will be read from
-# separate files at the end of this configuration file.
+# This file provides common configuration for the different ways that
+# the deployment can run. The configuration types are 'openshift-auth'
+# and 'anonymous-user'. Configuration specific to the different modes
+# will be read from separate files at the end of this configuration
+# file.
 
 # The application name and deployment mode are passed in through the
 # template. The application name should be the value used for the
@@ -12,7 +13,8 @@ import os
 # required for each will be different.
 
 application_name = os.environ.get('APPLICATION_NAME')
-deployment_mode = os.environ.get('DEPLOYMENT_MODE', 'workshop')
+
+configuration_type = os.environ.get('CONFIGURATION_TYPE', 'openshift-auth')
 
 # Override styling elements for the JupyterHub web pages.
 
@@ -51,6 +53,11 @@ c.Spawner.environment = dict()
 # This is so we can incrementally add values as we go along.
 
 c.JupyterHub.services = []
+
+# Initialise the set of extra containers to be empty so we know it is
+# a list. This is so we can incrementally add values as we go along.
+
+c.KubeSpawner.extra_containers = []
 
 # Override the image details with that for the terminal or dashboard
 # image being used. The default is to assume that a image stream with
@@ -116,6 +123,17 @@ if not public_hostname:
 
 c.Spawner.environment['JUPYTERHUB_ROUTE'] = 'https://%s' % public_hostname
 
+# Work out the subdomain under which applications hosted in the cluster
+# are hosted. Calculate this from the route for the JupyterHub route if
+# not supplied explicitly.
+
+cluster_subdomain = os.environ.get('CLUSTER_SUBDOMAIN')
+
+if not cluster_subdomain:
+    cluster_subdomain = '.'.join(public_hostname.split('.')[1:])
+
+c.Spawner.environment['CLUSTER_SUBDOMAIN'] = cluster_subdomain
+
 # The terminal image will normally work out what versions of OpenShift
 # and Kubernetes command line tools should be used, based on the version
 # of OpenShift which is being used. Allow these to be overridden if
@@ -131,7 +149,7 @@ if os.environ.get('KUBECTL_VERSION'):
 # Load configuration corresponding to the deployment mode.
 
 config_root = '/opt/app-root/src/.jupyter'
-config_file = '%s/jupyterhub_config-%s.py' % (config_root, deployment_mode)
+config_file = '%s/config-%s.py' % (config_root, deployment_mode)
 
 if os.path.exists(config_file):
     with open(config_file) as fp:

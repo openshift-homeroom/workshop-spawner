@@ -1,6 +1,6 @@
-# This file provides configuration specific to the 'workshop' deployment
-# mode. In this mode authentication for JupyterHub is done against the
-# OpenShift cluster using OAuth.
+# This file provides configuration specific to the 'openshift-auth'
+# deployment mode. In this mode authentication for JupyterHub is done
+# against the OpenShift cluster using OAuth.
 
 # Work out the public server address for the OpenShift OAuth endpoint.
 # Make sure the request is done in a session so the connection is closed
