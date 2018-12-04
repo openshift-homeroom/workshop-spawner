@@ -59,6 +59,11 @@ c.JupyterHub.services = []
 
 c.KubeSpawner.extra_containers = []
 
+# Initialise the set of extra handlers to be empty so we know it is
+# a list. This is so we can incrementally add values as we go along.
+
+c.KubeSpawner.extra_handlers = []
+
 # Override the image details with that for the terminal or dashboard
 # image being used. The default is to assume that a image stream with
 # '-app' extension for the application name is used. We need to use a

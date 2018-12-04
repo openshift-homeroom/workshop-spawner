@@ -113,3 +113,19 @@ if idle_timeout and int(idle_timeout):
             'command': ['cull-idle-servers', '--timeout=%s' % idle_timeout],
         }
     ])
+
+# Redirect handler for sending /restart back to home page for user.
+
+from tornado import web
+
+from jupyterhub.handlers import BaseHandler
+
+class RestartRedirectHandler(BaseHandler):
+
+    @web.authenticated
+    def get(self, *args):
+        self.redirect('/')
+
+c.JupyterHub.extra_handlers.extend([
+    (r'/restart$', RestartRedirectHandler),
+])

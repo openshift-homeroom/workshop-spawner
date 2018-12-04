@@ -8,8 +8,8 @@
 # user name and don't need to provide a password. During the process of
 # doing the psuedo authentication, create a service account for them,
 # where the name of service account is their user name. The special
-# '/reset' URL handler will cause any session to be reset and they will
-# be given a new instance.
+# '/restart' URL handler will cause any session to be restarted and they
+# will be given a new instance.
 
 import uuid
 import string
@@ -114,11 +114,11 @@ class AutoAuthenticator(Authenticator):
             'process_user': self.process_user
         }
         return [
-            ('/reset', AutoAuthenticateHandler, extra_settings)
+            ('/restart', AutoAuthenticateHandler, extra_settings)
         ]
 
     def login_url(self, base_url):
-        return url_path_join(base_url, 'reset')
+        return url_path_join(base_url, 'restart')
 
 c.JupyterHub.authenticator_class = AutoAuthenticator
 
