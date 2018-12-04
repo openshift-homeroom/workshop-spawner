@@ -50,6 +50,11 @@
         {
             "name": "KUBECTL_VERSION",
             "value": ""
+        },
+        {
+            "name": "JUPYTERHUB_CONFIG",
+            "value": "",
+            "required": false
         }
     ],
     "objects": [
@@ -106,6 +111,19 @@
                         }
                     }
                 ]
+            }
+        },
+        {
+            "kind": "ConfigMap",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-cfg",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "data": {
+                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
             }
         },
         {
@@ -205,6 +223,10 @@
                                     {
                                         "mountPath": "/opt/app-root/data",
                                         "name": "data"
+                                    },
+                                    {
+                                        "name": "config",
+                                        "mountPath": "/opt/app-root/configs"
                                     }
                                 ]
                             }
@@ -214,6 +236,13 @@
                                 "name": "data",
                                 "persistentVolumeClaim": {
                                     "claimName": "${APPLICATION_NAME}-hub-data"
+                                }
+                            },
+                            {
+                                "name": "config",
+                                "configMap": {
+                                    "name": "${APPLICATION_NAME}-cfg",
+                                    "defaultMode": 420
                                 }
                             }
                         ]

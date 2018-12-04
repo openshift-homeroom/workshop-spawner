@@ -2,7 +2,7 @@
     "kind": "Template",
     "apiVersion": "v1",
     "metadata": {
-        "name": "workshop-jupyterhub-development-anonymous-user",
+        "name": "workshop-jupyterhub-production-anonymous-user",
         "annotations": {
             "openshift.io/display-name": "Workshop (Development/Anonymous User)"
         }
@@ -16,16 +16,6 @@
         {
             "name": "APPLICATION_NAME",
             "value": "terminals",
-            "required": true
-        },
-        {
-            "name": "GIT_REPOSITORY_URL",
-            "value": "https://github.com/openshift-labs/workshop-jupyterhub.git",
-            "required": true
-        },
-        {
-            "name": "GIT_REPOSITORY_REF",
-            "value": "develop",
             "required": true
         },
         {
@@ -50,7 +40,7 @@
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/osevg/jupyterhub-quickstart:2.0.1"
+            "value": "quay.io/osevg/workshop-jupyterhub:master"
         },
         {
             "name": "OC_VERSION",
@@ -128,50 +118,17 @@
                 "labels": {
                     "app": "${APPLICATION_NAME}"
                 }
-            }
-        },
-
-        {
-            "kind": "BuildConfig",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}-hub",
-                "labels": {
-                    "app": "${APPLICATION_NAME}"
-                }
             },
             "spec": {
-                "triggers": [
+                "tags": [
                     {
-                        "type": "ConfigChange"
-                    },
-                    {
-                        "type": "ImageChange"
-                    }
-                ],
-                "source": {
-                    "type": "Git",
-                    "git": {
-                        "uri": "${GIT_REPOSITORY_URL}",
-                        "ref": "${GIT_REPOSITORY_REF}"
-                    },
-                    "contextDir": "jupyterhub"
-                },
-                "strategy": {
-                    "type": "Source",
-                    "sourceStrategy": {
+                        "name": "latest",
                         "from": {
                             "kind": "DockerImage",
                             "name": "${JUPYTERHUB_IMAGE}"
                         }
                     }
-                },
-                "output": {
-                    "to": {
-                        "kind": "ImageStreamTag",
-                        "name": "${APPLICATION_NAME}-hub:latest"
-                    }
-                }
+                ]
             }
         },
         {
