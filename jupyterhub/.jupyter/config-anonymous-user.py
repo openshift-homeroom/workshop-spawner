@@ -55,11 +55,24 @@ class AutoAuthenticateHandler(BaseHandler):
 
         if raw_user:
             if self.force_new_server and raw_user.running:
-                # Stop the user's current terminal instance if it
-                # is running so that they get a new one.
+                # Stop the user's current terminal instance if it is
+                # running so that they get a new one. Should hopefully
+                # only end up here if have hit the /restart URL path.
+
                 status = yield raw_user.spawner.poll_and_notify()
                 if status is None:
                     yield self.stop_single_user(raw_user)
+
+                # Also force a new user name be generated so don't have
+                # issues with browser caching web pages for anything
+                # want to be able to change for a demo. Only way to do
+                # this seems to be to clear the login cookie and force a
+                # redirect back to the top of the site, hoping we do not
+                # get into a loop.
+
+                self.clear_login_cookie()
+                return self.redirect('/')
+
         else:
             username = self.generate_user()
             raw_user = self.user_from_username(username)
