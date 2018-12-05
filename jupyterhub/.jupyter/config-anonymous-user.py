@@ -417,3 +417,43 @@ def modify_pod_hook(spawner, pod):
     return pod
 
 c.KubeSpawner.modify_pod_hook = modify_pod_hook
+
+# Setup culling of terminal instances when idle or session expires, as
+# well as setup service to clean up service accounts and projects related
+# to old sessions.
+
+idle_timeout = os.environ.get('IDLE_TIMEOUT', '600')
+max_session_age = os.environ.get('MAX_SESSION_AGE')
+
+if idle_timeout and int(idle_timeout):
+    cull_idle_servers_args = ['cull-idle-servers']
+
+    cull_idle_servers_args.append('--cull-every=60')
+    cull_idle_servers_args.append('--timeout=%s' % idle_timeout)
+    cull_idle_servers_args.append('--cull-users')
+
+    if max_session_age:
+        cull_idle_servers_args.append('--max-age=%s' % max_session_age)
+
+    c.JupyterHub.services.extend([
+        {
+            'name': 'cull-idle',
+            'admin': True,
+            'command': cull_idle_servers_args,
+        }
+    ])
+
+    delete_projects_args = ['/opt/app-root/src/scripts/delete-projects.sh']
+
+    c.JupyterHub.services.extend([
+        {
+            'name': 'delete-projects',
+            'command': delete_projects_args,
+            'environment': dict(
+                PYTHONUNBUFFERED='1',
+                APPLICATION_NAME=application_name,
+                KUBERNETES_SERVICE_HOST=os.environ['KUBERNETES_SERVICE_HOST'],
+                KUBERNETES_SERVICE_PORT=os.environ['KUBERNETES_SERVICE_PORT']
+            ),
+        }
+    ])
