@@ -162,6 +162,11 @@ c.KubeSpawner.extra_containers.extend([
 
 c.Spawner.environment['CONSOLE_URL'] = 'http://localhost:10083'
 
+# Pass through for dashboard the URL where should be redirected in order
+# to restart a session, with a new instance created with fresh image.
+
+c.Spawner.environment['RESTART_URL'] = '/restart'
+
 # We need to ensure the service account does actually exist, and also
 # create a project for the user and a role binding which allows the
 # service account to work on that project. They need to be given admin
