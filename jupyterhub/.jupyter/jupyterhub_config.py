@@ -91,13 +91,12 @@ c.KubeSpawner.cmd = ['/usr/libexec/s2i/run']
 
 c.Spawner.mem_limit = convert_size_to_bytes(os.environ.get('MEMORY_SIZE', '512Mi'))
 
-# Set the policy that images will always be pulled to the node each
-# time. This is so that during development, changes to the terminal
-# image will always be picked up. May want to put this under deployment
-# environment switch so can set as IfNotPresent when deploying in a
-# production scenario.
+# Set the policy that images will always be pulled to the node each time
+# when the image name is not explicitly provided. This is so that during
+# development, changes to the terminal image will always be picked up.
 
-c.KubeSpawner.image_pull_policy = 'Always'
+if not terminal_image:
+    c.KubeSpawner.image_pull_policy = 'Always'
 
 # Work out hostname for the exposed route of the JupyterHub server. This
 # is tricky as we need to use the REST API to query it. We assume that

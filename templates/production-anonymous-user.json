@@ -208,6 +208,10 @@
 					"value": "${APPLICATION_NAME}"
 				    },
 				    {
+					"name": "TERMINAL_IMAGE",
+					"value": "${TERMINAL_IMAGE}"
+				    },
+				    {
 					"name": "MEMORY_SIZE",
 					"value": "${MEMORY_SIZE}"
 				    },
@@ -341,31 +345,7 @@
 		    "insecureEdgeTerminationPolicy": "Redirect"
 		}
 	    }
-	},
-        {
-            "kind": "ImageStream",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}-app",
-                "labels": {
-                    "app": "${APPLICATION_NAME}"
-                }
-            },
-            "spec": {
-                "lookupPolicy": {
-                    "local": true
-                },
-                "tags": [
-                    {
-                        "name": "latest",
-                        "from": {
-                            "kind": "DockerImage",
-                            "name": "${TERMINAL_IMAGE}"
-                        }
-                    }
-                ]
-            }
-        }
+	}
     ]
 }
 
