@@ -82,32 +82,37 @@ class AutoAuthenticateHandler(BaseHandler):
 
         # Ensure that a service account exists corresponding to the
         # user.
+        #
+        # XXX Disable this for now and leave until spawning the pod.
+        # If do it here and client doesn't support cookies, the redirect
+        # loop results in a service account being created each time
+        # through the loop.
 
-        while True:
-            hub = '%s-%s' % (application_name, namespace)
-            account_name = '%s-%s' % (hub, user.name)
-
-            try:
-                text = service_account_template.safe_substitute(
-                        namespace=namespace, name=account_name, hub=hub)
-                body = json.loads(text)
-
-                service_account_resource.create(namespace=namespace, body=body)
-
-            except ApiException as e:
-                if e.status != 409:
-                    print('ERROR: Error creating service account. %s' % e)
-                    raise
-
-                else:
-                    break
-
-            except Exception as e:
-                print('ERROR: Error creating service account. %s' % e)
-                raise
-
-            else:
-                break
+        # while True:
+        #     hub = '%s-%s' % (application_name, namespace)
+        #     account_name = '%s-%s' % (hub, user.name)
+        #
+        #     try:
+        #         text = service_account_template.safe_substitute(
+        #                 namespace=namespace, name=account_name, hub=hub)
+        #         body = json.loads(text)
+        #
+        #         service_account_resource.create(namespace=namespace, body=body)
+        #
+        #     except ApiException as e:
+        #         if e.status != 409:
+        #             print('ERROR: Error creating service account. %s' % e)
+        #             raise
+        #
+        #         else:
+        #             break
+        #
+        #     except Exception as e:
+        #         print('ERROR: Error creating service account. %s' % e)
+        #         raise
+        #
+        #     else:
+        #         break
 
         self.redirect(self.get_argument("next", user.url))
 
