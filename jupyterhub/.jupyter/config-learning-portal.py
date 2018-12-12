@@ -1,4 +1,4 @@
-# This file provides configuration specific to the 'anonymous-user'
+# This file provides configuration specific to the 'learning-portal'
 # deployment mode. In this mode, anonymous authentication is used, with
 # users being given their own unique service account and project to work
 # in. The project and service account will be deleted when the session

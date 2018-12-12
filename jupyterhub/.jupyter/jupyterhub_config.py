@@ -1,8 +1,8 @@
 import os
 
 # This file provides common configuration for the different ways that
-# the deployment can run. The configuration types are 'openshift-auth'
-# and 'anonymous-user'. Configuration specific to the different modes
+# the deployment can run. The configuration types are 'workshop-terminals'
+# and 'learning-portal'. Configuration specific to the different modes
 # will be read from separate files at the end of this configuration
 # file.
 
@@ -14,7 +14,7 @@ import os
 
 application_name = os.environ.get('APPLICATION_NAME')
 
-configuration_type = os.environ.get('CONFIGURATION_TYPE', 'openshift-auth')
+configuration_type = os.environ.get('CONFIGURATION_TYPE', 'workshop-terminals')
 
 # Override styling elements for the JupyterHub web pages.
 

@@ -1,4 +1,4 @@
-# This file provides configuration specific to the 'openshift-auth'
+# This file provides configuration specific to the 'workshop-terminals'
 # deployment mode. In this mode authentication for JupyterHub is done
 # against the OpenShift cluster using OAuth.
 

@@ -2,9 +2,9 @@
     "kind": "Template",
     "apiVersion": "v1",
     "metadata": {
-        "name": "workshop-jupyterhub-development-anonymous-user",
+        "name": "learning-portal-production",
         "annotations": {
-            "openshift.io/display-name": "Workshop (Development/Anonymous User)"
+            "openshift.io/display-name": "Learning Portal (Production)"
         }
     },
     "parameters": [
@@ -15,17 +15,7 @@
         },
         {
             "name": "APPLICATION_NAME",
-            "value": "terminals",
-            "required": true
-        },
-        {
-            "name": "GIT_REPOSITORY_URL",
-            "value": "https://github.com/openshift-labs/workshop-jupyterhub.git",
-            "required": true
-        },
-        {
-            "name": "GIT_REPOSITORY_REF",
-            "value": "develop",
+            "value": "portal",
             "required": true
         },
         {
@@ -46,11 +36,11 @@
         },
         {
             "name": "TERMINAL_IMAGE",
-            "value": "quay.io/osevg/workshop-dashboard:master"
+            "value": "quay.io/openshiftlabs/workshop-dashboard:1.0.0"
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/osevg/jupyterhub-quickstart:2.0.1"
+            "value": "quay.io/openshiftlabs/workshop-jupyterhub:1.0.0"
         },
         {
             "name": "OC_VERSION",
@@ -128,50 +118,17 @@
                 "labels": {
                     "app": "${APPLICATION_NAME}"
                 }
-            }
-        },
-
-        {
-            "kind": "BuildConfig",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}-hub",
-                "labels": {
-                    "app": "${APPLICATION_NAME}"
-                }
             },
             "spec": {
-                "triggers": [
+                "tags": [
                     {
-                        "type": "ConfigChange"
-                    },
-                    {
-                        "type": "ImageChange"
-                    }
-                ],
-                "source": {
-                    "type": "Git",
-                    "git": {
-                        "uri": "${GIT_REPOSITORY_URL}",
-                        "ref": "${GIT_REPOSITORY_REF}"
-                    },
-                    "contextDir": "jupyterhub"
-                },
-                "strategy": {
-                    "type": "Source",
-                    "sourceStrategy": {
+                        "name": "latest",
                         "from": {
                             "kind": "DockerImage",
                             "name": "${JUPYTERHUB_IMAGE}"
                         }
                     }
-                },
-                "output": {
-                    "to": {
-                        "kind": "ImageStreamTag",
-                        "name": "${APPLICATION_NAME}-hub:latest"
-                    }
-                }
+                ]
             }
         },
         {
@@ -244,11 +201,15 @@
 				"env": [
                                     {
                                         "name": "CONFIGURATION_TYPE",
-                                        "value": "anonymous-user"
+                                        "value": "learning-portal"
                                     },
 				    {
 					"name": "APPLICATION_NAME",
 					"value": "${APPLICATION_NAME}"
+				    },
+				    {
+					"name": "TERMINAL_IMAGE",
+					"value": "${TERMINAL_IMAGE}"
 				    },
 				    {
 					"name": "MEMORY_SIZE",
@@ -384,31 +345,7 @@
 		    "insecureEdgeTerminationPolicy": "Redirect"
 		}
 	    }
-	},
-        {
-            "kind": "ImageStream",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}-app",
-                "labels": {
-                    "app": "${APPLICATION_NAME}"
-                }
-            },
-            "spec": {
-                "lookupPolicy": {
-                    "local": true
-                },
-                "tags": [
-                    {
-                        "name": "latest",
-                        "from": {
-                            "kind": "DockerImage",
-                            "name": "${TERMINAL_IMAGE}"
-                        }
-                    }
-                ]
-            }
-        }
+	}
     ]
 }
 
