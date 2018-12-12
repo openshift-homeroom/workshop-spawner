@@ -11,13 +11,13 @@ Quick start instructions
 If you don't want to read about how the environments work, nor how they can be customised to include your own additional content and tools, run:
 
 ```
-$ oc new-app https://raw.githubusercontent.com/openshift-labs/workshop-jupyterhub/master/templates/production-openshift-auth.json
+$ oc new-app https://raw.githubusercontent.com/openshift-labs/workshop-jupyterhub/master/templates/workshop-terminals-production.json
 ```
 
-This will create a deployment for the ``terminal`` application. Check the output from ``oc new-app`` for the public URL the application can be accessed with, or run the following command to get details of the route.
+This will create a deployment for the ``terminals`` application. Check the output from ``oc new-app`` for the public URL the application can be accessed with, or run the following command to get details of the route.
 
 ```
-$ oc get route terminal
+$ oc get route terminals
 ```
 
 When a user visits the URL for the application, they will be redirected to the login page for the OpenShift cluster. Once the user has logged in, after the  user environment has been created, they will be presented with an interactive shell in their browser.
