@@ -36,11 +36,13 @@
         },
         {
             "name": "TERMINAL_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-dashboard:1.0.0"
+            "value": "quay.io/openshiftlabs/workshop-dashboard:1.1.0",
+            "required": true
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-jupyterhub:1.0.0"
+            "value": "quay.io/openshiftlabs/workshop-jupyterhub:1.0.0",
+            "required": true
         },
         {
             "name": "OC_VERSION",
