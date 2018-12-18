@@ -225,7 +225,7 @@ project_request_template = string.Template("""
 role_binding_template = string.Template("""
 {
     "kind": "RoleBinding",
-    "apiVersion": "v1",
+    "apiVersion": "rbac.authorization.k8s.io/v1",
     "metadata": {
         "name": "${name}-${role}",
         "labels": {
