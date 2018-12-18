@@ -206,7 +206,7 @@ secret_resource = api_client.resources.get(
      api_version='v1', kind='Secret')
 
 role_binding_resource = api_client.resources.get(
-     api_version='v1', kind='RoleBinding')
+     api_version='rbac.authorization.k8s.io/v1', kind='RoleBinding')
 
 project_request_template = string.Template("""
 {
