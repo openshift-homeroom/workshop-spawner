@@ -241,7 +241,7 @@ role_binding_template = string.Template("""
     ],
     "roleRef": {
         "apiGroup": "rbac.authorization.k8s.io",
-        "kind": "Role",
+        "kind": "ClusterRole",
         "name": "${role}"
     }
 }
