@@ -36,12 +36,12 @@
         },
         {
             "name": "TERMINAL_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-dashboard:1.1.0",
-            "required": true
+            "value": "",
+            "required": false
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-jupyterhub:1.0.2",
+            "value": "quay.io/openshiftlabs/workshop-jupyterhub:1.0.3",
             "required": true
         },
         {
@@ -347,7 +347,31 @@
 		    "insecureEdgeTerminationPolicy": "Redirect"
 		}
 	    }
-	}
+	},
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-app",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "lookupPolicy": {
+                    "local": true
+                },
+                "tags": [
+                    {
+                        "name": "latest",
+                        "from": {
+                            "kind": "DockerImage",
+                            "name": "quay.io/openshiftlabs/workshop-dashboard:1.1.0"
+                        }
+                    }
+                ]
+            }
+        }
     ]
 }
 
