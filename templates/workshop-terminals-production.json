@@ -31,8 +31,8 @@
         },
         {
             "name": "TERMINAL_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-terminal:1.1.0",
-            "required": true
+            "value": "",
+            "required": false
         },
         {
             "name": "JUPYTERHUB_IMAGE",
@@ -191,6 +191,10 @@
                                         "value": "${APPLICATION_NAME}"
                                     },
                                     {
+                                        "name": "TERMINAL_IMAGE",
+                                        "value": "${TERMINAL_IMAGE}"
+                                    },
+                                    {
                                         "name": "MEMORY_SIZE",
                                         "value": "${MEMORY_SIZE}"
                                     },
@@ -343,7 +347,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "${TERMINAL_IMAGE}"
+                            "name": "quay.io/openshiftlabs/workshop-terminal:1.1.0"
                         }
                     }
                 ]
