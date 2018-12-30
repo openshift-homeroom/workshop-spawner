@@ -33,7 +33,7 @@
         },
         {
             "name": "ADMIN_USERS",
-            "value": "opentlc-mgr"
+            "value": ""
         },
         {
             "name": "IDLE_TIMEOUT",
