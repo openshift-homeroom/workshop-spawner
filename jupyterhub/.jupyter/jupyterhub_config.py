@@ -74,7 +74,7 @@ c.JupyterHub.extra_handlers = []
 terminal_image = os.environ.get('TERMINAL_IMAGE')
 
 if not terminal_image:
-    terminal_image = '%s-app:latest' % application
+    terminal_image = '%s-app:latest' % application_name
 
 c.KubeSpawner.image_spec = resolve_image_name(terminal_image)
 
