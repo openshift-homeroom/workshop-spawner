@@ -66,19 +66,17 @@ c.JupyterHub.extra_handlers = []
 
 # Override the image details with that for the terminal or dashboard
 # image being used. The default is to assume that a image stream with
-# '-app' extension for the application name is used. We need to use a
-# fiddle at the moment and use the internal registry address for where
-# the image policy plugin isn't configured correctly for the cluster
-# such that Kuebernetes resources can use image streams.
+# '-app' extension for the application name is used. The call to the
+# function resolve_image_name() is try and resolve to image registry
+# when using image stream. This is to workaround issue that many
+# clusters do not have image policy controller configured correctly.
 
 terminal_image = os.environ.get('TERMINAL_IMAGE')
 
 if not terminal_image:
-    c.KubeSpawner.image_spec = (
-            'docker-registry.default.svc:5000/%s/%s-app:latest' %
-            (namespace, application_name))
-else:
-    c.KubeSpawner.image_spec = terminal_image
+    terminal_image = '%s-app:latest' % application
+
+c.KubeSpawner.image_spec = resolve_image_name(terminal_image)
 
 # Override the command run in the terminal image as we aren't deploying
 # Jupyter notebooks but our terminal image.
