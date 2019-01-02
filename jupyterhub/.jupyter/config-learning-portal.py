@@ -415,11 +415,11 @@ def modify_pod_hook(spawner, pod):
 
         print('WARNING: Could not verify account. %s' % user_account_name)
 
-    # Add environment variable for the users namespace for use in any
+    # Add environment variable for the project namespace for use in any
     # workshop content.
 
     pod.spec.containers[0].env.append(
-            dict(name='USER_NAMESPACE', value=project_name))
+            dict(name='PROJECT_NAMESPACE', value=project_name))
 
     return pod
 
