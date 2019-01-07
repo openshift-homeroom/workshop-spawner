@@ -27,8 +27,12 @@
             "value": "1Gi"
         },
         {
+            "name": "SERVER_LIMIT",
+            "value": "8"
+        },
+        {
             "name": "IDLE_TIMEOUT",
-            "value": "900"
+            "value": "300"
         },
         {
             "name": "MAX_SESSION_AGE",

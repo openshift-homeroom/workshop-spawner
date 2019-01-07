@@ -587,8 +587,14 @@ def modify_pod_hook(spawner, pod):
 c.KubeSpawner.modify_pod_hook = modify_pod_hook
 
 # Setup culling of terminal instances when idle or session expires, as
-# well as setup service to clean up service accounts and projects related
-# to old sessions.
+# well as setup service to clean up service accounts and projects
+# related to old sessions. If a server limit is defined, also cap how
+# many can be run.
+
+server_limit = os.environ.get('SERVER_LIMIT')
+
+if server_limit:
+    c.JupyterHub.active_server_limit = int(server_limit)
 
 idle_timeout = os.environ.get('IDLE_TIMEOUT', '600')
 max_session_age = os.environ.get('MAX_SESSION_AGE')
