@@ -208,6 +208,12 @@ secret_resource = api_client.resources.get(
 role_binding_resource = api_client.resources.get(
      api_version='rbac.authorization.k8s.io/v1', kind='RoleBinding')
 
+limit_range_resource = api_client.resources.get(
+     api_version='v1', kind='LimitRange')
+
+resource_quota_resource = api_client.resources.get(
+     api_version='v1', kind='ResourceQuota')
+
 project_request_template = string.Template("""
 {
     "kind": "ProjectRequest",
@@ -246,6 +252,115 @@ role_binding_template = string.Template("""
     }
 }
 """)
+
+resource_limits_definition = """
+{
+    "kind": "LimitRange",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "resource-limits"
+    },
+    "spec": {
+        "limits": [
+            {
+                "type": "Pod",
+                "min": {
+                    "cpu": "100m",
+                    "memory": "32Mi"
+                },
+                "max": {
+                    "cpu": "2",
+                    "memory": "2Gi"
+                }
+            },
+            {
+                "type": "Container",
+                "min": {
+                    "cpu": "100m",
+                    "memory": "32Mi"
+                },
+                "max": {
+                    "cpu": "2",
+                    "memory": "1Gi"
+                },
+                "default": {
+                    "cpu": "250m",
+                    "memory": "512Mi"
+                },
+                "defaultRequest": {
+                    "cpu": "100m",
+                    "memory": "128Mi"
+                }
+            },
+            {
+                "type": "PersistentVolumeClaim",
+                "min": {
+                    "storage": "1Gi"
+                },
+                "max": {
+                    "storage": "1Gi"
+                }
+            }
+        ]
+    }
+}
+"""
+
+compute_resources_definition = """
+{
+    "kind": "ResourceQuota",
+    "apiVersion": "v1",
+    "metadata": {
+	"name": "compute-resources"
+    },
+    "spec": {
+	"hard": {
+	    "limits.cpu": "2",
+	    "limits.memory": "2Gi"
+	},
+	"scopes": [
+	    "NotTerminating"
+	]
+    }
+}
+"""
+
+compute_resources_timebound_definition = """
+{
+    "kind": "ResourceQuota",
+    "apiVersion": "v1",
+    "metadata": {
+	"name": "compute-resources-timebound"
+    },
+    "spec": {
+	"hard": {
+	    "limits.cpu": "2",
+	    "limits.memory": "2Gi"
+	},
+	"scopes": [
+	    "Terminating"
+	]
+    }
+}
+"""
+
+object_counts_definition = """
+{
+    "kind": "ResourceQuota",
+    "apiVersion": "v1",
+    "metadata": {
+	"name": "object-counts"
+    },
+    "spec": {
+	"hard": {
+	    "persistentvolumeclaims": "3",
+	    "replicationcontrollers": "20",
+	    "secrets": "20",
+	    "services": "5"
+	}
+    }
+}
+"""
 
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
@@ -350,6 +465,52 @@ def modify_pod_hook(spawner, pod):
     except Exception as e:
         print('ERROR: Error creating rolebinding for hub. %s' % e)
         raise
+
+    # Create limit ranges for the project so any deployments will have
+    # default memory/cpu min and max values.
+
+    try:
+        body = json.loads(resource_limits_definition)
+
+        limit_range_resource.create(namespace=project_name, body=body)
+
+    except ApiException as e:
+        if e.status != 409:
+            print('ERROR: Error creating limit range. %s' % e)
+            raise
+
+    # Create resource quotas for the project so there is a maximum for
+    # what resources can be used.
+
+    try:
+        body = json.loads(compute_resources_definition)
+
+        resource_quota_resource.create(namespace=project_name, body=body)
+
+    except ApiException as e:
+        if e.status != 409:
+            print('ERROR: Error creating compute resources quota. %s' % e)
+            raise
+
+    try:
+        body = json.loads(compute_resources_timebound_definition)
+
+        resource_quota_resource.create(namespace=project_name, body=body)
+
+    except ApiException as e:
+        if e.status != 409:
+            print('ERROR: Error creating compute resources timebound quota. %s' % e)
+            raise
+
+    try:
+        body = json.loads(object_counts_definition)
+
+        resource_quota_resource.create(namespace=project_name, body=body)
+
+    except ApiException as e:
+        if e.status != 409:
+            print('ERROR: Error creating object counts quota. %s' % e)
+            raise
 
     # Create role binding in the project so the users service account
     # can create resources in it. Need to give it 'admin' role and not
