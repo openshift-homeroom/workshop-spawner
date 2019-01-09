@@ -281,7 +281,7 @@ resource_limits_definition = """
                 },
                 "max": {
                     "cpu": "2",
-                    "memory": "1Gi"
+                    "memory": "1536Mi"
                 },
                 "default": {
                     "cpu": "500m",
