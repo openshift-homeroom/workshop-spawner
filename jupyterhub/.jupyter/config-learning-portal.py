@@ -265,7 +265,7 @@ resource_limits_definition = """
             {
                 "type": "Pod",
                 "min": {
-                    "cpu": "100m",
+                    "cpu": "50m",
                     "memory": "32Mi"
                 },
                 "max": {
@@ -276,7 +276,7 @@ resource_limits_definition = """
             {
                 "type": "Container",
                 "min": {
-                    "cpu": "100m",
+                    "cpu": "50m",
                     "memory": "32Mi"
                 },
                 "max": {
@@ -284,11 +284,11 @@ resource_limits_definition = """
                     "memory": "1Gi"
                 },
                 "default": {
-                    "cpu": "250m",
+                    "cpu": "500m",
                     "memory": "512Mi"
                 },
                 "defaultRequest": {
-                    "cpu": "100m",
+                    "cpu": "50m",
                     "memory": "128Mi"
                 }
             },
