@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -x
+
+if [ -f /tmp/src/jupyterhub-realm.json ]; then
+    mv /tmp/src/jupyterhub-realm.json .
+fi

@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -x
+
+SERVER="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT"
+TOKEN=`cat /var/run/secrets/kubernetes.io/serviceaccount/token`
+NAMESPACE=`cat /var/run/secrets/kubernetes.io/serviceaccount/namespace`
+
+URL="$SERVER/oapi/v1/namespaces/$NAMESPACE/routes/$JUPYTERHUB_SERVICE_NAME"
+
+JUPYTERHUB_HOSTNAME=`curl -s -k -H "Authorization: Bearer $TOKEN" $URL | \
+    python -c "import json, sys; \
+               data = json.loads(sys.stdin.read()); \
+               print(data['spec']['host'])"`
+
+KEYCLOAK_ARGS=
+
+if [ -f jupyterhub-realm.json ]; then
+    cat jupyterhub-realm.json | sed \
+        -e "s/{{ *JUPYTERHUB_HOSTNAME *}}/$JUPYTERHUB_HOSTNAME/g" \
+        -e "s/{{ *OAUTH_CLIENT_SECRET *}}/$OAUTH_CLIENT_SECRET/g" > /tmp/realm.json
+
+    KEYCLOAK_ARGS="$KEYCLOAK_ARGS -Dkeycloak.import=/tmp/realm.json"
+    KEYCLOAK_ARGS="$KEYCLOAK_ARGS -Dkeycloak.migration.strategy=IGNORE_EXISTING"
+fi
+
+exec start-keycloak.sh -b 0.0.0.0 $KEYCLOAK_ARGS
