@@ -1,8 +1,8 @@
-# This file provides configuration specific to the 'terminal-server'
+# This file provides configuration specific to the 'jumpbox-server'
 # deployment mode. In this mode authentication for JupyterHub is done
 # against a KeyCloak authentication server.
 
-# Configure KeyCloak as the authentication provider for users.
+# Configure standalone KeyCloak as the authentication provider for users.
 
 keycloak_name = '%s-keycloak' % application_name
 keycloak_hostname = extract_hostname(routes, keycloak_name)
