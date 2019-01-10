@@ -2,15 +2,25 @@
     "kind": "Template",
     "apiVersion": "v1",
     "metadata": {
-        "name": "workshop-terminals-production",
+        "name": "hosted-workshop-development",
         "annotations": {
-            "openshift.io/display-name": "Workshop Terminals (Production)"
+            "openshift.io/display-name": "Hosted Workshop (Development)"
         }
     },
     "parameters": [
         {
             "name": "APPLICATION_NAME",
             "value": "terminals",
+            "required": true
+        },
+        {
+            "name": "GIT_REPOSITORY_URL",
+            "value": "https://github.com/openshift-labs/workshop-jupyterhub.git",
+            "required": true
+        },
+        {
+            "name": "GIT_REPOSITORY_REF",
+            "value": "develop",
             "required": true
         },
         {
@@ -36,7 +46,7 @@
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-jupyterhub:1.1.6",
+            "value": "quay.io/openshiftlabs/jupyterhub-quickstart:3.0.4",
             "required": true
         },
         {
@@ -50,11 +60,6 @@
         {
             "name": "KUBECTL_VERSION",
             "value": ""
-        },
-        {
-            "name": "JUPYTERHUB_CONFIG",
-            "value": "",
-            "required": false
         }
     ],
     "objects": [
@@ -100,30 +105,49 @@
                 "labels": {
                     "app": "${APPLICATION_NAME}"
                 }
+            }
+        },
+        {
+            "kind": "BuildConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-hub",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
             },
             "spec": {
-                "tags": [
+                "triggers": [
                     {
-                        "name": "latest",
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange"
+                    }
+                ],
+                "source": {
+                    "type": "Git",
+                    "git": {
+                        "uri": "${GIT_REPOSITORY_URL}",
+                        "ref": "${GIT_REPOSITORY_REF}"
+                    },
+                    "contextDir": "jupyterhub"
+                },
+                "strategy": {
+                    "type": "Source",
+                    "sourceStrategy": {
                         "from": {
                             "kind": "DockerImage",
                             "name": "${JUPYTERHUB_IMAGE}"
                         }
                     }
-                ]
-            }
-        },
-        {
-            "kind": "ConfigMap",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}-cfg",
-                "labels": {
-                    "app": "${APPLICATION_NAME}"
+                },
+                "output": {
+                    "to": {
+                        "kind": "ImageStreamTag",
+                        "name": "${APPLICATION_NAME}-hub:latest"
+                    }
                 }
-            },
-            "data": {
-                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
             }
         },
         {
@@ -174,7 +198,6 @@
                         "containers": [
                             {
                                 "name": "spawner",
-                                "image": "${APPLICATION_NAME}-hub:latest",
                                 "ports": [
                                     {
                                         "containerPort": 8080,
@@ -184,7 +207,7 @@
                                 "env": [
                                     {
                                         "name": "CONFIGURATION_TYPE",
-                                        "value": "workshop-terminals"
+                                        "value": "hosted-workshop"
                                     },
                                     {
                                         "name": "APPLICATION_NAME",
@@ -227,10 +250,6 @@
                                     {
                                         "mountPath": "/opt/app-root/data",
                                         "name": "data"
-                                    },
-                                    {
-                                        "name": "config",
-                                        "mountPath": "/opt/app-root/configs"
                                     }
                                 ]
                             }
@@ -240,13 +259,6 @@
                                 "name": "data",
                                 "persistentVolumeClaim": {
                                     "claimName": "${APPLICATION_NAME}-hub-data"
-                                }
-                            },
-                            {
-                                "name": "config",
-                                "configMap": {
-                                    "name": "${APPLICATION_NAME}-cfg",
-                                    "defaultMode": 420
                                 }
                             }
                         ]

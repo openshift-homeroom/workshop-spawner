@@ -1,4 +1,4 @@
-# This file provides configuration specific to the 'workshop-terminals'
+# This file provides configuration specific to the 'hosted-workshop'
 # deployment mode. In this mode authentication for JupyterHub is done
 # against the OpenShift cluster using OAuth.
 
@@ -46,6 +46,13 @@ c.Authenticator.auto_login = True
 c.JupyterHub.admin_access = True
 
 c.Authenticator.admin_users = set(os.environ.get('ADMIN_USERS', '').split())
+
+# No project is created automatically. Assume that the project which
+# should be used is the same as the users name.
+
+import operator
+
+c.Spawner.environment['PROJECT_NAMESPACE'] = operator.attrgetter('user.name')
 
 # For workshops we provide each user with a persistent volume so they
 # don't loose their work. This is mounted on /opt/app-root, so we need

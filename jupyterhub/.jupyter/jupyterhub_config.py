@@ -1,7 +1,7 @@
 import os
 
 # This file provides common configuration for the different ways that
-# the deployment can run. The configuration types are 'workshop-terminals'
+# the deployment can run. The configuration types are 'hosted-workshop'
 # and 'learning-portal'. Configuration specific to the different modes
 # will be read from separate files at the end of this configuration
 # file.
@@ -11,10 +11,16 @@ import os
 # deployment, and more specifically, must match the name of the route.
 # The configuration type will vary based on the template, as the setup
 # required for each will be different.
+#
+# The name 'workshop-terminals' was old identifier. Keep for now, mapping
+# to 'hosted-workshop', but need to remove it at some point.
 
 application_name = os.environ.get('APPLICATION_NAME')
 
-configuration_type = os.environ.get('CONFIGURATION_TYPE', 'workshop-terminals')
+configuration_type = os.environ.get('CONFIGURATION_TYPE', 'hosted-workshop')
+
+if configuration_type == 'workshop-terminals':
+    configuration_type = 'hosted-workshop'
 
 # Override styling elements for the JupyterHub web pages.
 
