@@ -42,13 +42,16 @@ c.OpenShiftOAuthenticator.oauth_callback_url = (
 
 c.Authenticator.auto_login = True
 
-c.Spawner.environment['PROJECT_NAMESPACE'] = operator.attrgetter('user.name')
-
 # Enable admin access to designated users of the OpenShift cluster.
 
 c.JupyterHub.admin_access = True
 
 c.Authenticator.admin_users = set(os.environ.get('ADMIN_USERS', '').split())
+
+# No project is created automatically. Assume that the project which
+# should be used is the same as the users name.
+
+c.Spawner.environment['PROJECT_NAMESPACE'] = operator.attrgetter('user.name')
 
 # For workshops we provide each user with a persistent volume so they
 # don't loose their work. This is mounted on /opt/app-root, so we need
