@@ -40,6 +40,11 @@
             "required": true
         },
         {
+            "name": "KEYCLOAK_IMAGE",
+            "value": "quay.io/openshiftlabs/workshop-keycloak:2.0.0",
+            "required": true
+        },
+        {
             "name": "OC_VERSION",
             "value": ""
         },
@@ -395,7 +400,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-keycloak:2.0.0"
+                            "name": "${KEYCLOAK_IMAGE}"
                         }
                     }
                 ]
