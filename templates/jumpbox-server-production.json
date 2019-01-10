@@ -36,7 +36,7 @@
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-jupyterhub:1.1.6",
+            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.0.0",
             "required": true
         },
         {
@@ -388,49 +388,17 @@
                 "labels": {
                     "app": "${APPLICATION_NAME}"
                 }
-            }
-        },
-        {
-            "kind": "BuildConfig",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}-keycloak",
-                "labels": {
-                    "app": "${APPLICATION_NAME}"
-                }
             },
             "spec": {
-                "triggers": [
+                "tags": [
                     {
-                        "type": "ConfigChange"
-                    },
-                    {
-                        "type": "ImageChange"
-                    }
-                ],
-                "source": {
-                    "type": "Git",
-                    "git": {
-                        "uri": "${GIT_REPOSITORY_URL}",
-                        "ref": "${GIT_REPOSITORY_REF}"
-                    },
-                    "contextDir": "keycloak"
-                },
-                "strategy": {
-                    "type": "Source",
-                    "sourceStrategy": {
+                        "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "jboss/keycloak-openshift:4.0.0.Final"
+                            "name": "quay.io/openshiftlabs/workshop-keycloak:2.0.0"
                         }
                     }
-                },
-                "output": {
-                    "to": {
-                        "kind": "ImageStreamTag",
-                        "name": "${APPLICATION_NAME}-keycloak:latest"
-                    }
-                }
+                ]
             }
         },
         {
