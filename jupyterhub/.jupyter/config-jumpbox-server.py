@@ -29,6 +29,8 @@ c.OAuthenticator.client_secret = os.environ.get('OAUTH_CLIENT_SECRET')
 
 c.OAuthenticator.tls_verify = False
 
+c.Authenticator.auto_login = True
+
 # Enable admin access to designated users of the OpenShift cluster.
 
 c.JupyterHub.admin_access = True
