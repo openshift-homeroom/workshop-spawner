@@ -9,7 +9,6 @@
 
 import json
 import requests
-import operator
 
 server_url = 'https://openshift.default.svc.cluster.local'
 oauth_metadata_url = '%s/.well-known/oauth-authorization-server' % server_url
@@ -50,6 +49,8 @@ c.Authenticator.admin_users = set(os.environ.get('ADMIN_USERS', '').split())
 
 # No project is created automatically. Assume that the project which
 # should be used is the same as the users name.
+
+import operator
 
 c.Spawner.environment['PROJECT_NAMESPACE'] = operator.attrgetter('user.name')
 
