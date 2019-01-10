@@ -231,7 +231,7 @@
                                 "env": [
                                     {
                                         "name": "CONFIGURATION_TYPE",
-                                        "value": "terminal-server"
+                                        "value": "jumpbox-server"
                                     },
                                     {
                                         "name": "APPLICATION_NAME",
