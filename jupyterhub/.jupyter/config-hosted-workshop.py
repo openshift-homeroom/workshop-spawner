@@ -9,6 +9,7 @@
 
 import json
 import requests
+import operator
 
 server_url = 'https://openshift.default.svc.cluster.local'
 oauth_metadata_url = '%s/.well-known/oauth-authorization-server' % server_url
@@ -40,6 +41,8 @@ c.OpenShiftOAuthenticator.oauth_callback_url = (
         'https://%s/hub/oauth_callback' % public_hostname)
 
 c.Authenticator.auto_login = True
+
+c.Spawner.environment['PROJECT_NAMESPACE'] = operator.attrgetter('user.name')
 
 # Enable admin access to designated users of the OpenShift cluster.
 
