@@ -73,13 +73,20 @@ c.JupyterHub.extra_handlers = []
 # Override the image details with that for the terminal or dashboard
 # image being used. The default is to assume that a image stream with
 # '-app' extension for the application name is used. The call to the
-# function resolve_image_name() is try and resolve to image registry
+# function resolve_image_name() is to try and resolve to image registry
 # when using image stream. This is to workaround issue that many
 # clusters do not have image policy controller configured correctly.
+#
+# Note that we set the policy that images will always be pulled to the
+# node each time when the image name is not explicitly provided. This is
+# so that during development, changes to the terminal image will always
+# be picked up. Someone developing a new image need only update the
+# 'latest' tag on the '-app' image using 'oc tag'. 
 
 terminal_image = os.environ.get('TERMINAL_IMAGE')
 
 if not terminal_image:
+    c.KubeSpawner.image_pull_policy = 'Always'
     terminal_image = '%s-app:latest' % application_name
 
 c.KubeSpawner.image_spec = resolve_image_name(terminal_image)
@@ -94,13 +101,6 @@ c.KubeSpawner.cmd = ['/usr/libexec/s2i/run']
 # so users have a choice of images when deploying workshop content.
 
 c.Spawner.mem_limit = convert_size_to_bytes(os.environ.get('MEMORY_SIZE', '512Mi'))
-
-# Set the policy that images will always be pulled to the node each time
-# when the image name is not explicitly provided. This is so that during
-# development, changes to the terminal image will always be picked up.
-
-if not terminal_image:
-    c.KubeSpawner.image_pull_policy = 'Always'
 
 # Work out hostname for the exposed route of the JupyterHub server. This
 # is tricky as we need to use the REST API to query it. We assume that
