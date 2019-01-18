@@ -11,9 +11,11 @@
 # '/restart' URL handler will cause any session to be restarted and they
 # will be given a new instance.
 
-import uuid
 import string
 import json
+import time
+import functools
+import random
 
 from tornado import gen
 
@@ -39,6 +41,20 @@ service_account_template = string.Template("""
 }
 """)
 
+class AnonymousUser(object):
+
+    def __init__(self, name):
+        self.name = name
+        self.active = False
+
+@functools.lru_cache(10000)
+def get_user_details(name):
+    return AnonymousUser(name)
+
+def generate_random_userid(n=5):
+    return ''.join(random.choice(
+            string.ascii_lowercase + string.digits) for _ in range(n))
+
 class AutoAuthenticateHandler(BaseHandler):
 
     def initialize(self, force_new_server, process_user):
@@ -47,7 +63,12 @@ class AutoAuthenticateHandler(BaseHandler):
         self.process_user = process_user
 
     def generate_user(self):
-        return ''.join(str(uuid.uuid1(0)).split('-')[:-1])
+        while True:
+            name = generate_random_userid()
+            user = get_user_details(name)
+            if not user.active:
+                user.active = True
+                return name
 
     @gen.coroutine
     def get(self):
