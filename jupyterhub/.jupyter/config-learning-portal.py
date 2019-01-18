@@ -487,6 +487,25 @@ def modify_pod_hook(spawner, pod):
         print('ERROR: Error creating rolebinding for hub. %s' % e)
         raise
 
+    # Delete any limit ranges applied to the project that may conflict
+    # with the limit range being applied.
+
+    try:
+        limit_ranges = limit_range_resource.get(namespace=project_name)
+
+    except ApiException as e:
+        print('ERROR: Error querying limit ranges. %s' % e)
+        raise
+
+    for limit_range in limit_ranges.items:
+        try:
+            limit_range_resource.delete(namespace=project_name,
+                    name=limit_range.metadata.name)
+
+        except ApiException as e:
+            print('ERROR: Error deleting limit range. %s' % e)
+            raise
+
     # Create limit ranges for the project so any deployments will have
     # default memory/cpu min and max values.
 
@@ -498,6 +517,25 @@ def modify_pod_hook(spawner, pod):
     except ApiException as e:
         if e.status != 409:
             print('ERROR: Error creating limit range. %s' % e)
+            raise
+
+    # Delete any resource quotas applied to the project that may conflict
+    # with the resource quotas being applied.
+
+    try:
+        resource_quotas = resource_quota_resource.get(namespace=project_name)
+
+    except ApiException as e:
+        print('ERROR: Error querying resource quotas. %s' % e)
+        raise
+
+    for resource_quota in resource_quotas.items:
+        try:
+            resource_quota_resource.delete(namespace=project_name,
+                    name=resource_quota.metadata.name)
+
+        except ApiException as e:
+            print('ERROR: Error deleting resource quota. %s' % e)
             raise
 
     # Create resource quotas for the project so there is a maximum for
