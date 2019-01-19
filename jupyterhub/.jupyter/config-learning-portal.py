@@ -332,16 +332,16 @@ compute_resources_definition = """
     "kind": "ResourceQuota",
     "apiVersion": "v1",
     "metadata": {
-	"name": "compute-resources"
+        "name": "compute-resources"
     },
     "spec": {
-	"hard": {
-	    "limits.cpu": "2",
-	    "limits.memory": "2Gi"
-	},
-	"scopes": [
-	    "NotTerminating"
-	]
+        "hard": {
+            "limits.cpu": "2",
+            "limits.memory": "2Gi"
+        },
+        "scopes": [
+            "NotTerminating"
+        ]
     }
 }
 """
@@ -351,16 +351,16 @@ compute_resources_timebound_definition = """
     "kind": "ResourceQuota",
     "apiVersion": "v1",
     "metadata": {
-	"name": "compute-resources-timebound"
+        "name": "compute-resources-timebound"
     },
     "spec": {
-	"hard": {
-	    "limits.cpu": "2",
-	    "limits.memory": "2Gi"
-	},
-	"scopes": [
-	    "Terminating"
-	]
+        "hard": {
+            "limits.cpu": "2",
+            "limits.memory": "2Gi"
+        },
+        "scopes": [
+            "Terminating"
+        ]
     }
 }
 """
@@ -370,15 +370,15 @@ object_counts_definition = """
     "kind": "ResourceQuota",
     "apiVersion": "v1",
     "metadata": {
-	"name": "object-counts"
+        "name": "object-counts"
     },
     "spec": {
-	"hard": {
-	    "persistentvolumeclaims": "3",
-	    "replicationcontrollers": "20",
-	    "secrets": "20",
-	    "services": "5"
-	}
+        "hard": {
+            "persistentvolumeclaims": "3",
+            "replicationcontrollers": "20",
+            "secrets": "20",
+            "services": "5"
+        }
     }
 }
 """

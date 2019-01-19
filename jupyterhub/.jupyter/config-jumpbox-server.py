@@ -48,48 +48,51 @@ c.Authenticator.admin_users = set(os.environ.get('ADMIN_USERS', '').split())
 # volume. Perhaps should use the JupyterHub image for the init container
 # and add the script which performs the copy to this image.
 
-c.KubeSpawner.pvc_name_template = c.KubeSpawner.pod_name_template
+volume_size = os.environ.get('VOLUME_SIZE')
 
-c.KubeSpawner.storage_pvc_ensure = True
+if volume_size:
+    c.KubeSpawner.pvc_name_template = '%s-user' % c.KubeSpawner.pod_name_template
 
-c.KubeSpawner.storage_capacity = os.environ.get('VOLUME_SIZE', '1Gi')
+    c.KubeSpawner.storage_pvc_ensure = True
 
-c.KubeSpawner.storage_access_modes = ['ReadWriteOnce']
+    c.KubeSpawner.storage_capacity = volume_size
 
-c.KubeSpawner.volumes = [
-    {
-        'name': 'data',
-        'persistentVolumeClaim': {
-            'claimName': c.KubeSpawner.pvc_name_template
-        }
-    }
-]
+    c.KubeSpawner.storage_access_modes = ['ReadWriteOnce']
 
-c.KubeSpawner.volume_mounts = [
-    {
-        'name': 'data',
-        'mountPath': '/opt/app-root',
-        'subPath': 'workspace'
-    }
-]
-
-c.KubeSpawner.init_containers = [
-    {
-        'name': 'setup-volume',
-        'image': '%s' % c.KubeSpawner.image_spec,
-        'command': [
-            '/opt/workshop/bin/setup-volume.sh',
-            '/opt/app-root',
-            '/mnt/workspace'
-        ],
-        'volumeMounts': [
-            {
-                'name': 'data',
-                'mountPath': '/mnt'
+    c.KubeSpawner.volumes = [
+        {
+            'name': 'data',
+            'persistentVolumeClaim': {
+                'claimName': c.KubeSpawner.pvc_name_template
             }
-        ]
-    }
-]
+        }
+    ]
+
+    c.KubeSpawner.volume_mounts = [
+        {
+            'name': 'data',
+            'mountPath': '/opt/app-root',
+            'subPath': 'workspace'
+        }
+    ]
+
+    c.KubeSpawner.init_containers.extend([
+        {
+            'name': 'setup-volume',
+            'image': '%s' % c.KubeSpawner.image_spec,
+            'command': [
+                '/opt/workshop/bin/setup-volume.sh',
+                '/opt/app-root',
+                '/mnt/workspace'
+            ],
+            'volumeMounts': [
+                {
+                    'name': 'data',
+                    'mountPath': '/mnt'
+                }
+            ]
+        }
+    ])
 
 # Setup culling of terminal instances if timeout parameter is supplied.
 
@@ -104,17 +107,28 @@ if idle_timeout and int(idle_timeout):
         }
     ])
 
+# Pass through for dashboard the URL where should be redirected in order
+# to restart a session, with a new instance created with fresh image.
+
+c.Spawner.environment['RESTART_URL'] = '/restart'
+
 # Redirect handler for sending /restart back to home page for user.
 
-from tornado import web
+from tornado import web, gen
 
 from jupyterhub.handlers import BaseHandler
 
 class RestartRedirectHandler(BaseHandler):
 
     @web.authenticated
+    @gen.coroutine
     def get(self, *args):
-        self.redirect('/')
+        user = self.get_current_user()
+        if user.running:
+            status = yield user.spawner.poll_and_notify()
+            if status is None:
+                yield self.stop_single_user(user)
+        self.redirect('/hub/spawn')
 
 c.JupyterHub.extra_handlers.extend([
     (r'/restart$', RestartRedirectHandler),

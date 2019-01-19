@@ -60,6 +60,11 @@ c.Spawner.environment = dict()
 
 c.JupyterHub.services = []
 
+# Initialise the set of init containers to be empty so we know it is
+# a list. This is so we can incrementally add values as we go along.
+
+c.KubeSpawner.init_containers = []
+
 # Initialise the set of extra containers to be empty so we know it is
 # a list. This is so we can incrementally add values as we go along.
 
