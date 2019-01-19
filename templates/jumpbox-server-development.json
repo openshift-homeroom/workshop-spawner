@@ -29,7 +29,7 @@
         },
         {
             "name": "VOLUME_SIZE",
-            "value": "1Gi"
+            "value": ""
         },
         {
             "name": "ADMIN_USERS",

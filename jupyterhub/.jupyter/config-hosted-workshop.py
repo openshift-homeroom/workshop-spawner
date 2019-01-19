@@ -65,48 +65,51 @@ c.Spawner.environment['PROJECT_NAMESPACE'] = operator.attrgetter('user.name')
 # volume. Perhaps should use the JupyterHub image for the init container
 # and add the script which performs the copy to this image.
 
-c.KubeSpawner.pvc_name_template = c.KubeSpawner.pod_name_template
+volume_size = os.environ.get('VOLUME_SIZE')
 
-c.KubeSpawner.storage_pvc_ensure = True
+if volume_size:
+    c.KubeSpawner.pvc_name_template = '%s-user' % c.KubeSpawner.pod_name_template
 
-c.KubeSpawner.storage_capacity = os.environ.get('VOLUME_SIZE', '1Gi')
+    c.KubeSpawner.storage_pvc_ensure = True
 
-c.KubeSpawner.storage_access_modes = ['ReadWriteOnce']
+    c.KubeSpawner.storage_capacity = volume_size
 
-c.KubeSpawner.volumes = [
-    {
-        'name': 'data',
-        'persistentVolumeClaim': {
-            'claimName': c.KubeSpawner.pvc_name_template
-        }
-    }
-]
+    c.KubeSpawner.storage_access_modes = ['ReadWriteOnce']
 
-c.KubeSpawner.volume_mounts = [
-    {
-        'name': 'data',
-        'mountPath': '/opt/app-root',
-        'subPath': 'workspace'
-    }
-]
-
-c.KubeSpawner.init_containers = [
-    {
-        'name': 'setup-volume',
-        'image': '%s' % c.KubeSpawner.image_spec,
-        'command': [
-            '/opt/workshop/bin/setup-volume.sh',
-            '/opt/app-root',
-            '/mnt/workspace'
-        ],
-        'volumeMounts': [
-            {
-                'name': 'data',
-                'mountPath': '/mnt'
+    c.KubeSpawner.volumes = [
+        {
+            'name': 'data',
+            'persistentVolumeClaim': {
+                'claimName': c.KubeSpawner.pvc_name_template
             }
-        ]
-    }
-]
+        }
+    ]
+
+    c.KubeSpawner.volume_mounts = [
+        {
+            'name': 'data',
+            'mountPath': '/opt/app-root',
+            'subPath': 'workspace'
+        }
+    ]
+
+    c.KubeSpawner.init_containers.extend([
+        {
+            'name': 'setup-volume',
+            'image': '%s' % c.KubeSpawner.image_spec,
+            'command': [
+                '/opt/workshop/bin/setup-volume.sh',
+                '/opt/app-root',
+                '/mnt/workspace'
+            ],
+            'volumeMounts': [
+                {
+                    'name': 'data',
+                    'mountPath': '/mnt'
+                }
+            ]
+        }
+    ])
 
 # Setup culling of terminal instances if timeout parameter is supplied.
 
