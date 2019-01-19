@@ -10,7 +10,7 @@
     "parameters": [
         {
             "name": "APPLICATION_NAME",
-            "value": "terminals",
+            "value": "workshop",
             "required": true
         },
         {
