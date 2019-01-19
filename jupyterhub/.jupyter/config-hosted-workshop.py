@@ -121,17 +121,28 @@ if idle_timeout and int(idle_timeout):
         }
     ])
 
+# Pass through for dashboard the URL where should be redirected in order
+# to restart a session, with a new instance created with fresh image.
+
+c.Spawner.environment['RESTART_URL'] = '/restart'
+
 # Redirect handler for sending /restart back to home page for user.
 
-from tornado import web
+from tornado import web, gen
 
 from jupyterhub.handlers import BaseHandler
 
 class RestartRedirectHandler(BaseHandler):
 
     @web.authenticated
+    @gen.coroutine
     def get(self, *args):
-        self.redirect('/')
+        user = self.get_current_user()
+        if user.running:
+            status = yield user.spawner.poll_and_notify()
+            if status is None:
+                yield self.stop_single_user(user)
+        self.redirect('/hub/spawn')
 
 c.JupyterHub.extra_handlers.extend([
     (r'/restart$', RestartRedirectHandler),
