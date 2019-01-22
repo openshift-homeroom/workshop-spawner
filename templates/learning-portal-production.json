@@ -39,6 +39,11 @@
             "value": "3600"
         },
         {
+            "name": "PROJECT_RESOURCES",
+            "value": "default",
+            "required": true
+        },
+        {
             "name": "TERMINAL_IMAGE",
             "value": "",
             "required": false
@@ -345,6 +350,10 @@
                                     {
                                         "name": "MAX_SESSION_AGE",
                                         "value": "${MAX_SESSION_AGE}"
+                                    },
+                                    {
+                                        "name": "PROJECT_RESOURCES",
+                                        "value": "${PROJECT_RESOURCES}"
                                     },
                                     {
                                         "name": "OC_VERSION",
