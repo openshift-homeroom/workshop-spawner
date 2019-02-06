@@ -79,6 +79,11 @@
             "name": "JUPYTERHUB_CONFIG",
             "value": "",
             "required": false
+        },
+        {
+            "name": "POLICY_RULES",
+            "value": "[]",
+            "required": false
         }
     ],
     "objects": [
@@ -115,9 +120,9 @@
             "kind": "ClusterRole",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${PROJECT_NAME}-${APPLICATION_NAME}-self-provisioner",
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-manager",
                 "labels": {
-                    "app": "${PROJECT_NAME}-${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
             },
             "rules": [
@@ -228,9 +233,9 @@
             "kind": "ClusterRoleBinding",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${PROJECT_NAME}-${APPLICATION_NAME}-self-provisioner",
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-manager",
                 "labels": {
-                    "app": "${PROJECT_NAME}-${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
             },
             "subjects": [
@@ -241,7 +246,38 @@
                 }
             ],
             "roleRef": {
-                "name": "${PROJECT_NAME}-${APPLICATION_NAME}-self-provisioner"
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-manager"
+            }
+        },
+        {
+            "kind": "ClusterRole",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-account",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
+                }
+            },
+            "rules": "${{POLICY_RULES}}"
+        },
+        {
+            "kind": "ClusterRoleBinding",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-account",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
+                }
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
+                    "namespace": "${PROJECT_NAME}"
+                }
+            ],
+            "roleRef": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-account"
             }
         },
         {

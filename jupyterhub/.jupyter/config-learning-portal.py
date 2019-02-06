@@ -254,7 +254,7 @@ role_binding_template = string.Template("""
     "kind": "RoleBinding",
     "apiVersion": "rbac.authorization.k8s.io/v1",
     "metadata": {
-        "name": "${name}-${role}",
+        "name": "${name}-${tag}",
         "labels": {
             "hub": "${hub}"
         }
@@ -472,7 +472,7 @@ def modify_pod_hook(spawner, pod):
 
     try:
         text = role_binding_template.safe_substitute(
-                namespace=namespace, name=hub_account_name,
+                namespace=namespace, name=hub_account_name, tag='admin',
                 role='admin', hub=hub)
         body = json.loads(text)
 
@@ -597,7 +597,7 @@ def modify_pod_hook(spawner, pod):
 
     try:
         text = role_binding_template.safe_substitute(
-                namespace=namespace, name=user_account_name,
+                namespace=namespace, name=user_account_name, tag='admin',
                 role='admin', hub=hub)
         body = json.loads(text)
 
@@ -610,6 +610,27 @@ def modify_pod_hook(spawner, pod):
 
     except Exception as e:
         print('ERROR: Error creating rolebinding for user. %s' % e)
+        raise
+
+    # Create role binding in the project so the users service account
+    # can perform additional actions declared through additional policy
+    # rules for a specific workshop.
+
+    try:
+        text = role_binding_template.safe_substitute(
+                namespace=namespace, name=user_account_name, tag='extra',
+                role=hub+'-account', hub=hub)
+        body = json.loads(text)
+
+        role_binding_resource.create(namespace=project_name, body=body)
+
+    except ApiException as e:
+        if e.status != 409:
+            print('ERROR: Error creating role binding for extras. %s' % e)
+            raise
+
+    except Exception as e:
+        print('ERROR: Error creating rolebinding for extras. %s' % e)
         raise
 
     # Before can continue, need to poll looking to see if the secret for
