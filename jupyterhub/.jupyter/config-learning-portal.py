@@ -274,114 +274,452 @@ role_binding_template = string.Template("""
 }
 """)
 
-resource_limits_medium_definition = """
-{
-    "kind": "LimitRange",
-    "apiVersion": "v1",
-    "metadata": {
-        "name": "resource-limits"
-    },
-    "spec": {
-        "limits": [
-            {
-                "type": "Pod",
-                "min": {
-                    "cpu": "50m",
-                    "memory": "32Mi"
-                },
-                "max": {
-                    "cpu": "2",
-                    "memory": "2Gi"
+resource_budget_mapping = {
+    "small": {
+        "resource-limits" : {
+	    "kind": "LimitRange",
+	    "apiVersion": "v1",
+	    "metadata": {
+		"name": "resource-limits",
+                "annotations": {
+                    "resource-budget": "small"
+                }
+	    },
+	    "spec": {
+		"limits": [
+		    {
+			"type": "Pod",
+			"min": {
+			    "cpu": "50m",
+			    "memory": "32Mi"
+			},
+			"max": {
+			    "cpu": "1",
+			    "memory": "1Gi"
+			}
+		    },
+		    {
+			"type": "Container",
+			"min": {
+			    "cpu": "50m",
+			    "memory": "32Mi"
+			},
+			"max": {
+			    "cpu": "1",
+			    "memory": "1Gi"
+			},
+			"default": {
+			    "cpu": "250m",
+			    "memory": "256Mi"
+			},
+			"defaultRequest": {
+			    "cpu": "50m",
+			    "memory": "128Mi"
+			}
+		    },
+		    {
+			"type": "PersistentVolumeClaim",
+			"min": {
+			    "storage": "1Gi"
+			},
+			"max": {
+			    "storage": "1Gi"
+			}
+		    }
+		]
+	    }
+        },
+        "compute-resources" : {
+	    "kind": "ResourceQuota",
+	    "apiVersion": "v1",
+	    "metadata": {
+		"name": "compute-resources",
+                "annotations": {
+                    "resource-budget": "small"
+                }
+	    },
+	    "spec": {
+		"hard": {
+		    "limits.cpu": "1",
+		    "limits.memory": "1Gi"
+		},
+		"scopes": [
+		    "NotTerminating"
+		]
+	    }
+        },
+        "compute-resources-timebound" : {
+	    "kind": "ResourceQuota",
+	    "apiVersion": "v1",
+	    "metadata": {
+		"name": "compute-resources-timebound",
+                "annotations": {
+                    "resource-budget": "small"
+                }
+	    },
+	    "spec": {
+		"hard": {
+		    "limits.cpu": "1",
+		    "limits.memory": "1Gi"
+		},
+		"scopes": [
+		    "Terminating"
+		]
+	    }
+        },
+        "object-counts" : {
+            "kind": "ResourceQuota",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "object-counts",
+                "annotations": {
+                    "resource-budget": "small"
                 }
             },
-            {
-                "type": "Container",
-                "min": {
-                    "cpu": "50m",
-                    "memory": "32Mi"
-                },
-                "max": {
-                    "cpu": "2",
-                    "memory": "1536Mi"
-                },
-                "default": {
-                    "cpu": "500m",
-                    "memory": "512Mi"
-                },
-                "defaultRequest": {
-                    "cpu": "50m",
-                    "memory": "128Mi"
-                }
-            },
-            {
-                "type": "PersistentVolumeClaim",
-                "min": {
-                    "storage": "1Gi"
-                },
-                "max": {
-                    "storage": "1Gi"
+            "spec": {
+                "hard": {
+                    "persistentvolumeclaims": "3",
+                    "replicationcontrollers": "15",
+                    "secrets": "15",
+                    "services": "3"
                 }
             }
-        ]
-    }
-}
-"""
-
-compute_resources_medium_definition = """
-{
-    "kind": "ResourceQuota",
-    "apiVersion": "v1",
-    "metadata": {
-        "name": "compute-resources"
-    },
-    "spec": {
-        "hard": {
-            "limits.cpu": "2",
-            "limits.memory": "2Gi"
         },
-        "scopes": [
-            "NotTerminating"
-        ]
-    }
-}
-"""
-
-compute_resources_timebound_medium_definition = """
-{
-    "kind": "ResourceQuota",
-    "apiVersion": "v1",
-    "metadata": {
-        "name": "compute-resources-timebound"
     },
-    "spec": {
-        "hard": {
-            "limits.cpu": "2",
-            "limits.memory": "2Gi"
+    "medium": {
+        "resource-limits" : {
+	    "kind": "LimitRange",
+	    "apiVersion": "v1",
+	    "metadata": {
+		"name": "resource-limits",
+                "annotations": {
+                    "resource-budget": "medium"
+                }
+	    },
+	    "spec": {
+		"limits": [
+		    {
+			"type": "Pod",
+			"min": {
+			    "cpu": "50m",
+			    "memory": "32Mi"
+			},
+			"max": {
+			    "cpu": "2",
+			    "memory": "2Gi"
+			}
+		    },
+		    {
+			"type": "Container",
+			"min": {
+			    "cpu": "50m",
+			    "memory": "32Mi"
+			},
+			"max": {
+			    "cpu": "2",
+			    "memory": "2Gi"
+			},
+			"default": {
+			    "cpu": "500m",
+			    "memory": "512Mi"
+			},
+			"defaultRequest": {
+			    "cpu": "50m",
+			    "memory": "128Mi"
+			}
+		    },
+		    {
+			"type": "PersistentVolumeClaim",
+			"min": {
+			    "storage": "1Gi"
+			},
+			"max": {
+			    "storage": "5Gi"
+			}
+		    }
+		]
+	    }
         },
-        "scopes": [
-            "Terminating"
-        ]
-    }
-}
-"""
-
-object_counts_medium_definition = """
-{
-    "kind": "ResourceQuota",
-    "apiVersion": "v1",
-    "metadata": {
-        "name": "object-counts"
+        "compute-resources" : {
+	    "kind": "ResourceQuota",
+	    "apiVersion": "v1",
+	    "metadata": {
+		"name": "compute-resources",
+                "annotations": {
+                    "resource-budget": "medium"
+                }
+	    },
+	    "spec": {
+		"hard": {
+		    "limits.cpu": "2",
+		    "limits.memory": "2Gi"
+		},
+		"scopes": [
+		    "NotTerminating"
+		]
+	    }
+        },
+        "compute-resources-timebound" : {
+	    "kind": "ResourceQuota",
+	    "apiVersion": "v1",
+	    "metadata": {
+		"name": "compute-resources-timebound",
+                "annotations": {
+                    "resource-budget": "medium"
+                }
+	    },
+	    "spec": {
+		"hard": {
+		    "limits.cpu": "2",
+		    "limits.memory": "2Gi"
+		},
+		"scopes": [
+		    "Terminating"
+		]
+	    }
+        },
+        "object-counts" : {
+            "kind": "ResourceQuota",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "object-counts",
+                "annotations": {
+                    "resource-budget": "medium"
+                }
+            },
+            "spec": {
+                "hard": {
+                    "persistentvolumeclaims": "5",
+                    "replicationcontrollers": "20",
+                    "secrets": "20",
+                    "services": "5"
+                }
+            }
+        },
     },
-    "spec": {
-        "hard": {
-            "persistentvolumeclaims": "3",
-            "replicationcontrollers": "20",
-            "secrets": "20",
-            "services": "5"
+    "large": {
+        "resource-limits" : {
+	    "kind": "LimitRange",
+	    "apiVersion": "v1",
+	    "metadata": {
+		"name": "resource-limits",
+                "annotations": {
+                    "resource-budget": "large"
+                }
+	    },
+	    "spec": {
+		"limits": [
+		    {
+			"type": "Pod",
+			"min": {
+			    "cpu": "50m",
+			    "memory": "32Mi"
+			},
+			"max": {
+			    "cpu": "4",
+			    "memory": "4Gi"
+			}
+		    },
+		    {
+			"type": "Container",
+			"min": {
+			    "cpu": "50m",
+			    "memory": "32Mi"
+			},
+			"max": {
+			    "cpu": "4",
+			    "memory": "4Gi"
+			},
+			"default": {
+			    "cpu": "500m",
+			    "memory": "1Gi"
+			},
+			"defaultRequest": {
+			    "cpu": "50m",
+			    "memory": "128Mi"
+			}
+		    },
+		    {
+			"type": "PersistentVolumeClaim",
+			"min": {
+			    "storage": "1Gi"
+			},
+			"max": {
+			    "storage": "10Gi"
+			}
+		    }
+		]
+	    }
+        },
+        "compute-resources" : {
+	    "kind": "ResourceQuota",
+	    "apiVersion": "v1",
+	    "metadata": {
+		"name": "compute-resources",
+                "annotations": {
+                    "resource-budget": "large"
+                }
+	    },
+	    "spec": {
+		"hard": {
+		    "limits.cpu": "4",
+		    "limits.memory": "4Gi"
+		},
+		"scopes": [
+		    "NotTerminating"
+		]
+	    }
+        },
+        "compute-resources-timebound" : {
+	    "kind": "ResourceQuota",
+	    "apiVersion": "v1",
+	    "metadata": {
+		"name": "compute-resources-timebound",
+                "annotations": {
+                    "resource-budget": "large"
+                }
+	    },
+	    "spec": {
+		"hard": {
+		    "limits.cpu": "4",
+		    "limits.memory": "4Gi"
+		},
+		"scopes": [
+		    "Terminating"
+		]
+	    }
+        },
+        "object-counts" : {
+            "kind": "ResourceQuota",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "object-counts",
+                "annotations": {
+                    "resource-budget": "large"
+                }
+            },
+            "spec": {
+                "hard": {
+                    "persistentvolumeclaims": "10",
+                    "replicationcontrollers": "30",
+                    "secrets": "30",
+                    "services": "10"
+                }
+            }
+        }
+    },
+    "x-large": {
+        "resource-limits" : {
+	    "kind": "LimitRange",
+	    "apiVersion": "v1",
+	    "metadata": {
+		"name": "resource-limits",
+                "annotations": {
+                    "resource-budget": "large"
+                }
+	    },
+	    "spec": {
+		"limits": [
+		    {
+			"type": "Pod",
+			"min": {
+			    "cpu": "50m",
+			    "memory": "32Mi"
+			},
+			"max": {
+			    "cpu": "8",
+			    "memory": "8Gi"
+			}
+		    },
+		    {
+			"type": "Container",
+			"min": {
+			    "cpu": "50m",
+			    "memory": "32Mi"
+			},
+			"max": {
+			    "cpu": "8",
+			    "memory": "8Gi"
+			},
+			"default": {
+			    "cpu": "500m",
+			    "memory": "2Gi"
+			},
+			"defaultRequest": {
+			    "cpu": "50m",
+			    "memory": "128Mi"
+			}
+		    },
+		    {
+			"type": "PersistentVolumeClaim",
+			"min": {
+			    "storage": "1Gi"
+			},
+			"max": {
+			    "storage": "20Gi"
+			}
+		    }
+		]
+	    }
+        },
+        "compute-resources" : {
+	    "kind": "ResourceQuota",
+	    "apiVersion": "v1",
+	    "metadata": {
+		"name": "compute-resources",
+                "annotations": {
+                    "resource-budget": "large"
+                }
+	    },
+	    "spec": {
+		"hard": {
+		    "limits.cpu": "8",
+		    "limits.memory": "8Gi"
+		},
+		"scopes": [
+		    "NotTerminating"
+		]
+	    }
+        },
+        "compute-resources-timebound" : {
+	    "kind": "ResourceQuota",
+	    "apiVersion": "v1",
+	    "metadata": {
+		"name": "compute-resources-timebound",
+                "annotations": {
+                    "resource-budget": "large"
+                }
+	    },
+	    "spec": {
+		"hard": {
+		    "limits.cpu": "8",
+		    "limits.memory": "8Gi"
+		},
+		"scopes": [
+		    "Terminating"
+		]
+	    }
+        },
+        "object-counts" : {
+            "kind": "ResourceQuota",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "object-counts",
+                "annotations": {
+                    "resource-budget": "large"
+                }
+            },
+            "spec": {
+                "hard": {
+                    "persistentvolumeclaims": "15",
+                    "replicationcontrollers": "40",
+                    "secrets": "40",
+                    "services": "15"
+                }
+            }
         }
     }
 }
-"""
 
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
@@ -491,14 +829,18 @@ def modify_pod_hook(spawner, pod):
 
     resource_budget = os.environ.get('RESOURCE_BUDGET', 'default')
 
-    if resource_budget not in ['default', 'medium']:
+    if resource_budget not in resource_budget_mapping:
+        resource_budget = 'default'
+    elif not resource_budget_mapping[resource_budget]:
         resource_budget = 'default'
 
-    if resource_budget == 'medium':
-        resource_limits_definition = resource_limits_medium_definition
-        compute_resources_definition = compute_resources_medium_definition
-        compute_resources_timebound_definition = compute_resources_timebound_medium_definition
-        object_counts_definition = object_counts_medium_definition
+    if resource_budget != 'default':
+        resource_budget_item = resource_budget_mapping[resource_budget]
+
+        resource_limits_definition = resource_budget_item['resource-limits']
+        compute_resources_definition = resource_budget_item['compute-resources']
+        compute_resources_timebound_definition = resource_budget_item['compute-resources-timebound']
+        object_counts_definition = resource_budget_item['object-counts']
 
     # Delete any limit ranges applied to the project that may conflict
     # with the limit range being applied.
@@ -526,7 +868,7 @@ def modify_pod_hook(spawner, pod):
 
     if resource_budget != 'default':
         try:
-            body = json.loads(resource_limits_definition)
+            body = resource_limits_definition
 
             limit_range_resource.create(namespace=project_name, body=body)
 
@@ -560,7 +902,7 @@ def modify_pod_hook(spawner, pod):
 
     if resource_budget != 'default':
         try:
-            body = json.loads(compute_resources_definition)
+            body = compute_resources_definition
 
             resource_quota_resource.create(namespace=project_name, body=body)
 
@@ -570,7 +912,7 @@ def modify_pod_hook(spawner, pod):
                 raise
 
         try:
-            body = json.loads(compute_resources_timebound_definition)
+            body = compute_resources_timebound_definition
 
             resource_quota_resource.create(namespace=project_name, body=body)
 
@@ -580,7 +922,7 @@ def modify_pod_hook(spawner, pod):
                 raise
 
         try:
-            body = json.loads(object_counts_definition)
+            body = object_counts_definition
 
             resource_quota_resource.create(namespace=project_name, body=body)
 
