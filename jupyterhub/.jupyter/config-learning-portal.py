@@ -680,6 +680,14 @@ def modify_pod_hook(spawner, pod):
     pod.spec.containers[0].env.append(
             dict(name='PROJECT_NAMESPACE', value=project_name))
 
+    # Add environment variables for the namespace JupyterHub is running
+    # in and its name.
+
+    pod.spec.containers[0].env.append(
+            dict(name='JUPYTERHUB_NAMESPACE', value=namespace))
+    pod.spec.containers[0].env.append(
+            dict(name='JUPYTERHUB_APPLICATION', value=application_name))
+
     return pod
 
 c.KubeSpawner.modify_pod_hook = modify_pod_hook
