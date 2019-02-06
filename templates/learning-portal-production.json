@@ -39,7 +39,7 @@
             "value": "3600"
         },
         {
-            "name": "PROJECT_RESOURCES",
+            "name": "RESOURCE_BUDGET",
             "value": "default",
             "required": true
         },
@@ -352,8 +352,8 @@
                                         "value": "${MAX_SESSION_AGE}"
                                     },
                                     {
-                                        "name": "PROJECT_RESOURCES",
-                                        "value": "${PROJECT_RESOURCES}"
+                                        "name": "RESOURCE_BUDGET",
+                                        "value": "${RESOURCE_BUDGET}"
                                     },
                                     {
                                         "name": "OC_VERSION",
