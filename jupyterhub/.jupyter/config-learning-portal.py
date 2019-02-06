@@ -254,7 +254,7 @@ role_binding_template = string.Template("""
     "kind": "RoleBinding",
     "apiVersion": "rbac.authorization.k8s.io/v1",
     "metadata": {
-        "name": "${name}-${role}",
+        "name": "${name}-${tag}",
         "labels": {
             "hub": "${hub}"
         }
@@ -472,7 +472,7 @@ def modify_pod_hook(spawner, pod):
 
     try:
         text = role_binding_template.safe_substitute(
-                namespace=namespace, name=hub_account_name,
+                namespace=namespace, name=hub_account_name, tag='admin',
                 role='admin', hub=hub)
         body = json.loads(text)
 
@@ -489,12 +489,12 @@ def modify_pod_hook(spawner, pod):
 
     # Determine what project resources need to be used.
 
-    project_resources = os.environ.get('PROJECT_RESOURCES', 'default')
+    resource_budget = os.environ.get('RESOURCE_BUDGET', 'default')
 
-    if project_resources not in ['default', 'medium']:
-        project_resources = 'default'
+    if resource_budget not in ['default', 'medium']:
+        resource_budget = 'default'
 
-    if project_resources == 'medium':
+    if resource_budget == 'medium':
         resource_limits_definition = resource_limits_medium_definition
         compute_resources_definition = compute_resources_medium_definition
         compute_resources_timebound_definition = compute_resources_timebound_medium_definition
@@ -503,7 +503,7 @@ def modify_pod_hook(spawner, pod):
     # Delete any limit ranges applied to the project that may conflict
     # with the limit range being applied.
 
-    if project_resources != 'default':
+    if resource_budget != 'default':
         try:
             limit_ranges = limit_range_resource.get(
                         namespace=project_name)
@@ -524,7 +524,7 @@ def modify_pod_hook(spawner, pod):
     # Create limit ranges for the project so any deployments will have
     # default memory/cpu min and max values.
 
-    if project_resources != 'default':
+    if resource_budget != 'default':
         try:
             body = json.loads(resource_limits_definition)
 
@@ -538,7 +538,7 @@ def modify_pod_hook(spawner, pod):
     # Delete any resource quotas applied to the project that may conflict
     # with the resource quotas being applied.
 
-    if project_resources != 'default':
+    if resource_budget != 'default':
         try:
             resource_quotas = resource_quota_resource.get(namespace=project_name)
 
@@ -558,7 +558,7 @@ def modify_pod_hook(spawner, pod):
     # Create resource quotas for the project so there is a maximum for
     # what resources can be used.
 
-    if project_resources != 'default':
+    if resource_budget != 'default':
         try:
             body = json.loads(compute_resources_definition)
 
@@ -597,7 +597,7 @@ def modify_pod_hook(spawner, pod):
 
     try:
         text = role_binding_template.safe_substitute(
-                namespace=namespace, name=user_account_name,
+                namespace=namespace, name=user_account_name, tag='admin',
                 role='admin', hub=hub)
         body = json.loads(text)
 
@@ -610,6 +610,27 @@ def modify_pod_hook(spawner, pod):
 
     except Exception as e:
         print('ERROR: Error creating rolebinding for user. %s' % e)
+        raise
+
+    # Create role binding in the project so the users service account
+    # can perform additional actions declared through additional policy
+    # rules for a specific workshop.
+
+    try:
+        text = role_binding_template.safe_substitute(
+                namespace=namespace, name=user_account_name, tag='extra',
+                role=hub+'-account', hub=hub)
+        body = json.loads(text)
+
+        role_binding_resource.create(namespace=project_name, body=body)
+
+    except ApiException as e:
+        if e.status != 409:
+            print('ERROR: Error creating role binding for extras. %s' % e)
+            raise
+
+    except Exception as e:
+        print('ERROR: Error creating rolebinding for extras. %s' % e)
         raise
 
     # Before can continue, need to poll looking to see if the secret for
@@ -658,6 +679,14 @@ def modify_pod_hook(spawner, pod):
 
     pod.spec.containers[0].env.append(
             dict(name='PROJECT_NAMESPACE', value=project_name))
+
+    # Add environment variables for the namespace JupyterHub is running
+    # in and its name.
+
+    pod.spec.containers[0].env.append(
+            dict(name='JUPYTERHUB_NAMESPACE', value=namespace))
+    pod.spec.containers[0].env.append(
+            dict(name='JUPYTERHUB_APPLICATION', value=application_name))
 
     return pod
 

@@ -39,7 +39,7 @@
             "value": "3600"
         },
         {
-            "name": "PROJECT_RESOURCES",
+            "name": "RESOURCE_BUDGET",
             "value": "default",
             "required": true
         },
@@ -50,7 +50,7 @@
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.3.0",
+            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.4.0",
             "required": true
         },
         {
@@ -68,6 +68,11 @@
         {
             "name": "JUPYTERHUB_CONFIG",
             "value": "",
+            "required": false
+        },
+        {
+            "name": "POLICY_RULES",
+            "value": "[]",
             "required": false
         }
     ],
@@ -105,9 +110,9 @@
             "kind": "ClusterRole",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${PROJECT_NAME}-${APPLICATION_NAME}-self-provisioner",
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-manager",
                 "labels": {
-                    "app": "${PROJECT_NAME}-${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
             },
             "rules": [
@@ -178,6 +183,7 @@
                     "verbs": [
                         "delete",
                         "deletecollection",
+                        "edit",
                         "get",
                         "list",
                         "patch",
@@ -218,9 +224,9 @@
             "kind": "ClusterRoleBinding",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${PROJECT_NAME}-${APPLICATION_NAME}-self-provisioner",
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-manager",
                 "labels": {
-                    "app": "${PROJECT_NAME}-${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
             },
             "subjects": [
@@ -231,7 +237,38 @@
                 }
             ],
             "roleRef": {
-                "name": "${PROJECT_NAME}-${APPLICATION_NAME}-self-provisioner"
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-manager"
+            }
+        },
+        {
+            "kind": "ClusterRole",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-account",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
+                }
+            },
+            "rules": "${{POLICY_RULES}}"
+        },
+        {
+            "kind": "ClusterRoleBinding",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-account",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
+                }
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
+                    "namespace": "${PROJECT_NAME}"
+                }
+            ],
+            "roleRef": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-account"
             }
         },
         {
@@ -352,8 +389,8 @@
                                         "value": "${MAX_SESSION_AGE}"
                                     },
                                     {
-                                        "name": "PROJECT_RESOURCES",
-                                        "value": "${PROJECT_RESOURCES}"
+                                        "name": "RESOURCE_BUDGET",
+                                        "value": "${RESOURCE_BUDGET}"
                                     },
                                     {
                                         "name": "OC_VERSION",
@@ -492,7 +529,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-dashboard:1.3.1"
+                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.0.0"
                         }
                     }
                 ]
