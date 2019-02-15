@@ -10,7 +10,9 @@
 import json
 import requests
 
-server_url = 'https://openshift.default.svc.cluster.local'
+server_host = os.environ['KUBERNETES_PORT_443_TCP_ADDR']
+server_url = 'https://%s' % server_host
+
 oauth_metadata_url = '%s/.well-known/oauth-authorization-server' % server_url
 
 with requests.Session() as session:
