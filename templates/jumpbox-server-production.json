@@ -36,12 +36,12 @@
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.5.0",
+            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.5.1",
             "required": true
         },
         {
             "name": "KEYCLOAK_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-keycloak:2.5.0",
+            "value": "quay.io/openshiftlabs/workshop-keycloak:2.5.1",
             "required": true
         },
         {
