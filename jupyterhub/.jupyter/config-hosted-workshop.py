@@ -10,6 +10,10 @@
 import json
 import requests
 
+from fnmatch import fnmatch
+
+from tornado import web, gen
+
 server_host = os.environ['KUBERNETES_PORT_443_TCP_ADDR']
 server_url = 'https://%s' % server_host
 
@@ -48,13 +52,6 @@ c.Authenticator.auto_login = True
 c.JupyterHub.admin_access = True
 
 c.Authenticator.admin_users = set(os.environ.get('ADMIN_USERS', '').split())
-
-# No project is created automatically. Assume that the project which
-# should be used is the same as the users name.
-
-import operator
-
-c.Spawner.environment['PROJECT_NAMESPACE'] = operator.attrgetter('user.name')
 
 # For workshops we provide each user with a persistent volume so they
 # don't loose their work. This is mounted on /opt/app-root, so we need
@@ -113,6 +110,164 @@ if volume_size:
         }
     ])
 
+# Read user logins file and set up rules to mapping to passwords.
+
+user_logins_exact = {}
+
+user_logins_match = []
+
+if os.path.exists('/opt/app-root/configs/user_logins.csv'):
+    with open('/opt/app-root/configs/user_logins.csv') as fp:
+        for line in fp.readlines():
+            line = line.strip()
+            if line:
+                user, password, project = line.split(',')
+                if '*' in user or '?' in user or '[' in user:
+                    user_logins_match.append((user, password, project))
+                else:
+                    user_logins_exact[user] = (password, project)
+
+def lookup_user_details(user):
+    if user in user_logins_exact:
+        return user_logins_exact[user]
+
+    for pattern, password, project in user_logins_match:
+        if fnmatch(user, pattern):
+            return (password, project)
+
+# Make modifications to pod based on user and type of session.
+
+@gen.coroutine
+def modify_pod_hook(spawner, pod):
+    details = lookup_user_details(spawner.user.name)
+
+    if details:
+        password, project = details
+
+        password = password.format(username=spawner.user.name)
+        project = project.format(username=spawner.user.name)
+
+        if project:
+            pod.spec.containers[0].env.append(
+                    dict(name='PROJECT_NAMESPACE', value=project))
+
+            # Create project name if it doesn't exist.
+
+            pod.spec.containers[0].env.append(
+                    dict(name='OPENSHIFT_PROJECT', value=project))
+
+        else:
+            # No project is created automatically. Assume that the project
+            # which should be used is the same as the users name.
+
+            pod.spec.containers[0].env.append(
+                    dict(name='PROJECT_NAMESPACE', value=spawner.user.name))
+
+        pod.spec.volumes.extend([
+            {
+                'name': 'kubeconfig',
+                'emptyDir': {}
+            }
+        ])
+
+        if not pod.spec.init_containers:
+            pod.spec.init_containers = []
+
+        pod.spec.init_containers.extend([
+            {
+                'name': 'setup-environ',
+                'image': '%s' % pod.spec.containers[0].image,
+                'command': [ '/opt/workshop/bin/setup-environ.sh' ],
+                'env': [
+                    {
+                        'name': 'OPENSHIFT_USERNAME',
+                        'value': spawner.user.name
+                    },
+                    {
+                        'name': 'OPENSHIFT_PASSWORD',
+                        'value': password
+                    }
+                ],
+                'volumeMounts': [
+                    {
+                        'name': 'kubeconfig',
+                        'mountPath': '/var/run/workshop'
+                    }
+                ]
+            }
+        ])
+
+        pod.spec.containers[0].volume_mounts.extend([
+            {
+                'name': 'kubeconfig',
+                'mountPath': '/var/run/workshop'
+            }
+        ])
+
+        pod.spec.containers.extend([
+            {
+                "name": "console",
+                "image": "quay.io/openshift/origin-console:latest",
+                "command": [ "bash", "-c", "set -x; export BRIDGE_K8S_AUTH_BEARER_TOKEN=`cat /var/run/workshop/token`; /opt/bridge/bin/bridge" ],
+                "env": [
+                    {
+                        "name": "BRIDGE_BRANDING",
+                        "value": "openshift"
+                    },
+                    {
+                        "name": "BRIDGE_K8S_MODE",
+                        "value": "in-cluster"
+                    },
+                    {
+                        "name": "BRIDGE_LISTEN",
+                        "value": "http://0.0.0.0:10083"
+                    },
+                    {
+                        "name": "BRIDGE_BASE_ADDRESS",
+                        "value": "https://%s/" % public_hostname
+                    },
+                    {
+                        "name": "BRIDGE_BASE_PATH",
+                        "value": "/user/%s/console/" % spawner.user.name
+                    },
+                    {
+                        "name": "BRIDGE_PUBLIC_DIR",
+                        "value": "/opt/bridge/static"
+                    },
+                    {
+                        "name": "BRIDGE_USER_AUTH",
+                        "value": "disabled"
+                    },
+                    {
+                        "name": "BRIDGE_K8S_AUTH",
+                        "value": "bearer-token"
+                    }
+                ],
+                'volumeMounts': [
+                    {
+                        'name': 'kubeconfig',
+                        'mountPath': '/var/run/workshop'
+                    }
+                ]
+            }
+        ])
+
+        pod.spec.containers[0].env.append(dict(name='CONSOLE_URL',
+            value='http://localhost:10083'))
+
+        pod.spec.automount_service_account_token = True
+
+    else:
+        # No project is created automatically. Assume that the project
+        # which should be used is the same as the users name.
+
+        pod.spec.containers[0].env.append(
+                dict(name='PROJECT_NAMESPACE', value=spawner.user.name))
+
+    return pod
+
+c.KubeSpawner.modify_pod_hook = modify_pod_hook
+
 # Setup culling of terminal instances if timeout parameter is supplied.
 
 idle_timeout = os.environ.get('IDLE_TIMEOUT')
@@ -132,8 +287,6 @@ if idle_timeout and int(idle_timeout):
 c.Spawner.environment['RESTART_URL'] = '/restart'
 
 # Redirect handler for sending /restart back to home page for user.
-
-from tornado import web, gen
 
 from jupyterhub.handlers import BaseHandler
 

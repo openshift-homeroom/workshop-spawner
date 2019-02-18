@@ -26,6 +26,10 @@
             "value": ""
         },
         {
+            "name": "USER_LOGINS",
+            "value": ""
+        },
+        {
             "name": "IDLE_TIMEOUT",
             "value": "7200"
         },
@@ -36,7 +40,7 @@
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.5.1",
+            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.6.0",
             "required": true
         },
         {
@@ -123,7 +127,8 @@
                 }
             },
             "data": {
-                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
+                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}",
+                "user_logins.csv": "${USER_LOGINS}"
             }
         },
         {
@@ -347,7 +352,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-terminal:2.1.0"
+                            "name": "quay.io/openshiftlabs/workshop-terminal:2.2.0"
                         }
                     }
                 ]

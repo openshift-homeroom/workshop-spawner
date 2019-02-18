@@ -36,6 +36,10 @@
             "value": ""
         },
         {
+            "name": "USER_LOGINS",
+            "value": ""
+        },
+        {
             "name": "IDLE_TIMEOUT",
             "value": "7200"
         },
@@ -60,6 +64,11 @@
         {
             "name": "KUBECTL_VERSION",
             "value": ""
+        },
+        {
+            "name": "JUPYTERHUB_CONFIG",
+            "value": "",
+            "required": false
         }
     ],
     "objects": [
@@ -105,6 +114,20 @@
                 "labels": {
                     "app": "${APPLICATION_NAME}"
                 }
+            }
+        },
+        {
+            "kind": "ConfigMap",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-cfg",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "data": {
+                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}",
+                "user_logins.csv": "${USER_LOGINS}"
             }
         },
         {
@@ -250,6 +273,10 @@
                                     {
                                         "mountPath": "/opt/app-root/data",
                                         "name": "data"
+                                    },
+                                    {
+                                        "name": "config",
+                                        "mountPath": "/opt/app-root/configs"
                                     }
                                 ]
                             }
@@ -259,6 +286,13 @@
                                 "name": "data",
                                 "persistentVolumeClaim": {
                                     "claimName": "${APPLICATION_NAME}-hub-data"
+                                }
+                            },
+                            {
+                                "name": "config",
+                                "configMap": {
+                                    "name": "${APPLICATION_NAME}-cfg",
+                                    "defaultMode": 420
                                 }
                             }
                         ]
@@ -359,7 +393,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-terminal:2.1.0"
+                            "name": "quay.io/openshiftlabs/workshop-terminal:2.2.0"
                         }
                     }
                 ]

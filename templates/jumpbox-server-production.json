@@ -36,12 +36,12 @@
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.5.1",
+            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.6.0",
             "required": true
         },
         {
             "name": "KEYCLOAK_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-keycloak:2.5.1",
+            "value": "quay.io/openshiftlabs/workshop-keycloak:2.6.0",
             "required": true
         },
         {
@@ -379,7 +379,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-terminal:2.1.0"
+                            "name": "quay.io/openshiftlabs/workshop-terminal:2.2.0"
                         }
                     }
                 ]
