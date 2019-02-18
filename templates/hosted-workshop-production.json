@@ -26,6 +26,10 @@
             "value": ""
         },
         {
+            "name": "USER_LOGINS",
+            "value": ""
+        },
+        {
             "name": "IDLE_TIMEOUT",
             "value": "7200"
         },
@@ -123,7 +127,8 @@
                 }
             },
             "data": {
-                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
+                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}",
+                "user_logins.csv": "${USER_LOGINS}"
             }
         },
         {
