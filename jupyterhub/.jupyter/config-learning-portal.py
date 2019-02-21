@@ -243,6 +243,12 @@ limit_range_resource = api_client.resources.get(
 resource_quota_resource = api_client.resources.get(
      api_version='v1', kind='ResourceQuota')
 
+service_resource = api_client.resources.get(
+     api_version='v1', kind='Service')
+
+route_resource = api_client.resources.get(
+     api_version='route.openshift.io/v1', kind='Route')
+
 project_request_template = string.Template("""
 {
     "kind": "ProjectRequest",
@@ -729,6 +735,73 @@ resource_budget_mapping = {
     }
 }
 
+service_template = string.Template("""
+{
+    "kind": "Service",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "${name}",
+        "labels": {
+            "hub": "${hub}"
+        },
+        "ownerReferences": [
+            {
+                "apiVersion": "v1",
+                "kind": "ServiceAccount",
+                "blockOwnerDeletion": false,
+                "controller": true,
+                "name": "${name}",
+                "uid": "${uid}"
+            }
+        ]
+    },
+    "spec": {
+        "type": "ClusterIP",
+        "selector": {
+            "hub": "${hub}",
+            "user": "${username}"
+        },
+        "ports": []
+    }
+}
+""")
+
+route_template = string.Template("""
+{
+    "apiVersion": "route.openshift.io/v1",
+    "kind": "Route",
+    "metadata": {
+        "name": "${name}-${port}",
+        "labels": {
+            "hub": "${hub}",
+            "user": "${username}",
+            "port": "${port}"
+        },
+        "ownerReferences": [
+            {
+                "apiVersion": "v1",
+                "kind": "ServiceAccount",
+                "blockOwnerDeletion": false,
+                "controller": true,
+                "name": "${name}",
+                "uid": "${uid}"
+            }
+        ]
+    },
+    "spec": {
+        "host": "",
+        "port": {
+            "targetPort": "${port}"
+        },
+        "to": {
+            "kind": "Service",
+            "name": "${name}",
+            "weight": 100
+        }
+    }
+}
+""")
+
 c.KubeSpawner.extra_labels = {
     'hub': '%s-%s' % (application_name, namespace),
     'user': '{username}'
@@ -752,13 +825,18 @@ def modify_pod_hook(spawner, pod):
     # Need to do this as it may have been cleaned up if the session had
     # expired and user wasn't logged out in the browser.
 
+    owner_uid = None
+
     while True:
         try:
             text = service_account_template.safe_substitute(
                     namespace=namespace, name=user_account_name, hub=hub)
             body = json.loads(text)
 
-            service_account_resource.create(namespace=namespace, body=body)
+            service_account_object = service_account_resource.create(
+                    namespace=namespace, body=body)
+
+            owner_uid = service_account_object.metadata.uid
 
         except ApiException as e:
             if e.status != 409:
@@ -774,6 +852,65 @@ def modify_pod_hook(spawner, pod):
 
         else:
             break
+
+    # If we didn't create a service account object as one already existed,
+    # we need to query the existing one to get the uid to use as owner.
+
+    if owner_uid is None:
+        try:
+            service_account_object = service_account_resource.get(
+                    namespace=namespace, name=user_account_name)
+
+            owner_uid = service_account_object.metadata.uid
+
+        except Exception as e:
+            print('ERROR: Error getting service account. %s' % e)
+            raise
+
+    # If there are any exposed ports defined for the session, create
+    # a service object mapping to the pod for the ports, and create
+    # routes for each port.
+
+    exposed_ports = os.environ.get('EXPOSED_PORTS', '').split(',')
+
+    if exposed_ports:
+        try:
+            text = service_template.safe_substitute(name=user_account_name,
+                    hub=hub, username=short_name, uid=owner_uid)
+            body = json.loads(text)
+
+            for port in exposed_ports:
+                body['spec']['ports'].append(dict(name='%s-tcp' % port,
+                        protocol="TCP", port=int(port), targetPort=int(port)))
+
+            service_resource.create(namespace=namespace, body=body)
+
+        except ApiException as e:
+            if e.status != 409:
+                print('ERROR: Error creating service. %s' % e)
+                raise
+
+        except Exception as e:
+            print('ERROR: Error creating service. %s' % e)
+            raise
+
+        for port in exposed_ports:
+            try:
+                text = route_template.safe_substitute(name=user_account_name,
+                        hub=hub, port='%s-tcp' % port, username=short_name,
+                        uid=owner_uid)
+                body = json.loads(text)
+
+                route_resource.create(namespace=namespace, body=body)
+
+            except ApiException as e:
+                if e.status != 409:
+                    print('ERROR: Error creating route. %s' % e)
+                    raise
+
+            except Exception as e:
+                print('ERROR: Error creating route. %s' % e)
+                raise
 
     # Create a project for just this user. Poll to make sure it is
     # created before continue.

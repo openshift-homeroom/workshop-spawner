@@ -74,6 +74,10 @@
             "name": "POLICY_RULES",
             "value": "[]",
             "required": true
+        },
+        {
+            "name": "EXPOSED_PORTS",
+            "value": ""
         }
     ],
     "objects": [
@@ -403,6 +407,10 @@
                                     {
                                         "name": "KUBECTL_VERSION",
                                         "value": "${KUBECTL_VERSION}"
+                                    },
+                                    {
+                                        "name": "EXPOSED_PORTS",
+                                        "value": "${EXPOSED_PORTS}"
                                     }
                                 ],
                                 "volumeMounts": [
