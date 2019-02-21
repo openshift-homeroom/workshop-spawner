@@ -871,9 +871,11 @@ def modify_pod_hook(spawner, pod):
     # a service object mapping to the pod for the ports, and create
     # routes for each port.
 
-    exposed_ports = os.environ.get('EXPOSED_PORTS', '').split(',')
+    exposed_ports = os.environ.get('EXPOSED_PORTS', '')
 
     if exposed_ports:
+        exposed_ports = exposed_ports.split(',')
+
         try:
             text = service_template.safe_substitute(name=user_account_name,
                     hub=hub, username=short_name, uid=owner_uid)
