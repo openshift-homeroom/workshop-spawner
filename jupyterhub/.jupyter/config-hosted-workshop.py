@@ -101,6 +101,14 @@ if volume_size:
                 '/opt/app-root',
                 '/mnt/workspace'
             ],
+	    "resources": {
+		"limits": {
+		    "memory": os.environ.get('WORKSHOP_MEMORY', '128Mi')
+		},
+		"requests": {
+		    "memory": os.environ.get('WORKSHOP_MEMORY', '128Mi')
+		}
+	    },
             'volumeMounts': [
                 {
                     'name': 'data',
@@ -188,6 +196,14 @@ def modify_pod_hook(spawner, pod):
                         'value': password
                     }
                 ],
+                "resources": {
+                    "limits": {
+                        "memory": os.environ.get('WORKSHOP_MEMORY', '128Mi')
+                    },
+                    "requests": {
+                        "memory": os.environ.get('WORKSHOP_MEMORY', '128Mi')
+                    }
+                },
                 'volumeMounts': [
                     {
                         'name': 'kubeconfig',
@@ -243,6 +259,14 @@ def modify_pod_hook(spawner, pod):
                         "value": "bearer-token"
                     }
                 ],
+		"resources": {
+		    "limits": {
+			"memory": os.environ.get('CONSOLE_MEMORY', '128Mi')
+		    },
+		    "requests": {
+			"memory": os.environ.get('CONSOLE_MEMORY', '128Mi')
+		    }
+		},
                 'volumeMounts': [
                     {
                         'name': 'kubeconfig',

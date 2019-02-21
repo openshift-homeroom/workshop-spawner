@@ -18,6 +18,10 @@
             "value": "512Mi"
         },
         {
+            "name": "CONSOLE_MEMORY",
+            "value": "128Mi"
+        },
+        {
             "name": "VOLUME_SIZE",
             "value": ""
         },
@@ -202,6 +206,10 @@
                                     {
                                         "name": "WORKSHOP_MEMORY",
                                         "value": "${WORKSHOP_MEMORY}"
+                                    },
+                                    {
+                                        "name": "CONSOLE_MEMORY",
+                                        "value": "${CONSOLE_MEMORY}"
                                     },
                                     {
                                         "name": "VOLUME_SIZE",
