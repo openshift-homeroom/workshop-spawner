@@ -83,7 +83,7 @@
         {
             "name": "POLICY_RULES",
             "value": "[]",
-            "required": false
+            "required": true
         }
     ],
     "objects": [
