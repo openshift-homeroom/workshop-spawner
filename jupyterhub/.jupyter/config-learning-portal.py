@@ -729,6 +729,11 @@ resource_budget_mapping = {
     }
 }
 
+c.KubeSpawner.extra_labels = {
+    'hub': '%s-%s' % (application_name, namespace),
+    'user': '{username}'
+}
+
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
     # Create the service account. We know the user name is a UUID, but
