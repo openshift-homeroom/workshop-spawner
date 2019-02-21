@@ -789,9 +789,9 @@ route_template = string.Template("""
         ]
     },
     "spec": {
-        "host": "",
+        "host": "${host}",
         "port": {
-            "targetPort": "${port}"
+            "targetPort": "${port}-tcp"
         },
         "to": {
             "kind": "Service",
@@ -896,9 +896,10 @@ def modify_pod_hook(spawner, pod):
 
         for port in exposed_ports:
             try:
+                host = '%s-%s.%s' % (user_account_name, port, cluster_subdomain)
                 text = route_template.safe_substitute(name=user_account_name,
-                        hub=hub, port='%s-tcp' % port, username=short_name,
-                        uid=owner_uid)
+                        hub=hub, port='%s' % port, username=short_name,
+                        uid=owner_uid, host=host)
                 body = json.loads(text)
 
                 route_resource.create(namespace=namespace, body=body)
