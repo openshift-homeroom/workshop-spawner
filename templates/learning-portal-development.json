@@ -29,12 +29,12 @@
             "required": true
         },
         {
-            "name": "MEMORY_SIZE",
+            "name": "WORKSHOP_MEMORY",
             "value": "512Mi"
         },
         {
-            "name": "VOLUME_SIZE",
-            "value": "1Gi"
+            "name": "CONSOLE_MEMORY",
+            "value": "128Mi"
         },
         {
             "name": "SERVER_LIMIT",
@@ -419,12 +419,12 @@
                                         "value": "${SERVER_LIMIT}"
                                     },
                                     {
-                                        "name": "MEMORY_SIZE",
-                                        "value": "${MEMORY_SIZE}"
+                                        "name": "WORKSHOP_MEMORY",
+                                        "value": "${WORKSHOP_MEMORY}"
                                     },
                                     {
-                                        "name": "VOLUME_SIZE",
-                                        "value": "${VOLUME_SIZE}"
+                                        "name": "CONSOLE_MEMORY",
+                                        "value": "${CONSOLE_MEMORY}"
                                     },
                                     {
                                         "name": "IDLE_TIMEOUT",

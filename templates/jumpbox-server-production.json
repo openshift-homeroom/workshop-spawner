@@ -14,7 +14,7 @@
             "required": true
         },
         {
-            "name": "MEMORY_SIZE",
+            "name": "WORKSHOP_MEMORY",
             "value": "512Mi"
         },
         {
@@ -223,8 +223,8 @@
                                         "value": "${TERMINAL_IMAGE}"
                                     },
                                     {
-                                        "name": "MEMORY_SIZE",
-                                        "value": "${MEMORY_SIZE}"
+                                        "name": "WORKSHOP_MEMORY",
+                                        "value": "${WORKSHOP_MEMORY}"
                                     },
                                     {
                                         "name": "VOLUME_SIZE",
