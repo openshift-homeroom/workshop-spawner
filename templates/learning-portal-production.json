@@ -19,12 +19,12 @@
             "required": true
         },
         {
-            "name": "MEMORY_SIZE",
+            "name": "WORKSHOP_MEMORY",
             "value": "512Mi"
         },
         {
-            "name": "VOLUME_SIZE",
-            "value": "1Gi"
+            "name": "CONSOLE_MEMORY",
+            "value": "128Mi"
         },
         {
             "name": "SERVER_LIMIT",
@@ -50,7 +50,7 @@
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.6.1",
+            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.7.0",
             "required": true
         },
         {
@@ -373,12 +373,12 @@
                                         "value": "${TERMINAL_IMAGE}"
                                     },
                                     {
-                                        "name": "MEMORY_SIZE",
-                                        "value": "${MEMORY_SIZE}"
+                                        "name": "WORKSHOP_MEMORY",
+                                        "value": "${WORKSHOP_MEMORY}"
                                     },
                                     {
-                                        "name": "VOLUME_SIZE",
-                                        "value": "${VOLUME_SIZE}"
+                                        "name": "CONSOLE_MEMORY",
+                                        "value": "${CONSOLE_MEMORY}"
                                     },
                                     {
                                         "name": "IDLE_TIMEOUT",
@@ -529,7 +529,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.4.0"
+                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.4.1"
                         }
                     }
                 ]

@@ -105,7 +105,8 @@ c.KubeSpawner.cmd = ['/usr/libexec/s2i/run']
 # overridden on a case by case for images if a profile list is supplied
 # so users have a choice of images when deploying workshop content.
 
-c.Spawner.mem_limit = convert_size_to_bytes(os.environ.get('MEMORY_SIZE', '512Mi'))
+c.Spawner.mem_limit = convert_size_to_bytes(
+        os.environ.get('WORKSHOP_MEMORY', '512Mi'))
 
 # Work out hostname for the exposed route of the JupyterHub server. This
 # is tricky as we need to use the REST API to query it. We assume that

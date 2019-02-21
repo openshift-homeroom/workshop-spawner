@@ -196,6 +196,14 @@ c.KubeSpawner.extra_containers.extend([
                 "value": "disabled"
             }
         ],
+        "resources": {
+            "limits": {
+                "memory": os.environ.get('CONSOLE_MEMORY', '128Mi')
+            },
+            "requests": {
+                "memory": os.environ.get('CONSOLE_MEMORY', '128Mi')
+            }
+        }
     }
 ])
 
@@ -277,95 +285,95 @@ role_binding_template = string.Template("""
 resource_budget_mapping = {
     "small": {
         "resource-limits" : {
-	    "kind": "LimitRange",
-	    "apiVersion": "v1",
-	    "metadata": {
-		"name": "resource-limits",
+            "kind": "LimitRange",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "resource-limits",
                 "annotations": {
                     "resource-budget": "small"
                 }
-	    },
-	    "spec": {
-		"limits": [
-		    {
-			"type": "Pod",
-			"min": {
-			    "cpu": "50m",
-			    "memory": "32Mi"
-			},
-			"max": {
-			    "cpu": "1",
-			    "memory": "1Gi"
-			}
-		    },
-		    {
-			"type": "Container",
-			"min": {
-			    "cpu": "50m",
-			    "memory": "32Mi"
-			},
-			"max": {
-			    "cpu": "1",
-			    "memory": "1Gi"
-			},
-			"default": {
-			    "cpu": "250m",
-			    "memory": "256Mi"
-			},
-			"defaultRequest": {
-			    "cpu": "50m",
-			    "memory": "128Mi"
-			}
-		    },
-		    {
-			"type": "PersistentVolumeClaim",
-			"min": {
-			    "storage": "1Gi"
-			},
-			"max": {
-			    "storage": "1Gi"
-			}
-		    }
-		]
-	    }
+            },
+            "spec": {
+                "limits": [
+                    {
+                        "type": "Pod",
+                        "min": {
+                            "cpu": "50m",
+                            "memory": "32Mi"
+                        },
+                        "max": {
+                            "cpu": "1",
+                            "memory": "1Gi"
+                        }
+                    },
+                    {
+                        "type": "Container",
+                        "min": {
+                            "cpu": "50m",
+                            "memory": "32Mi"
+                        },
+                        "max": {
+                            "cpu": "1",
+                            "memory": "1Gi"
+                        },
+                        "default": {
+                            "cpu": "250m",
+                            "memory": "256Mi"
+                        },
+                        "defaultRequest": {
+                            "cpu": "50m",
+                            "memory": "128Mi"
+                        }
+                    },
+                    {
+                        "type": "PersistentVolumeClaim",
+                        "min": {
+                            "storage": "1Gi"
+                        },
+                        "max": {
+                            "storage": "1Gi"
+                        }
+                    }
+                ]
+            }
         },
         "compute-resources" : {
-	    "kind": "ResourceQuota",
-	    "apiVersion": "v1",
-	    "metadata": {
-		"name": "compute-resources",
+            "kind": "ResourceQuota",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "compute-resources",
                 "annotations": {
                     "resource-budget": "small"
                 }
-	    },
-	    "spec": {
-		"hard": {
-		    "limits.cpu": "1",
-		    "limits.memory": "1Gi"
-		},
-		"scopes": [
-		    "NotTerminating"
-		]
-	    }
+            },
+            "spec": {
+                "hard": {
+                    "limits.cpu": "1",
+                    "limits.memory": "1Gi"
+                },
+                "scopes": [
+                    "NotTerminating"
+                ]
+            }
         },
         "compute-resources-timebound" : {
-	    "kind": "ResourceQuota",
-	    "apiVersion": "v1",
-	    "metadata": {
-		"name": "compute-resources-timebound",
+            "kind": "ResourceQuota",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "compute-resources-timebound",
                 "annotations": {
                     "resource-budget": "small"
                 }
-	    },
-	    "spec": {
-		"hard": {
-		    "limits.cpu": "1",
-		    "limits.memory": "1Gi"
-		},
-		"scopes": [
-		    "Terminating"
-		]
-	    }
+            },
+            "spec": {
+                "hard": {
+                    "limits.cpu": "1",
+                    "limits.memory": "1Gi"
+                },
+                "scopes": [
+                    "Terminating"
+                ]
+            }
         },
         "object-counts" : {
             "kind": "ResourceQuota",
@@ -388,95 +396,95 @@ resource_budget_mapping = {
     },
     "medium": {
         "resource-limits" : {
-	    "kind": "LimitRange",
-	    "apiVersion": "v1",
-	    "metadata": {
-		"name": "resource-limits",
+            "kind": "LimitRange",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "resource-limits",
                 "annotations": {
                     "resource-budget": "medium"
                 }
-	    },
-	    "spec": {
-		"limits": [
-		    {
-			"type": "Pod",
-			"min": {
-			    "cpu": "50m",
-			    "memory": "32Mi"
-			},
-			"max": {
-			    "cpu": "2",
-			    "memory": "2Gi"
-			}
-		    },
-		    {
-			"type": "Container",
-			"min": {
-			    "cpu": "50m",
-			    "memory": "32Mi"
-			},
-			"max": {
-			    "cpu": "2",
-			    "memory": "2Gi"
-			},
-			"default": {
-			    "cpu": "500m",
-			    "memory": "512Mi"
-			},
-			"defaultRequest": {
-			    "cpu": "50m",
-			    "memory": "128Mi"
-			}
-		    },
-		    {
-			"type": "PersistentVolumeClaim",
-			"min": {
-			    "storage": "1Gi"
-			},
-			"max": {
-			    "storage": "5Gi"
-			}
-		    }
-		]
-	    }
+            },
+            "spec": {
+                "limits": [
+                    {
+                        "type": "Pod",
+                        "min": {
+                            "cpu": "50m",
+                            "memory": "32Mi"
+                        },
+                        "max": {
+                            "cpu": "2",
+                            "memory": "2Gi"
+                        }
+                    },
+                    {
+                        "type": "Container",
+                        "min": {
+                            "cpu": "50m",
+                            "memory": "32Mi"
+                        },
+                        "max": {
+                            "cpu": "2",
+                            "memory": "2Gi"
+                        },
+                        "default": {
+                            "cpu": "500m",
+                            "memory": "512Mi"
+                        },
+                        "defaultRequest": {
+                            "cpu": "50m",
+                            "memory": "128Mi"
+                        }
+                    },
+                    {
+                        "type": "PersistentVolumeClaim",
+                        "min": {
+                            "storage": "1Gi"
+                        },
+                        "max": {
+                            "storage": "5Gi"
+                        }
+                    }
+                ]
+            }
         },
         "compute-resources" : {
-	    "kind": "ResourceQuota",
-	    "apiVersion": "v1",
-	    "metadata": {
-		"name": "compute-resources",
+            "kind": "ResourceQuota",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "compute-resources",
                 "annotations": {
                     "resource-budget": "medium"
                 }
-	    },
-	    "spec": {
-		"hard": {
-		    "limits.cpu": "2",
-		    "limits.memory": "2Gi"
-		},
-		"scopes": [
-		    "NotTerminating"
-		]
-	    }
+            },
+            "spec": {
+                "hard": {
+                    "limits.cpu": "2",
+                    "limits.memory": "2Gi"
+                },
+                "scopes": [
+                    "NotTerminating"
+                ]
+            }
         },
         "compute-resources-timebound" : {
-	    "kind": "ResourceQuota",
-	    "apiVersion": "v1",
-	    "metadata": {
-		"name": "compute-resources-timebound",
+            "kind": "ResourceQuota",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "compute-resources-timebound",
                 "annotations": {
                     "resource-budget": "medium"
                 }
-	    },
-	    "spec": {
-		"hard": {
-		    "limits.cpu": "2",
-		    "limits.memory": "2Gi"
-		},
-		"scopes": [
-		    "Terminating"
-		]
-	    }
+            },
+            "spec": {
+                "hard": {
+                    "limits.cpu": "2",
+                    "limits.memory": "2Gi"
+                },
+                "scopes": [
+                    "Terminating"
+                ]
+            }
         },
         "object-counts" : {
             "kind": "ResourceQuota",
@@ -499,95 +507,95 @@ resource_budget_mapping = {
     },
     "large": {
         "resource-limits" : {
-	    "kind": "LimitRange",
-	    "apiVersion": "v1",
-	    "metadata": {
-		"name": "resource-limits",
+            "kind": "LimitRange",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "resource-limits",
                 "annotations": {
                     "resource-budget": "large"
                 }
-	    },
-	    "spec": {
-		"limits": [
-		    {
-			"type": "Pod",
-			"min": {
-			    "cpu": "50m",
-			    "memory": "32Mi"
-			},
-			"max": {
-			    "cpu": "4",
-			    "memory": "4Gi"
-			}
-		    },
-		    {
-			"type": "Container",
-			"min": {
-			    "cpu": "50m",
-			    "memory": "32Mi"
-			},
-			"max": {
-			    "cpu": "4",
-			    "memory": "4Gi"
-			},
-			"default": {
-			    "cpu": "500m",
-			    "memory": "1Gi"
-			},
-			"defaultRequest": {
-			    "cpu": "50m",
-			    "memory": "128Mi"
-			}
-		    },
-		    {
-			"type": "PersistentVolumeClaim",
-			"min": {
-			    "storage": "1Gi"
-			},
-			"max": {
-			    "storage": "10Gi"
-			}
-		    }
-		]
-	    }
+            },
+            "spec": {
+                "limits": [
+                    {
+                        "type": "Pod",
+                        "min": {
+                            "cpu": "50m",
+                            "memory": "32Mi"
+                        },
+                        "max": {
+                            "cpu": "4",
+                            "memory": "4Gi"
+                        }
+                    },
+                    {
+                        "type": "Container",
+                        "min": {
+                            "cpu": "50m",
+                            "memory": "32Mi"
+                        },
+                        "max": {
+                            "cpu": "4",
+                            "memory": "4Gi"
+                        },
+                        "default": {
+                            "cpu": "500m",
+                            "memory": "1Gi"
+                        },
+                        "defaultRequest": {
+                            "cpu": "50m",
+                            "memory": "128Mi"
+                        }
+                    },
+                    {
+                        "type": "PersistentVolumeClaim",
+                        "min": {
+                            "storage": "1Gi"
+                        },
+                        "max": {
+                            "storage": "10Gi"
+                        }
+                    }
+                ]
+            }
         },
         "compute-resources" : {
-	    "kind": "ResourceQuota",
-	    "apiVersion": "v1",
-	    "metadata": {
-		"name": "compute-resources",
+            "kind": "ResourceQuota",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "compute-resources",
                 "annotations": {
                     "resource-budget": "large"
                 }
-	    },
-	    "spec": {
-		"hard": {
-		    "limits.cpu": "4",
-		    "limits.memory": "4Gi"
-		},
-		"scopes": [
-		    "NotTerminating"
-		]
-	    }
+            },
+            "spec": {
+                "hard": {
+                    "limits.cpu": "4",
+                    "limits.memory": "4Gi"
+                },
+                "scopes": [
+                    "NotTerminating"
+                ]
+            }
         },
         "compute-resources-timebound" : {
-	    "kind": "ResourceQuota",
-	    "apiVersion": "v1",
-	    "metadata": {
-		"name": "compute-resources-timebound",
+            "kind": "ResourceQuota",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "compute-resources-timebound",
                 "annotations": {
                     "resource-budget": "large"
                 }
-	    },
-	    "spec": {
-		"hard": {
-		    "limits.cpu": "4",
-		    "limits.memory": "4Gi"
-		},
-		"scopes": [
-		    "Terminating"
-		]
-	    }
+            },
+            "spec": {
+                "hard": {
+                    "limits.cpu": "4",
+                    "limits.memory": "4Gi"
+                },
+                "scopes": [
+                    "Terminating"
+                ]
+            }
         },
         "object-counts" : {
             "kind": "ResourceQuota",
@@ -610,95 +618,95 @@ resource_budget_mapping = {
     },
     "x-large": {
         "resource-limits" : {
-	    "kind": "LimitRange",
-	    "apiVersion": "v1",
-	    "metadata": {
-		"name": "resource-limits",
+            "kind": "LimitRange",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "resource-limits",
                 "annotations": {
                     "resource-budget": "large"
                 }
-	    },
-	    "spec": {
-		"limits": [
-		    {
-			"type": "Pod",
-			"min": {
-			    "cpu": "50m",
-			    "memory": "32Mi"
-			},
-			"max": {
-			    "cpu": "8",
-			    "memory": "8Gi"
-			}
-		    },
-		    {
-			"type": "Container",
-			"min": {
-			    "cpu": "50m",
-			    "memory": "32Mi"
-			},
-			"max": {
-			    "cpu": "8",
-			    "memory": "8Gi"
-			},
-			"default": {
-			    "cpu": "500m",
-			    "memory": "2Gi"
-			},
-			"defaultRequest": {
-			    "cpu": "50m",
-			    "memory": "128Mi"
-			}
-		    },
-		    {
-			"type": "PersistentVolumeClaim",
-			"min": {
-			    "storage": "1Gi"
-			},
-			"max": {
-			    "storage": "20Gi"
-			}
-		    }
-		]
-	    }
+            },
+            "spec": {
+                "limits": [
+                    {
+                        "type": "Pod",
+                        "min": {
+                            "cpu": "50m",
+                            "memory": "32Mi"
+                        },
+                        "max": {
+                            "cpu": "8",
+                            "memory": "8Gi"
+                        }
+                    },
+                    {
+                        "type": "Container",
+                        "min": {
+                            "cpu": "50m",
+                            "memory": "32Mi"
+                        },
+                        "max": {
+                            "cpu": "8",
+                            "memory": "8Gi"
+                        },
+                        "default": {
+                            "cpu": "500m",
+                            "memory": "2Gi"
+                        },
+                        "defaultRequest": {
+                            "cpu": "50m",
+                            "memory": "128Mi"
+                        }
+                    },
+                    {
+                        "type": "PersistentVolumeClaim",
+                        "min": {
+                            "storage": "1Gi"
+                        },
+                        "max": {
+                            "storage": "20Gi"
+                        }
+                    }
+                ]
+            }
         },
         "compute-resources" : {
-	    "kind": "ResourceQuota",
-	    "apiVersion": "v1",
-	    "metadata": {
-		"name": "compute-resources",
+            "kind": "ResourceQuota",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "compute-resources",
                 "annotations": {
                     "resource-budget": "large"
                 }
-	    },
-	    "spec": {
-		"hard": {
-		    "limits.cpu": "8",
-		    "limits.memory": "8Gi"
-		},
-		"scopes": [
-		    "NotTerminating"
-		]
-	    }
+            },
+            "spec": {
+                "hard": {
+                    "limits.cpu": "8",
+                    "limits.memory": "8Gi"
+                },
+                "scopes": [
+                    "NotTerminating"
+                ]
+            }
         },
         "compute-resources-timebound" : {
-	    "kind": "ResourceQuota",
-	    "apiVersion": "v1",
-	    "metadata": {
-		"name": "compute-resources-timebound",
+            "kind": "ResourceQuota",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "compute-resources-timebound",
                 "annotations": {
                     "resource-budget": "large"
                 }
-	    },
-	    "spec": {
-		"hard": {
-		    "limits.cpu": "8",
-		    "limits.memory": "8Gi"
-		},
-		"scopes": [
-		    "Terminating"
-		]
-	    }
+            },
+            "spec": {
+                "hard": {
+                    "limits.cpu": "8",
+                    "limits.memory": "8Gi"
+                },
+                "scopes": [
+                    "Terminating"
+                ]
+            }
         },
         "object-counts" : {
             "kind": "ResourceQuota",

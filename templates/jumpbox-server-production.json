@@ -14,7 +14,7 @@
             "required": true
         },
         {
-            "name": "MEMORY_SIZE",
+            "name": "WORKSHOP_MEMORY",
             "value": "512Mi"
         },
         {
@@ -36,12 +36,12 @@
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.6.1",
+            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.7.0",
             "required": true
         },
         {
             "name": "KEYCLOAK_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-keycloak:2.6.1",
+            "value": "quay.io/openshiftlabs/workshop-keycloak:2.7.0",
             "required": true
         },
         {
@@ -223,8 +223,8 @@
                                         "value": "${TERMINAL_IMAGE}"
                                     },
                                     {
-                                        "name": "MEMORY_SIZE",
-                                        "value": "${MEMORY_SIZE}"
+                                        "name": "WORKSHOP_MEMORY",
+                                        "value": "${WORKSHOP_MEMORY}"
                                     },
                                     {
                                         "name": "VOLUME_SIZE",
