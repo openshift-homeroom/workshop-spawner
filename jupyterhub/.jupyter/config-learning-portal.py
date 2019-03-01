@@ -17,7 +17,7 @@ import time
 import functools
 import random
 
-from tornado import gen
+from tornado import gen, web
 
 from jupyterhub.auth import Authenticator
 from jupyterhub.handlers import BaseHandler
@@ -153,11 +153,11 @@ class AutoAuthenticator(Authenticator):
             'process_user': self.process_user
         }
         return [
-            ('/restart', AutoAuthenticateHandler, extra_settings)
+            ('/login', AutoAuthenticateHandler, extra_settings)
         ]
 
     def login_url(self, base_url):
-        return url_path_join(base_url, 'restart')
+        return url_path_join(base_url, 'login')
 
 c.JupyterHub.authenticator_class = AutoAuthenticator
 
@@ -1232,3 +1232,27 @@ if idle_timeout and int(idle_timeout):
             ),
         }
     ])
+
+# Redirect handler for sending /restart back to home page for user.
+
+from jupyterhub.handlers import BaseHandler
+
+homeroom_url = os.environ.get('HOMEROOM_URL') or ('/hub/spawn')
+
+class RestartRedirectHandler(BaseHandler):
+
+    @web.authenticated
+    @gen.coroutine
+    def get(self, *args):
+        user = self.get_current_user()
+
+        if user.running:
+            status = yield user.spawner.poll_and_notify()
+            if status is None:
+                yield self.stop_single_user(user)
+        self.clear_login_cookie()
+        self.redirect(homeroom_url)
+
+c.JupyterHub.extra_handlers.extend([
+    (r'/restart$', RestartRedirectHandler),
+])
