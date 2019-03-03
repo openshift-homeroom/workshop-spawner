@@ -1237,7 +1237,7 @@ if idle_timeout and int(idle_timeout):
 
 from jupyterhub.handlers import BaseHandler
 
-homeroom_url = os.environ.get('HOMEROOM_URL') or ('/hub/spawn')
+homeroom_url = os.environ.get('HOMEROOM_URL') or '/hub/spawn'
 
 class RestartRedirectHandler(BaseHandler):
 

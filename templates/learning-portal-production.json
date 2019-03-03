@@ -50,7 +50,7 @@
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.8.2",
+            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.8.3",
             "required": true
         },
         {
@@ -77,6 +77,10 @@
         },
         {
             "name": "EXPOSED_PORTS",
+            "value": ""
+        },
+        {
+            "name": "HOMEROOM_URL",
             "value": ""
         }
     ],
@@ -377,6 +381,10 @@
                                         "value": "${TERMINAL_IMAGE}"
                                     },
                                     {
+                                        "name": "SERVER_LIMIT",
+                                        "value": "${SERVER_LIMIT}"
+                                    },
+                                    {
                                         "name": "WORKSHOP_MEMORY",
                                         "value": "${WORKSHOP_MEMORY}"
                                     },
@@ -411,6 +419,10 @@
                                     {
                                         "name": "EXPOSED_PORTS",
                                         "value": "${EXPOSED_PORTS}"
+                                    },
+                                    {
+                                        "name": "HOMEROOM_URL",
+                                        "value": "${HOMEROOM_URL}"
                                     }
                                 ],
                                 "volumeMounts": [
@@ -537,7 +549,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.5.1"
+                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.8.0"
                         }
                     }
                 ]
