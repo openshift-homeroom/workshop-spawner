@@ -88,6 +88,10 @@
         {
             "name": "EXPOSED_PORTS",
             "value": ""
+        },
+        {
+            "name": "HOMEROOM_URL",
+            "value": ""
         }
     ],
     "objects": [
@@ -457,6 +461,10 @@
                                     {
                                         "name": "EXPOSED_PORTS",
                                         "value": "${EXPOSED_PORTS}"
+                                    },
+                                    {
+                                        "name": "HOMEROOM_URL",
+                                        "value": "${HOMEROOM_URL}"
                                     }
                                 ],
                                 "volumeMounts": [
