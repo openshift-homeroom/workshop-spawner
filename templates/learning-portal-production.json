@@ -377,6 +377,10 @@
                                         "value": "${TERMINAL_IMAGE}"
                                     },
                                     {
+                                        "name": "SERVER_LIMIT",
+                                        "value": "${SERVER_LIMIT}"
+                                    },
+                                    {
                                         "name": "WORKSHOP_MEMORY",
                                         "value": "${WORKSHOP_MEMORY}"
                                     },
