@@ -1,4 +1,4 @@
-FROM quay.io/jupyteronopenshift/jupyterhub:3.0.5
+FROM quay.io/jupyteronopenshift/jupyterhub:3.0.7
 
 USER root
 
