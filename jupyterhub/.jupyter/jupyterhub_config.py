@@ -112,14 +112,6 @@ c.Spawner.mem_limit = convert_size_to_bytes(
 # is tricky as we need to use the REST API to query it. We assume that
 # a secure route is always used. This is used when needing to do OAuth.
 
-from openshift.config import load_incluster_config
-from openshift.client.api_client import ApiClient
-from openshift.dynamic import DynamicClient
-
-load_incluster_config()
-
-api_client = DynamicClient(ApiClient())
-
 route_resource = api_client.resources.get(
      api_version='route.openshift.io/v1', kind='Route')
 
