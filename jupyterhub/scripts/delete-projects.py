@@ -6,9 +6,10 @@ from collections import namedtuple
 
 from kubernetes.client.rest import ApiException
 
-from openshift.config import load_incluster_config
-from openshift.client.api_client import ApiClient
-from openshift.dynamic import DynamicClient, ResourceInstance
+from kubernetes.client.configuration import Configuration
+from kubernetes.config.incluster_config import load_incluster_config
+from kubernetes.client.api_client import ApiClient
+from openshift.dynamic import DynamicClient
 
 service_account_path = '/var/run/secrets/kubernetes.io/serviceaccount'
 
@@ -22,6 +23,12 @@ application_name = os.environ.get('APPLICATION_NAME')
 service_account_name = '%s-%s-hub' %  (application_name, namespace)
 
 load_incluster_config()
+
+import urllib3
+urllib3.disable_warnings()
+instance = Configuration()
+instance.verify_ssl = False
+Configuration.set_default(instance)
 
 api_client = DynamicClient(ApiClient())
 
