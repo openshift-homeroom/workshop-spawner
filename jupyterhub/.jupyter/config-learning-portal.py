@@ -1183,6 +1183,10 @@ def modify_pod_hook(spawner, pod):
     pod.spec.containers[0].env.append(
             dict(name='JUPYTERHUB_APPLICATION', value=application_name))
 
+    if homeroom_link:
+        pod.spec.containers[0].env.append(
+                dict(name='HOMEROOM_LINK', value=homeroom_link))
+
     return pod
 
 c.KubeSpawner.modify_pod_hook = modify_pod_hook
@@ -1237,7 +1241,7 @@ if idle_timeout and int(idle_timeout):
 
 from jupyterhub.handlers import BaseHandler
 
-homeroom_url = os.environ.get('HOMEROOM_URL') or '/hub/spawn'
+homeroom_link = os.environ.get('HOMEROOM_LINK')
 
 class RestartRedirectHandler(BaseHandler):
 
@@ -1251,7 +1255,7 @@ class RestartRedirectHandler(BaseHandler):
             if status is None:
                 yield self.stop_single_user(user)
         self.clear_login_cookie()
-        self.redirect(homeroom_url)
+        self.redirect(homeroom_link or '/hub/spawn')
 
 c.JupyterHub.extra_handlers.extend([
     (r'/restart$', RestartRedirectHandler),
