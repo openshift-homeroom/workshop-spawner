@@ -51,9 +51,10 @@ class AnonymousUser(object):
 def get_user_details(name):
     return AnonymousUser(name)
 
+random_userid_chars = 'bcdfghjklmnpqrstvwxyz0123456789'
+
 def generate_random_userid(n=5):
-    return ''.join(random.choice(
-            string.ascii_lowercase + string.digits) for _ in range(n))
+    return ''.join(random.choice(random_userid_chars) for _ in range(n))
 
 class AutoAuthenticateHandler(BaseHandler):
 
