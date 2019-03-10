@@ -73,6 +73,15 @@
             "name": "JUPYTERHUB_CONFIG",
             "value": "",
             "required": false
+        },
+        {
+            "name": "JUPYTERHUB_HOST",
+            "value": ""
+        },
+        {
+            "name": "LETS_ENCRYPT",
+            "value": "false",
+            "required": true
         }
     ],
     "objects": [
@@ -363,12 +372,15 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}",
+                "annotations": {
+                    "kubernetes.io/tls-acme": "${LETS_ENCRYPT}"
+                },
                 "labels": {
                     "app": "${APPLICATION_NAME}"
                 }
             },
             "spec": {
-                "host": "",
+                "host": "${JUPYTERHUB_HOST}",
                 "to": {
                     "kind": "Service",
                     "name": "${APPLICATION_NAME}",
