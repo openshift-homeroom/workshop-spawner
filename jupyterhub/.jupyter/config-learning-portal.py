@@ -808,6 +808,41 @@ c.KubeSpawner.extra_labels = {
     'user': '{username}'
 }
 
+extra_resources = {}
+
+if os.path.exists('/opt/app-root/configs/extra_resources.json'):
+    with open('/opt/app-root/configs/extra_resources.json') as fp:
+        extra_resources_data = fp.read().strip()
+
+        if extra_resources_data:
+            extra_resources = json.loads(extra_resources_data)
+
+            # Do some basic validation on extra resources.
+
+            if extra_resources:
+                assert extra_resources['kind'] == 'List'
+                assert extra_resources['apiVersion'] == 'v1'
+                for item in extra_resources['items']:
+                    assert 'kind' in item
+                    assert 'apiVersion' in item
+
+def create_extra_resources(project_name):
+    if not extra_resources:
+        return
+
+    for body in extra_resources['items']:
+        kind = body['kind']
+        api_version = body['apiVersion']
+
+        resource = api_client.resources.get(api_version=api_version, kind=kind)
+
+        try:
+            resource.create(namespace=project_name, body=body)
+
+        except Exception as e:
+            print('ERROR: Error creating resource %s. %s' % (body, e))
+            raise
+
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
     # Create the service account. We know the user name is a UUID, but
@@ -1128,6 +1163,10 @@ def modify_pod_hook(spawner, pod):
     except Exception as e:
         print('ERROR: Error creating rolebinding for extras. %s' % e)
         raise
+
+    # Create any extra resources in the project required for a workshop.
+
+    create_extra_resources(project_name)
 
     # Before can continue, need to poll looking to see if the secret for
     # the api token has been added to the service account. If don't do

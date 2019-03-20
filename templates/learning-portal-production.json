@@ -71,6 +71,10 @@
             "required": false
         },
         {
+            "name": "EXTRA_RESOURCES",
+            "value": ""
+        },
+        {
             "name": "POLICY_RULES",
             "value": "[]",
             "required": true
@@ -319,7 +323,8 @@
                 }
             },
             "data": {
-                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
+                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}",
+                "extra_resources.json": "${EXTRA_RESOURCES}"
             }
         },
         {
