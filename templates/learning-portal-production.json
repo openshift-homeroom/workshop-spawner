@@ -50,7 +50,7 @@
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.8.7",
+            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.9.0",
             "required": true
         },
         {
@@ -69,6 +69,10 @@
             "name": "JUPYTERHUB_CONFIG",
             "value": "",
             "required": false
+        },
+        {
+            "name": "EXTRA_RESOURCES",
+            "value": ""
         },
         {
             "name": "POLICY_RULES",
@@ -319,7 +323,8 @@
                 }
             },
             "data": {
-                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
+                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}",
+                "extra_resources.json": "${EXTRA_RESOURCES}"
             }
         },
         {
@@ -561,7 +566,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.8.2"
+                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.8.3"
                         }
                     }
                 ]

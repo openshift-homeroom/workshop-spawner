@@ -81,6 +81,10 @@
             "required": false
         },
         {
+            "name": "EXTRA_RESOURCES",
+            "value": ""
+        },
+        {
             "name": "POLICY_RULES",
             "value": "[]",
             "required": true
@@ -361,7 +365,8 @@
                 }
             },
             "data": {
-                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
+                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}",
+                "extra_resources.json": "${EXTRA_RESOURCES}"
             }
         },
         {
@@ -603,7 +608,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.8.2"
+                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.8.3"
                         }
                     }
                 ]
