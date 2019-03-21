@@ -812,31 +812,24 @@ extra_resources = {}
 
 if os.path.exists('/opt/app-root/configs/extra_resources.json'):
     with open('/opt/app-root/configs/extra_resources.json') as fp:
-        extra_resources_data = fp.read().strip()
-
-        if extra_resources_data:
-            extra_resources = json.loads(extra_resources_data)
-
-            # Do some basic validation on extra resources.
-
-            if extra_resources:
-                assert extra_resources['kind'] == 'List'
-                assert extra_resources['apiVersion'] == 'v1'
-                for item in extra_resources['items']:
-                    assert 'kind' in item
-                    assert 'apiVersion' in item
+        extra_resources = fp.read().strip()
 
 def create_extra_resources(project_name):
     if not extra_resources:
         return
 
-    for body in extra_resources['items']:
-        kind = body['kind']
-        api_version = body['apiVersion']
+    template = string.Template(extra_resources)
+    text = template.safe_substitute(jupyterhub_namespace=namespace,
+            project_namespace=project_name)
+    data = json.loads(text)
 
-        resource = api_client.resources.get(api_version=api_version, kind=kind)
-
+    for body in data['items']:
         try:
+            kind = body['kind']
+            api_version = body['apiVersion']
+
+            resource = api_client.resources.get(api_version=api_version, kind=kind)
+
             resource.create(namespace=project_name, body=body)
 
         except Exception as e:
@@ -1145,12 +1138,12 @@ def modify_pod_hook(spawner, pod):
 
     # Create role binding in the project so the users service account
     # can perform additional actions declared through additional policy
-    # rules for a specific workshop.
+    # rules for a specific workshop session.
 
     try:
         text = role_binding_template.safe_substitute(
-                namespace=namespace, name=user_account_name, tag='extra',
-                role=hub+'-account', hub=hub)
+                namespace=namespace, name=user_account_name,
+                tag='session-rules', role=hub+'-session-rules', hub=hub)
         body = json.loads(text)
 
         role_binding_resource.create(namespace=project_name, body=body)
