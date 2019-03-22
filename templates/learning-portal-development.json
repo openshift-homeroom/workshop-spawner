@@ -81,11 +81,16 @@
             "required": false
         },
         {
+            "name": "SPAWNER_RULES",
+            "value": "[]",
+            "required": true
+        },
+        {
             "name": "EXTRA_RESOURCES",
             "value": ""
         },
         {
-            "name": "POLICY_RULES",
+            "name": "SESSION_RULES",
             "value": "[]",
             "required": true
         },
@@ -141,7 +146,7 @@
             "kind": "ClusterRole",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-manager",
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
@@ -154,7 +159,9 @@
                         "rbac.authorization.k8s.io"
                     ],
                     "resourceNames": [
-                        "view"
+                        "view",
+                        "edit",
+                        "admin"
                     ],
                     "resources": [
                         "clusterroles",
@@ -254,7 +261,7 @@
             "kind": "ClusterRoleBinding",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-manager",
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
@@ -267,25 +274,25 @@
                 }
             ],
             "roleRef": {
-                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-manager"
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner"
             }
         },
         {
             "kind": "ClusterRole",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-account",
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner-rules",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
             },
-            "rules": "${{POLICY_RULES}}"
+            "rules": "${{SPAWNER_RULES}}"
         },
         {
             "kind": "ClusterRoleBinding",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-account",
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner-rules",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
@@ -298,7 +305,38 @@
                 }
             ],
             "roleRef": {
-                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-account"
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner-rules"
+            }
+        },
+        {
+            "kind": "ClusterRole",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-session-rules",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
+                }
+            },
+            "rules": "${{SESSION_RULES}}"
+        },
+        {
+            "kind": "ClusterRoleBinding",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-session-rules",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
+                }
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
+                    "namespace": "${PROJECT_NAME}"
+                }
+            ],
+            "roleRef": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-session-rules"
             }
         },
         {
