@@ -50,7 +50,7 @@
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.10.0",
+            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.10.1",
             "required": true
         },
         {
@@ -604,7 +604,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.8.3"
+                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.8.4"
                         }
                     }
                 ]
