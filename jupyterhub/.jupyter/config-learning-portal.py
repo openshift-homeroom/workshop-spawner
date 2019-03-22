@@ -832,6 +832,14 @@ def create_extra_resources(project_name):
 
             resource.create(namespace=project_name, body=body)
 
+        except ApiException as e:
+            if e.status != 409:
+                print('ERROR: Error creating resource %s. %s' % (body, e))
+                raise
+
+            else:
+                print('WARNING: Resource already exists %s.' % body)
+
         except Exception as e:
             print('ERROR: Error creating resource %s. %s' % (body, e))
             raise
