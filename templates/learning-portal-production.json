@@ -50,7 +50,7 @@
         },
         {
             "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.10.1",
+            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.10.2",
             "required": true
         },
         {
