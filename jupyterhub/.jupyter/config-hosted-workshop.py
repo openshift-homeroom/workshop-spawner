@@ -14,21 +14,28 @@ from fnmatch import fnmatch
 
 from tornado import web, gen
 
-server_host = os.environ['KUBERNETES_PORT_443_TCP_ADDR']
-server_url = 'https://%s' % server_host
+kubernetes_service_host = os.environ['KUBERNETES_SERVICE_HOST']
+kubernetes_service_port = os.environ['KUBERNETES_SERVICE_PORT']
 
-oauth_metadata_url = '%s/.well-known/oauth-authorization-server' % server_url
+kubernetes_server_url = 'https://%s:%s' % (kubernetes_service_host,
+        kubernetes_service_port)
+
+oauth_metadata_url = '%s/.well-known/oauth-authorization-server' % kubernetes_server_url
 
 with requests.Session() as session:
     response = session.get(oauth_metadata_url, verify=False)
     data = json.loads(response.content.decode('UTF-8'))
-    address = data['issuer']
+    oauth_issuer_address = data['issuer']
 
 # Enable the OpenShift authenticator. The OPENSHIFT_URL environment
 # variable must be set before importing the authenticator as it only
-# reads it when module is first imported.
+# reads it when module is first imported. From OpenShift 4.0 we need
+# to supply separate URLs for Kubernetes server and OAuth server.
 
-os.environ['OPENSHIFT_URL'] = address
+os.environ['OPENSHIFT_URL'] = oauth_issuer_address
+
+os.environ['OPENSHIFT_REST_API_URL'] = kubernetes_server_url
+os.environ['OPENSHIFT_AUTH_API_URL'] = oauth_issuer_address
 
 from oauthenticator.openshift import OpenShiftOAuthenticator
 c.JupyterHub.authenticator_class = OpenShiftOAuthenticator
