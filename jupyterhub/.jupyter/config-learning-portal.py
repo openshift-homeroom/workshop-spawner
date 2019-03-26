@@ -810,8 +810,8 @@ c.KubeSpawner.extra_labels = {
 
 extra_resources = {}
 
-if os.path.exists('/opt/app-root/configs/extra_resources.json'):
-    with open('/opt/app-root/configs/extra_resources.json') as fp:
+if os.path.exists('/opt/app-root/resources/extra_resources.json'):
+    with open('/opt/app-root/resources/extra_resources.json') as fp:
         extra_resources = fp.read().strip()
 
 def create_extra_resources(project_name):

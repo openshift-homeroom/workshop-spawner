@@ -361,7 +361,19 @@
                 }
             },
             "data": {
-                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}",
+                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
+            }
+        },
+        {
+            "kind": "ConfigMap",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-res",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "data": {
                 "extra_resources.json": "${EXTRA_RESOURCES}"
             }
         },
@@ -485,6 +497,10 @@
                                     {
                                         "name": "config",
                                         "mountPath": "/opt/app-root/configs"
+                                    },
+                                    {
+                                        "name": "resources",
+                                        "mountPath": "/opt/app-root/resources"
                                     }
                                 ]
                             }
@@ -500,6 +516,13 @@
                                 "name": "config",
                                 "configMap": {
                                     "name": "${APPLICATION_NAME}-cfg",
+                                    "defaultMode": 420
+                                }
+                            },
+                            {
+                                "name": "resources",
+                                "configMap": {
+                                    "name": "${APPLICATION_NAME}-res",
                                     "defaultMode": 420
                                 }
                             }
