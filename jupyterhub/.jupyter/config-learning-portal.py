@@ -814,7 +814,7 @@ if os.path.exists('/opt/app-root/resources/extra_resources.json'):
     with open('/opt/app-root/resources/extra_resources.json') as fp:
         extra_resources = fp.read().strip()
 
-def create_extra_resources(project_name):
+def create_extra_resources(project_name, project_uid):
     if not extra_resources:
         return
 
@@ -827,6 +827,11 @@ def create_extra_resources(project_name):
         try:
             kind = body['kind']
             api_version = body['apiVersion']
+
+            if kind.lower() in ('securitycontextconstraints', 'clusterrolebinding'):
+                body['metadata']['ownerReferences'] = [dict(
+                    apiVersion='v1', kind='Namespace', blockOwnerDeletion=False,
+                    controller=True, name=project_name, uid=project_uid)]
 
             resource = api_client.resources.get(api_version=api_version, kind=kind)
 
@@ -974,7 +979,7 @@ def modify_pod_hook(spawner, pod):
         print('ERROR: Error creating project. %s' % e)
         raise
 
-    for _ in range(20):
+    for _ in range(30):
         try:
             project = project_resource.get(name=project_name)
 
@@ -992,7 +997,11 @@ def modify_pod_hook(spawner, pod):
     else:
         # If can't verify project created, carry on anyway.
 
-        print('ERROR: Could not verify project. %s' % project_name)
+        print('ERROR: Could not verify project creation. %s' % project_name)
+
+        raise Exception('Could not verify project creation. %s' % project_name)
+
+    project_uid = project.metadata.uid
 
     # Create role binding in the project so the hub service account
     # can delete project when done. Will fail if the project hasn't
@@ -1167,7 +1176,7 @@ def modify_pod_hook(spawner, pod):
 
     # Create any extra resources in the project required for a workshop.
 
-    create_extra_resources(project_name)
+    create_extra_resources(project_name, project_uid)
 
     # Before can continue, need to poll looking to see if the secret for
     # the api token has been added to the service account. If don't do
