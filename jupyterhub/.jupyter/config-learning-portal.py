@@ -630,7 +630,7 @@ resource_budget_mapping = {
             "metadata": {
                 "name": "resource-limits",
                 "annotations": {
-                    "resource-budget": "large"
+                    "resource-budget": "x-large"
                 }
             },
             "spec": {
@@ -683,7 +683,7 @@ resource_budget_mapping = {
             "metadata": {
                 "name": "compute-resources",
                 "annotations": {
-                    "resource-budget": "large"
+                    "resource-budget": "x-large"
                 }
             },
             "spec": {
@@ -702,7 +702,7 @@ resource_budget_mapping = {
             "metadata": {
                 "name": "compute-resources-timebound",
                 "annotations": {
-                    "resource-budget": "large"
+                    "resource-budget": "x-large"
                 }
             },
             "spec": {
@@ -721,7 +721,7 @@ resource_budget_mapping = {
             "metadata": {
                 "name": "object-counts",
                 "annotations": {
-                    "resource-budget": "large"
+                    "resource-budget": "x-large"
                 }
             },
             "spec": {
