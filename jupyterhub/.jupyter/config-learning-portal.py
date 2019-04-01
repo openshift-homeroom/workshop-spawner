@@ -1028,12 +1028,13 @@ def modify_pod_hook(spawner, pod):
 
     resource_budget = os.environ.get('RESOURCE_BUDGET', 'default')
 
-    if resource_budget not in resource_budget_mapping:
-        resource_budget = 'default'
-    elif not resource_budget_mapping[resource_budget]:
-        resource_budget = 'default'
+    if resource_budget != 'unlimited':
+        if resource_budget not in resource_budget_mapping:
+            resource_budget = 'default'
+        elif not resource_budget_mapping[resource_budget]:
+            resource_budget = 'default'
 
-    if resource_budget != 'default':
+    if resource_budget not in ('default', 'unlimited'):
         resource_budget_item = resource_budget_mapping[resource_budget]
 
         resource_limits_definition = resource_budget_item['resource-limits']
@@ -1042,7 +1043,8 @@ def modify_pod_hook(spawner, pod):
         object_counts_definition = resource_budget_item['object-counts']
 
     # Delete any limit ranges applied to the project that may conflict
-    # with the limit range being applied.
+    # with the limit range being applied. For the case of unlimited, we
+    # delete any being applied but don't replace it.
 
     if resource_budget != 'default':
         try:
@@ -1065,7 +1067,7 @@ def modify_pod_hook(spawner, pod):
     # Create limit ranges for the project so any deployments will have
     # default memory/cpu min and max values.
 
-    if resource_budget != 'default':
+    if resource_budget not in ('default', 'unlimited'):
         try:
             body = resource_limits_definition
 
@@ -1079,7 +1081,7 @@ def modify_pod_hook(spawner, pod):
     # Delete any resource quotas applied to the project that may conflict
     # with the resource quotas being applied.
 
-    if resource_budget != 'default':
+    if resource_budget not in ('default', 'unlimited'):
         try:
             resource_quotas = resource_quota_resource.get(namespace=project_name)
 
@@ -1099,7 +1101,7 @@ def modify_pod_hook(spawner, pod):
     # Create resource quotas for the project so there is a maximum for
     # what resources can be used.
 
-    if resource_budget != 'default':
+    if resource_budget not in ('default', 'unlimited'):
         try:
             body = compute_resources_definition
 
