@@ -226,8 +226,8 @@ c.Spawner.environment['RESTART_URL'] = '/restart'
 project_resource = api_client.resources.get(
      api_version='project.openshift.io/v1', kind='Project')
 
-project_request_resource = api_client.resources.get(
-     api_version='project.openshift.io/v1', kind='ProjectRequest')
+namespace_resource = api_client.resources.get(
+     api_version='v1', kind='Namespace')
 
 service_account_resource = api_client.resources.get(
      api_version='v1', kind='ServiceAccount')
@@ -250,17 +250,24 @@ service_resource = api_client.resources.get(
 route_resource = api_client.resources.get(
      api_version='route.openshift.io/v1', kind='Route')
 
-project_request_template = string.Template("""
+namespace_template = string.Template("""
 {
-    "kind": "ProjectRequest",
-    "apiVersion": "project.openshift.io/v1",
+    "kind": "Namespace",
+    "apiVersion": "v1",
     "metadata": {
         "name": "${name}",
         "labels": {
-            "hub": "${hub}"
+            "app": "${hub}",
+            "spawner": "learning-portal"
+        },
+        "annotations": {
+            "spawner/requestor": "${requestor}",
+            "spawner/namespace": "${namespace}",
+            "spawner/deployment": "${deployment}",
+            "spawner/username": "${username}",
+            "spawner/session": "${session}"
         }
-    },
-    "description": "${description}"
+    }
 }
 """)
 
@@ -961,14 +968,16 @@ def modify_pod_hook(spawner, pod):
     # created before continue.
 
     try:
-        description = '%s/%s/%s/%s' % (namespace, application_name,
-                user_account_name, pod.metadata.name)
+        service_account_name = 'system:serviceaccount:%s:%s-%s-hub' % (
+                namespace, application_name, namespace)
 
-        text = project_request_template.safe_substitute(name=project_name,
-                hub=hub, description=description)
+        text = namespace_template.safe_substitute(name=project_name,
+                hub=hub, requestor=service_account_name, namespace=namespace,
+                deployment=application_name, username=user_account_name,
+                session=pod.metadata.name)
         body = json.loads(text)
 
-        project_request_resource.create(body=body)
+        namespace_resource.create(body=body)
 
     except ApiException as e:
         if e.status != 409:
