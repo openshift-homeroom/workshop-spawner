@@ -221,6 +221,7 @@
                     "verbs": [
                         "delete",
                         "deletecollection",
+                        "edit",
                         "get",
                         "list",
                         "patch",
