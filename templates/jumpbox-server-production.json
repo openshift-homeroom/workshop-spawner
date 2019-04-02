@@ -35,7 +35,7 @@
             "required": false
         },
         {
-            "name": "JUPYTERHUB_IMAGE",
+            "name": "SPAWNER_IMAGE",
             "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.11.1",
             "required": true
         },
@@ -149,7 +149,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "${JUPYTERHUB_IMAGE}"
+                            "name": "${SPAWNER_IMAGE}"
                         }
                     }
                 ]
