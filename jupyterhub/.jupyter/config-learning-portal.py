@@ -226,14 +226,17 @@ c.Spawner.environment['RESTART_URL'] = '/restart'
 project_resource = api_client.resources.get(
      api_version='project.openshift.io/v1', kind='Project')
 
-project_request_resource = api_client.resources.get(
-     api_version='project.openshift.io/v1', kind='ProjectRequest')
+namespace_resource = api_client.resources.get(
+     api_version='v1', kind='Namespace')
 
 service_account_resource = api_client.resources.get(
      api_version='v1', kind='ServiceAccount')
 
 secret_resource = api_client.resources.get(
      api_version='v1', kind='Secret')
+
+cluster_role_resource = api_client.resources.get(
+     api_version='rbac.authorization.k8s.io/v1', kind='ClusterRole')
 
 role_binding_resource = api_client.resources.get(
      api_version='rbac.authorization.k8s.io/v1', kind='RoleBinding')
@@ -250,17 +253,34 @@ service_resource = api_client.resources.get(
 route_resource = api_client.resources.get(
      api_version='route.openshift.io/v1', kind='Route')
 
-project_request_template = string.Template("""
+namespace_template = string.Template("""
 {
-    "kind": "ProjectRequest",
-    "apiVersion": "project.openshift.io/v1",
+    "kind": "Namespace",
+    "apiVersion": "v1",
     "metadata": {
         "name": "${name}",
         "labels": {
-            "hub": "${hub}"
-        }
-    },
-    "description": "${description}"
+            "app": "${hub}",
+            "spawner": "learning-portal"
+        },
+        "annotations": {
+            "spawner/requestor": "${requestor}",
+            "spawner/namespace": "${namespace}",
+            "spawner/deployment": "${deployment}",
+            "spawner/username": "${username}",
+            "spawner/session": "${session}"
+        },
+        "ownerReferences": [
+            {
+                "apiVersion": "v1",
+                "kind": "ClusterRole",
+                "blockOwnerDeletion": false,
+                "controller": true,
+                "name": "${owner}",
+                "uid": "${uid}"
+            }
+        ]
+    }
 }
 """)
 
@@ -630,7 +650,7 @@ resource_budget_mapping = {
             "metadata": {
                 "name": "resource-limits",
                 "annotations": {
-                    "resource-budget": "large"
+                    "resource-budget": "x-large"
                 }
             },
             "spec": {
@@ -683,7 +703,7 @@ resource_budget_mapping = {
             "metadata": {
                 "name": "compute-resources",
                 "annotations": {
-                    "resource-budget": "large"
+                    "resource-budget": "x-large"
                 }
             },
             "spec": {
@@ -702,7 +722,7 @@ resource_budget_mapping = {
             "metadata": {
                 "name": "compute-resources-timebound",
                 "annotations": {
-                    "resource-budget": "large"
+                    "resource-budget": "x-large"
                 }
             },
             "spec": {
@@ -721,7 +741,7 @@ resource_budget_mapping = {
             "metadata": {
                 "name": "object-counts",
                 "annotations": {
-                    "resource-budget": "large"
+                    "resource-budget": "x-large"
                 }
             },
             "spec": {
@@ -849,6 +869,15 @@ def create_extra_resources(project_name, project_uid):
             print('ERROR: Error creating resource %s. %s' % (body, e))
             raise
 
+project_owner_name = '%s-%s-spawner' % (application_name, namespace)
+
+try:
+    project_owner = cluster_role_resource.get(project_owner_name)
+
+except Exception as e:
+    print('ERROR: Cannot get spawner cluster role %s. %s' % (project_owner_name, e))
+    raise
+
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
     # Create the service account. We know the user name is a UUID, but
@@ -961,14 +990,17 @@ def modify_pod_hook(spawner, pod):
     # created before continue.
 
     try:
-        description = '%s/%s/%s/%s' % (namespace, application_name,
-                user_account_name, pod.metadata.name)
+        service_account_name = 'system:serviceaccount:%s:%s-%s-hub' % (
+                namespace, application_name, namespace)
 
-        text = project_request_template.safe_substitute(name=project_name,
-                hub=hub, description=description)
+        text = namespace_template.safe_substitute(name=project_name,
+                hub=hub, requestor=service_account_name, namespace=namespace,
+                deployment=application_name, username=user_account_name,
+                session=pod.metadata.name, owner=project_owner.metadata.name,
+                uid=project_owner.metadata.uid)
         body = json.loads(text)
 
-        project_request_resource.create(body=body)
+        namespace_resource.create(body=body)
 
     except ApiException as e:
         if e.status != 409:
@@ -1028,12 +1060,13 @@ def modify_pod_hook(spawner, pod):
 
     resource_budget = os.environ.get('RESOURCE_BUDGET', 'default')
 
-    if resource_budget not in resource_budget_mapping:
-        resource_budget = 'default'
-    elif not resource_budget_mapping[resource_budget]:
-        resource_budget = 'default'
+    if resource_budget != 'unlimited':
+        if resource_budget not in resource_budget_mapping:
+            resource_budget = 'default'
+        elif not resource_budget_mapping[resource_budget]:
+            resource_budget = 'default'
 
-    if resource_budget != 'default':
+    if resource_budget not in ('default', 'unlimited'):
         resource_budget_item = resource_budget_mapping[resource_budget]
 
         resource_limits_definition = resource_budget_item['resource-limits']
@@ -1042,7 +1075,8 @@ def modify_pod_hook(spawner, pod):
         object_counts_definition = resource_budget_item['object-counts']
 
     # Delete any limit ranges applied to the project that may conflict
-    # with the limit range being applied.
+    # with the limit range being applied. For the case of unlimited, we
+    # delete any being applied but don't replace it.
 
     if resource_budget != 'default':
         try:
@@ -1065,7 +1099,7 @@ def modify_pod_hook(spawner, pod):
     # Create limit ranges for the project so any deployments will have
     # default memory/cpu min and max values.
 
-    if resource_budget != 'default':
+    if resource_budget not in ('default', 'unlimited'):
         try:
             body = resource_limits_definition
 
@@ -1079,7 +1113,7 @@ def modify_pod_hook(spawner, pod):
     # Delete any resource quotas applied to the project that may conflict
     # with the resource quotas being applied.
 
-    if resource_budget != 'default':
+    if resource_budget not in ('default', 'unlimited'):
         try:
             resource_quotas = resource_quota_resource.get(namespace=project_name)
 
@@ -1099,7 +1133,7 @@ def modify_pod_hook(spawner, pod):
     # Create resource quotas for the project so there is a maximum for
     # what resources can be used.
 
-    if resource_budget != 'default':
+    if resource_budget not in ('default', 'unlimited'):
         try:
             body = compute_resources_definition
 

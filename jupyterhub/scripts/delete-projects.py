@@ -61,15 +61,13 @@ def get_projects():
 
         for project in projects.items:
             annotations = project.metadata.annotations
-            requestor = annotations and annotations['openshift.io/requester']
-            if requestor == full_account_name:
-                description = annotations['openshift.io/description']
-                if description:
-                    fields = description.split('/')
-                    if (len(fields) == 4 and fields[0] == namespace and
-                            fields[1] == application_name):
-                        project_details.append(Project(project.metadata.name,
-                                fields[2], fields[3]))
+            if annotations:
+                if (annotations['spawner/requestor'] == full_account_name and 
+                        annotations['spawner/namespace'] == namespace and
+                        annotations['spawner/deployment'] == application_name):
+                    project_details.append(Project(project.metadata.name,
+                            annotations['spawner/username'],
+                            annotations['spawner/session']))
 
     except Exception as e:
         print('ERROR: failed to list projects:', e)
