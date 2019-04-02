@@ -235,6 +235,9 @@ service_account_resource = api_client.resources.get(
 secret_resource = api_client.resources.get(
      api_version='v1', kind='Secret')
 
+cluster_role_resource = api_client.resources.get(
+     api_version='rbac.authorization.k8s.io/v1', kind='ClusterRole')
+
 role_binding_resource = api_client.resources.get(
      api_version='rbac.authorization.k8s.io/v1', kind='RoleBinding')
 
@@ -266,7 +269,17 @@ namespace_template = string.Template("""
             "spawner/deployment": "${deployment}",
             "spawner/username": "${username}",
             "spawner/session": "${session}"
-        }
+        },
+        "ownerReferences": [
+            {
+                "apiVersion": "v1",
+                "kind": "ClusterRole",
+                "blockOwnerDeletion": false,
+                "controller": true,
+                "name": "${owner}",
+                "uid": "${uid}"
+            }
+        ]
     }
 }
 """)
@@ -856,6 +869,15 @@ def create_extra_resources(project_name, project_uid):
             print('ERROR: Error creating resource %s. %s' % (body, e))
             raise
 
+project_owner_name = '%s-%s-spawner' % (application_name, namespace)
+
+try:
+    project_owner = cluster_role_resource.get(project_owner_name)
+
+except Exception as e:
+    print('ERROR: Cannot get spawner cluster role %s. %s' % (project_owner_name, e))
+    raise
+
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
     # Create the service account. We know the user name is a UUID, but
@@ -974,7 +996,8 @@ def modify_pod_hook(spawner, pod):
         text = namespace_template.safe_substitute(name=project_name,
                 hub=hub, requestor=service_account_name, namespace=namespace,
                 deployment=application_name, username=user_account_name,
-                session=pod.metadata.name)
+                session=pod.metadata.name, owner=project_owner.metadata.name,
+                uid=project_owner.metadata.uid)
         body = json.loads(text)
 
         namespace_resource.create(body=body)
