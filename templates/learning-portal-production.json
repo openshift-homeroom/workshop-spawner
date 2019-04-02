@@ -109,7 +109,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
             }
         },
@@ -119,7 +119,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-edit",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
             },
             "subjects": [
@@ -336,7 +336,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-hub",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
             },
             "spec": {
@@ -357,7 +357,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-cfg",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
             },
             "data": {
@@ -370,7 +370,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-res",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
             },
             "data": {
@@ -383,7 +383,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
             },
             "spec": {
@@ -410,13 +410,13 @@
                 ],
                 "replicas": 1,
                 "selector": {
-                    "app": "${APPLICATION_NAME}",
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "deploymentconfig": "${APPLICATION_NAME}"
                 },
                 "template": {
                     "metadata": {
                         "labels": {
-                            "app": "${APPLICATION_NAME}",
+                            "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                             "deploymentconfig": "${APPLICATION_NAME}"
                         }
                     },
@@ -537,7 +537,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-hub-data",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
             },
             "spec": {
@@ -557,7 +557,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
             },
             "spec": {
@@ -576,7 +576,7 @@
                     }
                 ],
                 "selector": {
-                    "app": "${APPLICATION_NAME}",
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "deploymentconfig": "${APPLICATION_NAME}"
                 }
             }
@@ -590,7 +590,7 @@
                     "kubernetes.io/tls-acme": "${LETS_ENCRYPT}"
                 },
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
             },
             "spec": {
@@ -615,7 +615,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-app",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}"
                 }
             },
             "spec": {
