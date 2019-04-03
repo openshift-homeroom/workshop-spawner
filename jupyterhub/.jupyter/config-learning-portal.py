@@ -828,6 +828,7 @@ c.KubeSpawner.common_labels = {
 }
 
 c.KubeSpawner.extra_labels = {
+    'spawner': 'learning-portal',
     'user': '{username}'
 }
 
