@@ -44,7 +44,7 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-jupyterhub:2.12.0",
+            "value": "quay.io/openshiftlabs/workshop-spawner:3.0.0",
             "required": true
         },
         {

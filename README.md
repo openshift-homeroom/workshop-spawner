@@ -11,7 +11,7 @@ Quick start instructions
 If you don't want to read about how the environments work, nor how they can be customised to include your own additional content and tools, run:
 
 ```
-$ oc new-app https://raw.githubusercontent.com/openshift-labs/workshop-jupyterhub/master/templates/hosted-workshop-production.json
+$ oc new-app https://raw.githubusercontent.com/openshift-labs/workshop-spawner/master/templates/hosted-workshop-production.json
 ```
 
 This will create a deployment for the ``terminals`` application. Check the output from ``oc new-app`` for the public URL the application can be accessed with, or run the following command to get details of the route.
