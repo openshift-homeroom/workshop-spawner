@@ -824,7 +824,10 @@ route_template = string.Template("""
 """)
 
 c.KubeSpawner.common_labels = {
-    'app': '%s-%s' % (application_name, namespace),
+    'app': '%s-%s' % (application_name, namespace)
+}
+
+c.KubeSpawner.extra_labels = {
     'user': '{username}'
 }
 
