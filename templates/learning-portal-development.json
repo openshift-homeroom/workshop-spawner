@@ -20,7 +20,7 @@
         },
         {
             "name": "GIT_REPOSITORY_URL",
-            "value": "https://github.com/openshift-labs/workshop-jupyterhub.git",
+            "value": "https://github.com/openshift-labs/workshop-spawner.git",
             "required": true
         },
         {
