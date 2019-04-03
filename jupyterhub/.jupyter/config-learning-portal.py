@@ -823,8 +823,8 @@ route_template = string.Template("""
 }
 """)
 
-c.KubeSpawner.extra_labels = {
-    'hub': '%s-%s' % (application_name, namespace),
+c.KubeSpawner.common_labels = {
+    'app': '%s-%s' % (application_name, namespace),
     'user': '{username}'
 }
 
