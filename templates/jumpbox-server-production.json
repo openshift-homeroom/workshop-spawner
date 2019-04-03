@@ -36,12 +36,12 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-spawner:3.0.2",
+            "value": "quay.io/openshiftlabs/workshop-spawner:3.0.3",
             "required": true
         },
         {
             "name": "KEYCLOAK_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-keycloak:3.0.2",
+            "value": "quay.io/openshiftlabs/workshop-keycloak:3.0.3",
             "required": true
         },
         {
