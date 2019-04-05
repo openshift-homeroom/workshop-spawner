@@ -162,6 +162,26 @@ class AutoAuthenticator(Authenticator):
 
 c.JupyterHub.authenticator_class = AutoAuthenticator
 
+# Mount config map for user provided environment variables for the
+# terminal and workshop.
+
+c.KubeSpawner.volumes = [
+    {
+        'name': 'envvars',
+        'configMap': {
+            'name': '%s-env' % application_name,
+            'defaultMode': 420
+        }
+    }
+]
+
+c.KubeSpawner.volume_mounts = [
+    {
+        'name': 'envvars',
+        'mountPath': '/opt/workshop/envvars'
+    }
+]
+
 # Deploy embedded web console as a separate container within the same
 # pod as the terminal instance. Currently use latest, but need to tie
 # this to the specific OpenShift version once OpenShift 4.0 is released.
