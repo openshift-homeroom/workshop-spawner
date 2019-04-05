@@ -76,7 +76,7 @@ c.KubeSpawner.volumes = [
 c.KubeSpawner.volume_mounts = [
     {
         'name': 'envvars',
-        'mountPath': '/opt/app-root/envvars'
+        'mountPath': '/opt/workshop/envvars'
     }
 ]
 
