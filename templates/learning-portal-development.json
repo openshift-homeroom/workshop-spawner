@@ -64,6 +64,14 @@
             "required": true
         },
         {
+            "name": "TERMINAL_ENVVARS",
+            "value": ""
+        },
+        {
+            "name": "WORKSHOP_ENVVARS",
+            "value": ""
+        },
+        {
             "name": "OC_VERSION",
             "value": ""
         },
@@ -434,6 +442,21 @@
             }
         },
         {
+            "kind": "ConfigMap",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-env",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "learning-portal"
+                }
+            },
+            "data": {
+                "terminal.sh": "${TERMINAL_ENVVARS}",
+                "workshop.sh": "${WORKSHOP_ENVVARS}"
+            }
+        },
+        {
             "kind": "DeploymentConfig",
             "apiVersion": "v1",
             "metadata": {
@@ -688,7 +711,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.9.0"
+                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.10.1"
                         }
                     }
                 ]

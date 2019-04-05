@@ -36,13 +36,21 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-spawner:3.0.3",
+            "value": "quay.io/openshiftlabs/workshop-spawner:3.0.4",
             "required": true
         },
         {
             "name": "KEYCLOAK_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-keycloak:3.0.3",
+            "value": "quay.io/openshiftlabs/workshop-keycloak:3.0.4",
             "required": true
+        },
+        {
+            "name": "TERMINAL_ENVVARS",
+            "value": ""
+        },
+        {
+            "name": "WORKSHOP_ENVVARS",
+            "value": ""
         },
         {
             "name": "OC_VERSION",
@@ -166,6 +174,20 @@
             },
             "data": {
                 "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
+            }
+        },
+        {
+            "kind": "ConfigMap",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-env",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "data": {
+                "terminal.sh": "${TERMINAL_ENVVARS}",
+                "workshop.sh": "${WORKSHOP_ENVVARS}"
             }
         },
         {
@@ -395,7 +417,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-terminal:2.5.0"
+                            "name": "quay.io/openshiftlabs/workshop-terminal:2.6.1"
                         }
                     }
                 ]

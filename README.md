@@ -8,7 +8,7 @@ The environment created for each user is pre-populated with OpenShift and Kubern
 Quick start instructions
 ------------------------
 
-If you don't want to read about how the environments work, nor how they can be customised to include your own additional content and tools, run:
+To quickly see what the terminal environment looks like, run:
 
 ```
 $ oc new-app https://raw.githubusercontent.com/openshift-labs/workshop-spawner/master/templates/hosted-workshop-production.json
