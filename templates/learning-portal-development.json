@@ -688,7 +688,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.10.0"
+                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.10.1"
                         }
                     }
                 ]
