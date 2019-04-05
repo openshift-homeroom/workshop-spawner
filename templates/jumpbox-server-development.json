@@ -50,6 +50,14 @@
             "required": true
         },
         {
+            "name": "TERMINAL_ENVVARS",
+            "value": ""
+        },
+        {
+            "name": "WORKSHOP_ENVVARS",
+            "value": ""
+        },
+        {
             "name": "OC_VERSION",
             "value": ""
         },
@@ -203,6 +211,20 @@
             },
             "data": {
                 "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
+            }
+        },
+        {
+            "kind": "ConfigMap",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-env",
+                "labels": {
+                    "app": "${APPLICATION_NAME}"
+                }
+            },
+            "data": {
+                "terminal.sh": "${TERMINAL_ENVVARS}",
+                "workshop.sh": "${WORKSHOP_ENVVARS}"
             }
         },
         {
