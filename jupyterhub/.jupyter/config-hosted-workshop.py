@@ -60,6 +60,26 @@ c.JupyterHub.admin_access = True
 
 c.Authenticator.admin_users = set(os.environ.get('ADMIN_USERS', '').split())
 
+# Mount config map for user provided environment variables for the
+# terminal and workshop.
+
+c.KubeSpawner.volumes = [
+    {
+	'name': 'envvars',
+	'configMap': {
+	    'name': '%s-env' % application_name,
+	    'defaultMode': 420
+	}
+    }
+]
+
+c.KubeSpawner.volume_mounts = [
+    {
+        'name': 'envvars',
+        'mountPath': '/opt/app-root/envvars'
+    }
+]
+
 # For workshops we provide each user with a persistent volume so they
 # don't loose their work. This is mounted on /opt/app-root, so we need
 # to copy the contents from the image into the persistent volume the
@@ -82,22 +102,22 @@ if volume_size:
 
     c.KubeSpawner.storage_access_modes = ['ReadWriteOnce']
 
-    c.KubeSpawner.volumes = [
+    c.KubeSpawner.volumes.extend([
         {
             'name': 'data',
             'persistentVolumeClaim': {
                 'claimName': c.KubeSpawner.pvc_name_template
             }
         }
-    ]
+    ])
 
-    c.KubeSpawner.volume_mounts = [
+    c.KubeSpawner.volume_mounts.extend([
         {
             'name': 'data',
             'mountPath': '/opt/app-root',
             'subPath': 'workspace'
         }
-    ]
+    ])
 
     c.KubeSpawner.init_containers.extend([
         {
