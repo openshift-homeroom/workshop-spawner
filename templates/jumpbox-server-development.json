@@ -184,8 +184,8 @@
                     "contextDir": "jupyterhub"
                 },
                 "strategy": {
-                    "type": "Source",
-                    "sourceStrategy": {
+                    "type": "Docker",
+                    "dockerStrategy": {
                         "from": {
                             "kind": "DockerImage",
                             "name": "${JUPYTERHUB_IMAGE}"
@@ -497,8 +497,8 @@
                     "contextDir": "keycloak"
                 },
                 "strategy": {
-                    "type": "Source",
-                    "sourceStrategy": {
+                    "type": "Docker",
+                    "dockerStrategy": {
                         "from": {
                             "kind": "DockerImage",
                             "name": "jboss/keycloak-openshift:4.0.0.Final"
