@@ -50,7 +50,7 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-spawner:3.0.4",
+            "value": "quay.io/openshiftlabs/workshop-spawner:3.0.5",
             "required": true
         },
         {
@@ -667,7 +667,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.10.1"
+                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.10.2"
                         }
                     }
                 ]
