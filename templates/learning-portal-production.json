@@ -19,6 +19,10 @@
             "required": true
         },
         {
+            "name": "SPAWNER_MEMORY",
+            "value": "768Mi"
+        },
+        {
             "name": "WORKSHOP_MEMORY",
             "value": "512Mi"
         },
@@ -467,6 +471,14 @@
                                         "protocol": "TCP"
                                     }
                                 ],
+                                "resources": {
+                                    "limits": {
+                                        "memory": "${SPAWNER_MEMORY}"
+                                    },
+                                    "requests": {
+                                        "memory": "${SPAWNER_MEMORY}"
+                                    }
+                                },
                                 "env": [
                                     {
                                         "name": "CONFIGURATION_TYPE",
