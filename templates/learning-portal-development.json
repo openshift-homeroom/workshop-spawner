@@ -29,6 +29,10 @@
             "required": true
         },
         {
+            "name": "SPAWNER_MEMORY",
+            "value": "768Mi"
+        },
+        {
             "name": "WORKSHOP_MEMORY",
             "value": "512Mi"
         },
@@ -511,6 +515,36 @@
                                         "protocol": "TCP"
                                     }
                                 ],
+                                "resources": {
+                                    "limits": {
+                                        "memory": "${SPAWNER_MEMORY}"
+                                    },
+                                    "requests": {
+                                        "memory": "${SPAWNER_MEMORY}"
+                                    }
+                                },
+                                "readinessProbe": {
+                                    "httpGet": {
+                                        "path": "/hub/api",
+                                        "port": 8080,
+                                        "scheme": "HTTP"
+                                    },
+                                    "periodSeconds": 10,
+                                    "successThreshold": 1,
+                                    "failureThreshold": 3,
+                                    "timeoutSeconds": 1
+                                },
+                                "livenessProbe": {
+                                    "httpGet": {
+                                        "path": "/hub/api",
+                                        "port": 8080,
+                                        "scheme": "HTTP"
+                                    },
+                                    "periodSeconds": 10,
+                                    "successThreshold": 1,
+                                    "failureThreshold": 3,
+                                    "timeoutSeconds": 1
+                                },
                                 "env": [
                                     {
                                         "name": "CONFIGURATION_TYPE",
