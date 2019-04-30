@@ -186,6 +186,8 @@ c.KubeSpawner.volume_mounts = [
 # pod as the terminal instance. Currently use latest, but need to tie
 # this to the specific OpenShift version once OpenShift 4.0 is released.
 
+console_branding = os.environ.get('CONSOLE_BRANDING', 'openshift')
+
 c.KubeSpawner.extra_containers.extend([
     {
         "name": "console",
@@ -215,6 +217,10 @@ c.KubeSpawner.extra_containers.extend([
             {
                 "name": "BRIDGE_USER_AUTH",
                 "value": "disabled"
+            },
+            {
+                "name": "BRIDGE_BRANDING",
+                "value": console_branding
             }
         ],
         "resources": {
