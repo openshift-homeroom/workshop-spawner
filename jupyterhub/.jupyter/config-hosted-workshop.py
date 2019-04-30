@@ -247,6 +247,8 @@ def modify_pod_hook(spawner, pod):
             }
         ])
 
+        console_branding = os.environ.get('CONSOLE_BRANDING', 'openshift')
+
         pod.spec.containers.extend([
             {
                 "name": "console",
@@ -284,6 +286,10 @@ def modify_pod_hook(spawner, pod):
                     {
                         "name": "BRIDGE_K8S_AUTH",
                         "value": "bearer-token"
+                    },
+                    {
+                        "name": "BRIDGE_BRANDING",
+                        "value": console_branding
                     }
                 ],
                 "resources": {
