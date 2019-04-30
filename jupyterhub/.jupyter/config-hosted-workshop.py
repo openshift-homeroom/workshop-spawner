@@ -65,11 +65,11 @@ c.Authenticator.admin_users = set(os.environ.get('ADMIN_USERS', '').split())
 
 c.KubeSpawner.volumes = [
     {
-	'name': 'envvars',
-	'configMap': {
-	    'name': '%s-env' % application_name,
-	    'defaultMode': 420
-	}
+        'name': 'envvars',
+        'configMap': {
+            'name': '%s-env' % application_name,
+            'defaultMode': 420
+        }
     }
 ]
 
@@ -128,14 +128,14 @@ if volume_size:
                 '/opt/app-root',
                 '/mnt/workspace'
             ],
-	    "resources": {
-		"limits": {
-		    "memory": os.environ.get('WORKSHOP_MEMORY', '128Mi')
-		},
-		"requests": {
-		    "memory": os.environ.get('WORKSHOP_MEMORY', '128Mi')
-		}
-	    },
+            "resources": {
+                "limits": {
+                    "memory": os.environ.get('WORKSHOP_MEMORY', '128Mi')
+                },
+                "requests": {
+                    "memory": os.environ.get('WORKSHOP_MEMORY', '128Mi')
+                }
+            },
             'volumeMounts': [
                 {
                     'name': 'data',
@@ -286,14 +286,14 @@ def modify_pod_hook(spawner, pod):
                         "value": "bearer-token"
                     }
                 ],
-		"resources": {
-		    "limits": {
-			"memory": os.environ.get('CONSOLE_MEMORY', '128Mi')
-		    },
-		    "requests": {
-			"memory": os.environ.get('CONSOLE_MEMORY', '128Mi')
-		    }
-		},
+                "resources": {
+                    "limits": {
+                        "memory": os.environ.get('CONSOLE_MEMORY', '128Mi')
+                    },
+                    "requests": {
+                        "memory": os.environ.get('CONSOLE_MEMORY', '128Mi')
+                    }
+                },
                 'volumeMounts': [
                     {
                         'name': 'kubeconfig',
