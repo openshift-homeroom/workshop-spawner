@@ -31,6 +31,10 @@
             "value": "128Mi"
         },
         {
+            "name": "CONSOLE_BRANDING",
+            "value": "openshift"
+        },
+        {
             "name": "SERVER_LIMIT",
             "value": "8"
         },
@@ -54,7 +58,7 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-spawner:3.0.6",
+            "value": "quay.io/openshiftlabs/workshop-spawner:3.0.7",
             "required": true
         },
         {
@@ -525,6 +529,10 @@
                                     {
                                         "name": "CONSOLE_MEMORY",
                                         "value": "${CONSOLE_MEMORY}"
+                                    },
+                                    {
+                                        "name": "CONSOLE_BRANDING",
+                                        "value": "${CONSOLE_BRANDING}"
                                     },
                                     {
                                         "name": "IDLE_TIMEOUT",

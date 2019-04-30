@@ -41,6 +41,10 @@
             "value": "128Mi"
         },
         {
+            "name": "CONSOLE_BRANDING",
+            "value": "openshift"
+        },
+        {
             "name": "SERVER_LIMIT",
             "value": "8"
         },
@@ -569,6 +573,10 @@
                                     {
                                         "name": "CONSOLE_MEMORY",
                                         "value": "${CONSOLE_MEMORY}"
+                                    },
+                                    {
+                                        "name": "CONSOLE_BRANDING",
+                                        "value": "${CONSOLE_BRANDING}"
                                     },
                                     {
                                         "name": "IDLE_TIMEOUT",
