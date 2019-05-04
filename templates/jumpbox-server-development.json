@@ -62,6 +62,10 @@
             "value": ""
         },
         {
+            "name": "GATEWAY_ENVVARS",
+            "value": ""
+        },
+        {
             "name": "OC_VERSION",
             "value": ""
         },
@@ -228,7 +232,8 @@
             },
             "data": {
                 "terminal.sh": "${TERMINAL_ENVVARS}",
-                "workshop.sh": "${WORKSHOP_ENVVARS}"
+                "workshop.sh": "${WORKSHOP_ENVVARS}",
+                "gateway.sh": "${GATEWAY_ENVVARS}"
             }
         },
         {
