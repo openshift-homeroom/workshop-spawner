@@ -52,7 +52,7 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-spawner:3.0.7",
+            "value": "quay.io/openshiftlabs/workshop-spawner:3.0.8",
             "required": true
         },
         {
@@ -61,6 +61,10 @@
         },
         {
             "name": "WORKSHOP_ENVVARS",
+            "value": ""
+        },
+        {
+            "name": "GATEWAY_ENVVARS",
             "value": ""
         },
         {
@@ -171,7 +175,8 @@
             },
             "data": {
                 "terminal.sh": "${TERMINAL_ENVVARS}",
-                "workshop.sh": "${WORKSHOP_ENVVARS}"
+                "workshop.sh": "${WORKSHOP_ENVVARS}",
+                "gateway.sh": "${GATEWAY_ENVVARS}"
             }
         },
         {
