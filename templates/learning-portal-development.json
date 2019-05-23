@@ -380,7 +380,6 @@
                 }
             }
         },
-
         {
             "kind": "BuildConfig",
             "apiVersion": "v1",
@@ -766,4 +765,3 @@
         }
     ]
 }
-
