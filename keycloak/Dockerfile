@@ -1,4 +1,4 @@
-FROM jboss/keycloak-openshift:4.0.0.Final
+FROM jboss/keycloak-openshift:4.8.3.Final
 
 USER root
 
