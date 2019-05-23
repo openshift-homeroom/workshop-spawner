@@ -162,6 +162,17 @@ class AutoAuthenticator(Authenticator):
 
 c.JupyterHub.authenticator_class = AutoAuthenticator
 
+# Override labels on pods so matches label used by the spawner.
+
+c.KubeSpawner.common_labels = {
+    'app': '%s-%s' % (application_name, namespace)
+}
+
+c.KubeSpawner.extra_labels = {
+    'spawner': 'learning-portal',
+    'user': '{username}'
+}
+
 # Mount config map for user provided environment variables for the
 # terminal and workshop.
 
@@ -1070,15 +1081,6 @@ route_template = string.Template("""
     }
 }
 """)
-
-c.KubeSpawner.common_labels = {
-    'app': '%s-%s' % (application_name, namespace)
-}
-
-c.KubeSpawner.extra_labels = {
-    'spawner': 'learning-portal',
-    'user': '{username}'
-}
 
 extra_resources = {}
 
