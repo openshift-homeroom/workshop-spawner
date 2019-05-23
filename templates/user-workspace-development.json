@@ -2,15 +2,30 @@
     "kind": "Template",
     "apiVersion": "v1",
     "metadata": {
-        "name": "jumpbox-server-production",
+        "name": "user-workspace-development",
         "annotations": {
-            "openshift.io/display-name": "Jumpbox Server (Production)"
+            "openshift.io/display-name": "User Workspace (Development)"
         }
     },
     "parameters": [
         {
+            "name": "PROJECT_NAME",
+            "value": "",
+            "required": true
+        },
+        {
             "name": "APPLICATION_NAME",
-            "value": "jumpbox",
+            "value": "workspace",
+            "required": true
+        },
+        {
+            "name": "GIT_REPOSITORY_URL",
+            "value": "https://github.com/openshift-labs/workshop-spawner.git",
+            "required": true
+        },
+        {
+            "name": "GIT_REPOSITORY_REF",
+            "value": "develop",
             "required": true
         },
         {
@@ -20,6 +35,18 @@
         {
             "name": "WORKSHOP_MEMORY",
             "value": "512Mi"
+        },
+        {
+            "name": "CONSOLE_MEMORY",
+            "value": "128Mi"
+        },
+        {
+            "name": "CONSOLE_BRANDING",
+            "value": "openshift"
+        },
+        {
+            "name": "CONSOLE_VERSION",
+            "value": "4.2.0"
         },
         {
             "name": "VOLUME_SIZE",
@@ -34,18 +61,18 @@
             "value": "7200"
         },
         {
+            "name": "RESOURCE_BUDGET",
+            "value": "default",
+            "required": true
+        },
+        {
             "name": "TERMINAL_IMAGE",
             "value": "",
             "required": false
         },
         {
-            "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-spawner:3.1.0",
-            "required": true
-        },
-        {
-            "name": "KEYCLOAK_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-keycloak:3.1.0",
+            "name": "JUPYTERHUB_IMAGE",
+            "value": "quay.io/jupyteronopenshift/jupyterhub:3.0.7",
             "required": true
         },
         {
@@ -107,6 +134,28 @@
             "required": true
         },
         {
+            "name": "SPAWNER_RULES",
+            "value": "[]",
+            "required": true
+        },
+        {
+            "name": "EXTRA_RESOURCES",
+            "value": ""
+        },
+        {
+            "name": "SESSION_RULES",
+            "value": "[]",
+            "required": true
+        },
+        {
+            "name": "EXPOSED_PORTS",
+            "value": ""
+        },
+        {
+            "name": "HOMEROOM_LINK",
+            "value": ""
+        },
+        {
             "name": "JUPYTERHUB_HOST",
             "value": ""
         },
@@ -125,9 +174,10 @@
             "kind": "ServiceAccount",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-hub",
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             }
         },
@@ -137,17 +187,223 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-edit",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "subjects": [
                 {
                     "kind": "ServiceAccount",
-                    "name": "${APPLICATION_NAME}-hub"
+                    "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub"
                 }
             ],
             "roleRef": {
                 "name": "edit"
+            }
+        },
+        {
+            "kind": "ClusterRole",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
+                }
+            },
+            "rules": [
+                {
+                    "apiGroups": [
+                        "",
+                        "authorization.openshift.io",
+                        "rbac.authorization.k8s.io"
+                    ],
+                    "resourceNames": [
+                        "view",
+                        "edit",
+                        "admin"
+                    ],
+                    "resources": [
+                        "clusterroles",
+                        "roles"
+                    ],
+                    "verbs": [
+                        "bind"
+                    ]
+                },
+                {
+                    "apiGroups": [
+                        "",
+                        "authorization.openshift.io",
+                        "rbac.authorization.k8s.io"
+                    ],
+                    "resources": [
+                        "clusterrolebindings",
+                        "rolebindings"
+                    ],
+                    "verbs": [
+                        "create",
+                        "delete",
+                        "deletecollection",
+                        "get",
+                        "list",
+                        "patch",
+                        "update",
+                        "watch"
+                    ]
+                },
+                {
+                    "apiGroups": [
+                        ""
+                    ],
+                    "resources": [
+                        "limitranges",
+                        "resourcequotas"
+                    ],
+                    "verbs": [
+                        "create",
+                        "delete",
+                        "deletecollection",
+                        "get",
+                        "list",
+                        "patch",
+                        "update",
+                        "watch"
+                    ]
+                },
+                {
+                    "apiGroups": [
+                        ""
+                    ],
+                    "resources": [
+                        "namespaces"
+                    ],
+                    "verbs": [
+                        "create",
+                        "delete",
+                        "deletecollection",
+                        "edit",
+                        "get",
+                        "list",
+                        "patch",
+                        "update",
+                        "watch"
+                    ]
+                },
+                {
+                    "apiGroups": [
+                        "",
+                        "project.openshift.io"
+                    ],
+                    "resources": [
+                        "projects"
+                    ],
+                    "verbs": [
+                        "delete",
+                        "get",
+                        "list",
+                        "watch"
+                    ]
+                },
+                {
+                    "apiGroups": [
+                        "",
+                        "project.openshift.io"
+                    ],
+                    "resources": [
+                        "projectrequests"
+                    ],
+                    "verbs": [
+                        "create"
+                    ]
+                }
+            ]
+        },
+        {
+            "kind": "ClusterRoleBinding",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
+                }
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
+                    "namespace": "${PROJECT_NAME}"
+                }
+            ],
+            "roleRef": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner"
+            }
+        },
+        {
+            "kind": "ClusterRole",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner-rules",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
+                }
+            },
+            "rules": "${{SPAWNER_RULES}}"
+        },
+        {
+            "kind": "ClusterRoleBinding",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner-rules",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
+                }
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
+                    "namespace": "${PROJECT_NAME}"
+                }
+            ],
+            "roleRef": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner-rules"
+            }
+        },
+        {
+            "kind": "ClusterRole",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-session-rules",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
+                }
+            },
+            "rules": "${{SESSION_RULES}}"
+        },
+        {
+            "kind": "ClusterRoleBinding",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-session-rules",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
+                }
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
+                    "namespace": "${PROJECT_NAME}"
+                }
+            ],
+            "roleRef": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-session-rules"
             }
         },
         {
@@ -156,19 +412,53 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-hub",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
+                }
+            }
+        },
+        {
+            "kind": "BuildConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-hub",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "spec": {
-                "tags": [
+                "triggers": [
                     {
-                        "name": "latest",
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange"
+                    }
+                ],
+                "source": {
+                    "type": "Git",
+                    "git": {
+                        "uri": "${GIT_REPOSITORY_URL}",
+                        "ref": "${GIT_REPOSITORY_REF}"
+                    },
+                    "contextDir": "jupyterhub"
+                },
+                "strategy": {
+                    "type": "Docker",
+                    "dockerStrategy": {
                         "from": {
                             "kind": "DockerImage",
-                            "name": "${SPAWNER_IMAGE}"
+                            "name": "${JUPYTERHUB_IMAGE}"
                         }
                     }
-                ]
+                },
+                "output": {
+                    "to": {
+                        "kind": "ImageStreamTag",
+                        "name": "${APPLICATION_NAME}-hub:latest"
+                    }
+                }
             }
         },
         {
@@ -177,7 +467,8 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-cfg",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "data": {
@@ -188,9 +479,24 @@
             "kind": "ConfigMap",
             "apiVersion": "v1",
             "metadata": {
+                "name": "${APPLICATION_NAME}-res",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
+                }
+            },
+            "data": {
+                "extra_resources.json": "${EXTRA_RESOURCES}"
+            }
+        },
+        {
+            "kind": "ConfigMap",
+            "apiVersion": "v1",
+            "metadata": {
                 "name": "${APPLICATION_NAME}-env",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "data": {
@@ -205,7 +511,8 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "spec": {
@@ -232,18 +539,18 @@
                 ],
                 "replicas": 1,
                 "selector": {
-                    "app": "${APPLICATION_NAME}",
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "deploymentconfig": "${APPLICATION_NAME}"
                 },
                 "template": {
                     "metadata": {
                         "labels": {
-                            "app": "${APPLICATION_NAME}",
+                            "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                             "deploymentconfig": "${APPLICATION_NAME}"
                         }
                     },
                     "spec": {
-                        "serviceAccountName": "${APPLICATION_NAME}-hub",
+                        "serviceAccountName": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
                         "containers": [
                             {
                                 "name": "spawner",
@@ -286,7 +593,7 @@
                                 "env": [
                                     {
                                         "name": "CONFIGURATION_TYPE",
-                                        "value": "jumpbox-server"
+                                        "value": "user-workspace"
                                     },
                                     {
                                         "name": "APPLICATION_NAME",
@@ -301,6 +608,18 @@
                                         "value": "${WORKSHOP_MEMORY}"
                                     },
                                     {
+                                        "name": "CONSOLE_MEMORY",
+                                        "value": "${CONSOLE_MEMORY}"
+                                    },
+                                    {
+                                        "name": "CONSOLE_BRANDING",
+                                        "value": "${CONSOLE_BRANDING}"
+                                    },
+                                    {
+                                        "name": "CONSOLE_VERSION",
+                                        "value": "${CONSOLE_VERSION}"
+                                    },
+                                    {
                                         "name": "VOLUME_SIZE",
                                         "value": "${VOLUME_SIZE}"
                                     },
@@ -311,6 +630,10 @@
                                     {
                                         "name": "IDLE_TIMEOUT",
                                         "value": "${IDLE_TIMEOUT}"
+                                    },
+                                    {
+                                        "name": "RESOURCE_BUDGET",
+                                        "value": "${RESOURCE_BUDGET}"
                                     },
                                     {
                                         "name": "OC_VERSION",
@@ -325,6 +648,14 @@
                                         "value": "${KUBECTL_VERSION}"
                                     },
                                     {
+                                        "name": "EXPOSED_PORTS",
+                                        "value": "${EXPOSED_PORTS}"
+                                    },
+                                    {
+                                        "name": "HOMEROOM_LINK",
+                                        "value": "${HOMEROOM_LINK}"
+                                    },
+                                    {
                                         "name": "OAUTH_CLIENT_SECRET",
                                         "value": "${OAUTH_CLIENT_SECRET}"
                                     }
@@ -337,6 +668,10 @@
                                     {
                                         "name": "config",
                                         "mountPath": "/opt/app-root/configs"
+                                    },
+                                    {
+                                        "name": "resources",
+                                        "mountPath": "/opt/app-root/resources"
                                     }
                                 ]
                             }
@@ -354,6 +689,13 @@
                                     "name": "${APPLICATION_NAME}-cfg",
                                     "defaultMode": 420
                                 }
+                            },
+                            {
+                                "name": "resources",
+                                "configMap": {
+                                    "name": "${APPLICATION_NAME}-res",
+                                    "defaultMode": 420
+                                }
                             }
                         ]
                     }
@@ -366,7 +708,8 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-hub-data",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "spec": {
@@ -386,7 +729,8 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "spec": {
@@ -405,7 +749,7 @@
                     }
                 ],
                 "selector": {
-                    "app": "${APPLICATION_NAME}",
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "deploymentconfig": "${APPLICATION_NAME}"
                 }
             }
@@ -419,7 +763,8 @@
                     "kubernetes.io/tls-acme": "${LETS_ENCRYPT}"
                 },
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "spec": {
@@ -444,7 +789,8 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-app",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "spec": {
@@ -456,7 +802,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-terminal:2.6.1"
+                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.10.5"
                         }
                     }
                 ]
@@ -468,19 +814,53 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
+                }
+            }
+        },
+        {
+            "kind": "BuildConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-keycloak",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "spec": {
-                "tags": [
+                "triggers": [
                     {
-                        "name": "latest",
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange"
+                    }
+                ],
+                "source": {
+                    "type": "Git",
+                    "git": {
+                        "uri": "${GIT_REPOSITORY_URL}",
+                        "ref": "${GIT_REPOSITORY_REF}"
+                    },
+                    "contextDir": "keycloak"
+                },
+                "strategy": {
+                    "type": "Docker",
+                    "dockerStrategy": {
                         "from": {
                             "kind": "DockerImage",
-                            "name": "${KEYCLOAK_IMAGE}"
+                            "name": "jboss/keycloak-openshift:4.0.0.Final"
                         }
                     }
-                ]
+                },
+                "output": {
+                    "to": {
+                        "kind": "ImageStreamTag",
+                        "name": "${APPLICATION_NAME}-keycloak:latest"
+                    }
+                }
             }
         },
         {
@@ -489,7 +869,8 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "spec": {
@@ -516,19 +897,19 @@
                 ],
                 "replicas": 1,
                 "selector": {
-                    "app": "${APPLICATION_NAME}",
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "deploymentconfig": "${APPLICATION_NAME}-keycloak"
                 },
                 "template": {
                     "metadata": {
                         "name": "${APPLICATION_NAME}-keycloak",
                         "labels": {
-                            "app": "${APPLICATION_NAME}",
+                            "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                             "deploymentconfig": "${APPLICATION_NAME}-keycloak"
                         }
                     },
                     "spec": {
-                        "serviceAccountName": "${APPLICATION_NAME}-hub",
+                        "serviceAccountName": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
                         "containers": [
                             {
                                 "name": "keycloak",
@@ -605,7 +986,8 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "spec": {
@@ -624,7 +1006,7 @@
                     }
                 ],
                 "selector": {
-                    "app": "${APPLICATION_NAME}",
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "deploymentconfig": "${APPLICATION_NAME}-keycloak"
                 }
             }
@@ -638,7 +1020,8 @@
                     "kubernetes.io/tls-acme": "${LETS_ENCRYPT}"
                 },
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "spec": {
@@ -662,7 +1045,8 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak-data",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "spec": {
@@ -682,13 +1066,14 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak-db",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "spec": {
                 "replicas": 1,
                 "selector": {
-                    "app": "${APPLICATION_NAME}",
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "deploymentconfig": "${APPLICATION_NAME}-keycloak-db"
                 },
                 "strategy": {
@@ -697,7 +1082,7 @@
                 "template": {
                     "metadata": {
                         "labels": {
-                            "app": "${APPLICATION_NAME}",
+                            "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                             "deploymentconfig": "${APPLICATION_NAME}-keycloak-db"
                         }
                     },
@@ -785,7 +1170,8 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak-db",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace"
                 }
             },
             "spec": {
@@ -798,7 +1184,7 @@
                     }
                 ],
                 "selector": {
-                    "app": "${APPLICATION_NAME}",
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "deploymentconfig": "${APPLICATION_NAME}-keycloak-db"
                 }
             }

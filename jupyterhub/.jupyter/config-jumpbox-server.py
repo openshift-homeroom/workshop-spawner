@@ -6,7 +6,7 @@
 
 keycloak_name = '%s-keycloak' % application_name
 keycloak_hostname = extract_hostname(routes, keycloak_name)
-keycloak_realm = 'jupyterhub'
+keycloak_realm = 'homeroom'
 
 os.environ['OAUTH2_TOKEN_URL'] = 'https://%s/auth/realms/%s/protocol/openid-connect/token' % (keycloak_hostname, keycloak_realm)
 os.environ['OAUTH2_AUTHORIZE_URL'] = 'https://%s/auth/realms/%s/protocol/openid-connect/auth' % (keycloak_hostname, keycloak_realm)
@@ -24,7 +24,7 @@ c.OAuthenticator.login_service = "KeyCloak"
 
 c.OAuthenticator.oauth_callback_url = 'https://%s/hub/oauth_callback' % public_hostname
 
-c.OAuthenticator.client_id = 'jupyterhub'
+c.OAuthenticator.client_id = 'homeroom'
 c.OAuthenticator.client_secret = os.environ.get('OAUTH_CLIENT_SECRET')
 
 c.OAuthenticator.tls_verify = False

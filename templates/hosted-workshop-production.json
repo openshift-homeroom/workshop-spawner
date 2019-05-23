@@ -30,6 +30,10 @@
             "value": "openshift"
         },
         {
+            "name": "CONSOLE_VERSION",
+            "value": "4.2.0"
+        },
+        {
             "name": "VOLUME_SIZE",
             "value": ""
         },
@@ -52,7 +56,7 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-spawner:3.0.9",
+            "value": "quay.io/openshiftlabs/workshop-spawner:3.1.0",
             "required": true
         },
         {
@@ -288,6 +292,10 @@
                                     {
                                         "name": "CONSOLE_BRANDING",
                                         "value": "${CONSOLE_BRANDING}"
+                                    },
+                                    {
+                                        "name": "CONSOLE_VERSION",
+                                        "value": "${CONSOLE_VERSION}"
                                     },
                                     {
                                         "name": "VOLUME_SIZE",

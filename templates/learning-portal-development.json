@@ -45,6 +45,10 @@
             "value": "openshift"
         },
         {
+            "name": "CONSOLE_VERSION",
+            "value": "4.2.0"
+        },
+        {
             "name": "SERVER_LIMIT",
             "value": "8"
         },
@@ -380,7 +384,6 @@
                 }
             }
         },
-
         {
             "kind": "BuildConfig",
             "apiVersion": "v1",
@@ -584,6 +587,10 @@
                                         "value": "${CONSOLE_BRANDING}"
                                     },
                                     {
+                                        "name": "CONSOLE_VERSION",
+                                        "value": "${CONSOLE_VERSION}"
+                                    },
+                                    {
                                         "name": "IDLE_TIMEOUT",
                                         "value": "${IDLE_TIMEOUT}"
                                     },
@@ -766,4 +773,3 @@
         }
     ]
 }
-

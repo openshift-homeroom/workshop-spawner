@@ -248,11 +248,12 @@ def modify_pod_hook(spawner, pod):
         ])
 
         console_branding = os.environ.get('CONSOLE_BRANDING', 'openshift')
+        console_version = os.environ.get('CONSOLE_VERSION', '4.2.0')
 
         pod.spec.containers.extend([
             {
                 "name": "console",
-                "image": "quay.io/openshift/origin-console:latest",
+                "image": "quay.io/openshift/origin-console:%s" % console_version,
                 "command": [ "bash", "-c", "set -x; export BRIDGE_K8S_AUTH_BEARER_TOKEN=`cat /var/run/workshop/token`; /opt/bridge/bin/bridge" ],
                 "env": [
                     {

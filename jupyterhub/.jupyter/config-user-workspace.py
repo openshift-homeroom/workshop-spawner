@@ -1,166 +1,48 @@
-# This file provides configuration specific to the 'learning-portal'
-# deployment mode. In this mode, anonymous authentication is used, with
-# users being given their own unique service account and project to work
-# in. The project and service account will be deleted when the session
-# goes idle or the time limit for the session has expired.
-
-# Use an anonymous authenticator. Users will be automatically assigned a
-# user name and don't need to provide a password. During the process of
-# doing the psuedo authentication, create a service account for them,
-# where the name of service account is their user name. The special
-# '/restart' URL handler will cause any session to be restarted and they
-# will be given a new instance.
+# This file provides configuration specific to the 'user-workspace'
+# deployment mode. In this mode authentication for JupyterHub is done
+# against a KeyCloak authentication server.
 
 import string
 import json
-import time
-import functools
-import random
 
-from tornado import gen, web
-
-from jupyterhub.auth import Authenticator
-from jupyterhub.handlers import BaseHandler
-from jupyterhub.utils import url_path_join
+from tornado import web, gen
 
 from kubernetes.client.rest import ApiException
 
-service_account_resource = api_client.resources.get(
-     api_version='v1', kind='ServiceAccount')
+# Configure standalone KeyCloak as the authentication provider for users.
 
-service_account_template = string.Template("""
-{
-    "kind": "ServiceAccount",
-    "apiVersion": "v1",
-    "metadata": {
-        "name": "${name}",
-        "labels": {
-            "hub": "${hub}"
-        }
-    }
-}
-""")
+keycloak_name = '%s-keycloak' % application_name
+keycloak_hostname = extract_hostname(routes, keycloak_name)
+keycloak_realm = 'homeroom'
 
-class AnonymousUser(object):
+os.environ['OAUTH2_TOKEN_URL'] = 'https://%s/auth/realms/%s/protocol/openid-connect/token' % (keycloak_hostname, keycloak_realm)
+os.environ['OAUTH2_AUTHORIZE_URL'] = 'https://%s/auth/realms/%s/protocol/openid-connect/auth' % (keycloak_hostname, keycloak_realm)
+os.environ['OAUTH2_USERDATA_URL'] = 'https://%s/auth/realms/%s/protocol/openid-connect/userinfo' % (keycloak_hostname, keycloak_realm)
 
-    def __init__(self, name):
-        self.name = name
-        self.active = False
+os.environ['OAUTH2_TLS_VERIFY'] = '0'
+os.environ['OAUTH_TLS_VERIFY'] = '0'
 
-@functools.lru_cache(10000)
-def get_user_details(name):
-    return AnonymousUser(name)
+os.environ['OAUTH2_USERNAME_KEY'] = 'preferred_username'
 
-random_userid_chars = 'bcdfghjklmnpqrstvwxyz0123456789'
+from oauthenticator.generic import GenericOAuthenticator
+c.JupyterHub.authenticator_class = GenericOAuthenticator
 
-def generate_random_userid(n=5):
-    return ''.join(random.choice(random_userid_chars) for _ in range(n))
+c.OAuthenticator.login_service = "KeyCloak"
 
-class AutoAuthenticateHandler(BaseHandler):
+c.OAuthenticator.oauth_callback_url = 'https://%s/hub/oauth_callback' % public_hostname
 
-    def initialize(self, force_new_server, process_user):
-        super().initialize()
-        self.force_new_server = force_new_server
-        self.process_user = process_user
+c.OAuthenticator.client_id = 'homeroom'
+c.OAuthenticator.client_secret = os.environ.get('OAUTH_CLIENT_SECRET')
 
-    def generate_user(self):
-        while True:
-            name = generate_random_userid()
-            user = get_user_details(name)
-            if not user.active:
-                user.active = True
-                return name
+c.OAuthenticator.tls_verify = False
 
-    @gen.coroutine
-    def get(self):
-        raw_user = self.get_current_user()
+c.Authenticator.auto_login = True
 
-        if raw_user:
-            if self.force_new_server and raw_user.running:
-                # Stop the user's current terminal instance if it is
-                # running so that they get a new one. Should hopefully
-                # only end up here if have hit the /restart URL path.
+# Enable admin access to designated users of the OpenShift cluster.
 
-                status = yield raw_user.spawner.poll_and_notify()
-                if status is None:
-                    yield self.stop_single_user(raw_user)
+c.JupyterHub.admin_access = True
 
-                # Also force a new user name be generated so don't have
-                # issues with browser caching web pages for anything
-                # want to be able to change for a demo. Only way to do
-                # this seems to be to clear the login cookie and force a
-                # redirect back to the top of the site, hoping we do not
-                # get into a loop.
-
-                self.clear_login_cookie()
-                return self.redirect('/')
-
-        else:
-            username = self.generate_user()
-            raw_user = self.user_from_username(username)
-            self.set_login_cookie(raw_user)
-
-        user = yield gen.maybe_future(self.process_user(raw_user, self))
-
-        # Ensure that a service account exists corresponding to the
-        # user.
-        #
-        # XXX Disable this for now and leave until spawning the pod.
-        # If do it here and client doesn't support cookies, the redirect
-        # loop results in a service account being created each time
-        # through the loop.
-
-        # while True:
-        #     hub = '%s-%s' % (application_name, namespace)
-        #     account_name = '%s-%s' % (hub, user.name)
-        #
-        #     try:
-        #         text = service_account_template.safe_substitute(
-        #                 namespace=namespace, name=account_name, hub=hub)
-        #         body = json.loads(text)
-        #
-        #         service_account_resource.create(namespace=namespace, body=body)
-        #
-        #     except ApiException as e:
-        #         if e.status != 409:
-        #             print('ERROR: Error creating service account. %s' % e)
-        #             raise
-        #
-        #         else:
-        #             break
-        #
-        #     except Exception as e:
-        #         print('ERROR: Error creating service account. %s' % e)
-        #         raise
-        #
-        #     else:
-        #         break
-
-        self.redirect(self.get_argument("next", user.url))
-
-class AutoAuthenticator(Authenticator):
-
-    auto_login = True
-    login_service = 'auto'
-
-    force_new_server = True
-
-    def process_user(self, user, handler):
-        return user
-
-    def get_handlers(self, app):
-        extra_settings = {
-            'force_new_server': self.force_new_server,
-            'process_user': self.process_user
-        }
-        return [
-            ('/login', AutoAuthenticateHandler, extra_settings)
-        ]
-
-    def login_url(self, base_url):
-        return url_path_join(base_url, 'login')
-
-c.JupyterHub.authenticator_class = AutoAuthenticator
+c.Authenticator.admin_users = set(os.environ.get('ADMIN_USERS', '').split())
 
 # Override labels on pods so matches label used by the spawner.
 
@@ -169,7 +51,7 @@ c.KubeSpawner.common_labels = {
 }
 
 c.KubeSpawner.extra_labels = {
-    'spawner': 'learning-portal',
+    'spawner': 'user-workspace',
     'user': '{username}'
 }
 
@@ -192,6 +74,71 @@ c.KubeSpawner.volume_mounts = [
         'mountPath': '/opt/workshop/envvars'
     }
 ]
+
+# For workshops we provide each user with a persistent volume so they
+# don't loose their work. This is mounted on /opt/app-root, so we need
+# to copy the contents from the image into the persistent volume the
+# first time using an init container.
+#
+# Note that if a profiles list is used, there must still be a default
+# terminal image setup we can use to run the init container. The image
+# is what contains the script which copies the file into the persistent
+# volume. Perhaps should use the JupyterHub image for the init container
+# and add the script which performs the copy to this image.
+
+volume_size = os.environ.get('VOLUME_SIZE')
+
+if volume_size:
+    c.KubeSpawner.pvc_name_template = '%s-user' % c.KubeSpawner.pod_name_template
+
+    c.KubeSpawner.storage_pvc_ensure = True
+
+    c.KubeSpawner.storage_capacity = volume_size
+
+    c.KubeSpawner.storage_access_modes = ['ReadWriteOnce']
+
+    c.KubeSpawner.volumes.extend([
+        {
+            'name': 'data',
+            'persistentVolumeClaim': {
+                'claimName': c.KubeSpawner.pvc_name_template
+            }
+        }
+    ])
+
+    c.KubeSpawner.volume_mounts.extend([
+        {
+            'name': 'data',
+            'mountPath': '/opt/app-root',
+            'subPath': 'workspace'
+        }
+    ])
+
+    c.KubeSpawner.init_containers.extend([
+        {
+            'name': 'setup-volume',
+            'image': '%s' % c.KubeSpawner.image_spec,
+            'command': [
+                '/opt/workshop/bin/setup-volume.sh',
+                '/opt/app-root',
+                '/mnt/workspace'
+            ],
+	    "resources": {
+		"limits": {
+		    "memory": os.environ.get('WORKSHOP_MEMORY', '128Mi')
+		},
+		"requests": {
+		    "memory": os.environ.get('WORKSHOP_MEMORY', '128Mi')
+		}
+	    },
+            'volumeMounts': [
+                {
+                    'name': 'data',
+                    'mountPath': '/mnt'
+                }
+            ]
+        }
+    ])
 
 # Deploy embedded web console as a separate container within the same
 # pod as the terminal instance. Currently use latest, but need to tie
@@ -247,11 +194,6 @@ c.KubeSpawner.extra_containers.extend([
 ])
 
 c.Spawner.environment['CONSOLE_URL'] = 'http://localhost:10083'
-
-# Pass through for dashboard the URL where should be redirected in order
-# to restart a session, with a new instance created with fresh image.
-
-c.Spawner.environment['RESTART_URL'] = '/restart'
 
 # We need to ensure the service account does actually exist, and also
 # create a project for the user and a role binding which allows the
@@ -318,6 +260,19 @@ namespace_template = string.Template("""
                 "uid": "${uid}"
             }
         ]
+    }
+}
+""")
+
+service_account_template = string.Template("""
+{
+    "kind": "ServiceAccount",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "${name}",
+        "labels": {
+            "hub": "${hub}"
+        }
     }
 }
 """)
@@ -1529,52 +1484,23 @@ def modify_pod_hook(spawner, pod):
     return pod
 
 c.KubeSpawner.modify_pod_hook = modify_pod_hook
+# Setup culling of terminal instances if timeout parameter is supplied.
 
-# Setup culling of terminal instances when idle or session expires, as
-# well as setup service to clean up service accounts and projects
-# related to old sessions. If a server limit is defined, also cap how
-# many can be run.
-
-server_limit = os.environ.get('SERVER_LIMIT')
-
-if server_limit:
-    c.JupyterHub.active_server_limit = int(server_limit)
-
-idle_timeout = os.environ.get('IDLE_TIMEOUT', '600')
-max_session_age = os.environ.get('MAX_SESSION_AGE')
+idle_timeout = os.environ.get('IDLE_TIMEOUT')
 
 if idle_timeout and int(idle_timeout):
-    cull_idle_servers_args = ['cull-idle-servers']
-
-    cull_idle_servers_args.append('--cull-every=60')
-    cull_idle_servers_args.append('--timeout=%s' % idle_timeout)
-    cull_idle_servers_args.append('--cull-users')
-
-    if max_session_age:
-        cull_idle_servers_args.append('--max-age=%s' % max_session_age)
-
     c.JupyterHub.services.extend([
         {
             'name': 'cull-idle',
             'admin': True,
-            'command': cull_idle_servers_args,
+            'command': ['cull-idle-servers', '--timeout=%s' % idle_timeout],
         }
     ])
 
-    delete_projects_args = ['/opt/app-root/src/scripts/delete-projects.sh']
+# Pass through for dashboard the URL where should be redirected in order
+# to restart a session, with a new instance created with fresh image.
 
-    c.JupyterHub.services.extend([
-        {
-            'name': 'delete-projects',
-            'command': delete_projects_args,
-            'environment': dict(
-                PYTHONUNBUFFERED='1',
-                APPLICATION_NAME=application_name,
-                KUBERNETES_SERVICE_HOST=os.environ['KUBERNETES_SERVICE_HOST'],
-                KUBERNETES_SERVICE_PORT=os.environ['KUBERNETES_SERVICE_PORT']
-            ),
-        }
-    ])
+c.Spawner.environment['RESTART_URL'] = '/restart'
 
 # Redirect handler for sending /restart back to home page for user.
 
@@ -1593,7 +1519,6 @@ class RestartRedirectHandler(BaseHandler):
             status = yield user.spawner.poll_and_notify()
             if status is None:
                 yield self.stop_single_user(user)
-        self.clear_login_cookie()
         self.redirect(homeroom_link or '/hub/spawn')
 
 c.JupyterHub.extra_handlers.extend([

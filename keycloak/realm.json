@@ -1,6 +1,6 @@
 {
-  "id": "jupyterhub",
-  "realm": "jupyterhub",
+  "id": "homeroom",
+  "realm": "homeroom",
   "notBefore": 0,
   "revokeRefreshToken": false,
   "refreshTokenMaxReuse": 0,
@@ -60,7 +60,7 @@
   "clients": [
     {
       "id": "3c776167-01b1-46b9-b074-933224557e3d",
-      "clientId": "jupyterhub",
+      "clientId": "homeroom",
       "rootUrl": "https://{{ JUPYTERHUB_HOSTNAME }}",
       "adminUrl": "https://{{ JUPYTERHUB_HOSTNAME }}",
       "surrogateAuthRequired": false,
@@ -151,13 +151,13 @@
       "id": "ebd5193f-0869-45dd-980c-f8535a5e7924",
       "clientId": "security-admin-console",
       "name": "${client_security-admin-console}",
-      "baseUrl": "/auth/admin/jupyterhub/console/index.html",
+      "baseUrl": "/auth/admin/homeroom/console/index.html",
       "surrogateAuthRequired": false,
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
       "secret": "**********",
       "redirectUris": [
-        "/auth/admin/jupyterhub/console/*"
+        "/auth/admin/homeroom/console/*"
       ],
       "webOrigins": [],
       "notBefore": 0,
@@ -206,7 +206,7 @@
       "id": "f179f47a-7115-4bdc-be75-0d320e950a87",
       "clientId": "account",
       "name": "${client_account}",
-      "baseUrl": "/auth/realms/jupyterhub/account",
+      "baseUrl": "/auth/realms/homeroom/account",
       "surrogateAuthRequired": false,
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
@@ -216,7 +216,7 @@
         "manage-account"
       ],
       "redirectUris": [
-        "/auth/realms/jupyterhub/account/*"
+        "/auth/realms/homeroom/account/*"
       ],
       "webOrigins": [],
       "notBefore": 0,
