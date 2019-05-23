@@ -198,11 +198,12 @@ c.KubeSpawner.volume_mounts = [
 # this to the specific OpenShift version once OpenShift 4.0 is released.
 
 console_branding = os.environ.get('CONSOLE_BRANDING', 'openshift')
+console_version = os.environ.get('CONSOLE_VERSION', '4.2.0')
 
 c.KubeSpawner.extra_containers.extend([
     {
         "name": "console",
-        "image": "quay.io/openshift/origin-console:latest",
+        "image": "quay.io/openshift/origin-console:%s" % console_version,
         "command": [ "/opt/bridge/bin/bridge" ],
         "env": [
             {
