@@ -2,6 +2,6 @@
 
 set -x
 
-if [ -f /tmp/src/jupyterhub-realm.json ]; then
-    mv /tmp/src/jupyterhub-realm.json .
+if [ -f /tmp/src/realm.json ]; then
+    mv /tmp/src/realm.json .
 fi

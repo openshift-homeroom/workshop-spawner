@@ -15,8 +15,8 @@ JUPYTERHUB_HOSTNAME=`curl -s -k -H "Authorization: Bearer $TOKEN" $URL | \
 
 KEYCLOAK_ARGS=
 
-if [ -f jupyterhub-realm.json ]; then
-    cat jupyterhub-realm.json | sed \
+if [ -f realm.json ]; then
+    cat realm.json | sed \
         -e "s/{{ *JUPYTERHUB_HOSTNAME *}}/$JUPYTERHUB_HOSTNAME/g" \
         -e "s/{{ *OAUTH_CLIENT_SECRET *}}/$OAUTH_CLIENT_SECRET/g" > /tmp/realm.json
 
