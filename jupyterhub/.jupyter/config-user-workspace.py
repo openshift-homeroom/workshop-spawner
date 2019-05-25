@@ -4,6 +4,7 @@
 
 import string
 import json
+import yaml
 
 from tornado import web, gen
 
@@ -1039,10 +1040,17 @@ route_template = string.Template("""
 """)
 
 extra_resources = {}
+extra_resources_loader = None
+
+if os.path.exists('/opt/app-root/resources/extra_resources.yaml'):
+    with open('/opt/app-root/resources/extra_resources.yaml') as fp:
+        extra_resources = fp.read().strip()
+        extra_resources_loader = yaml.safe_load
 
 if os.path.exists('/opt/app-root/resources/extra_resources.json'):
     with open('/opt/app-root/resources/extra_resources.json') as fp:
         extra_resources = fp.read().strip()
+        extra_resources_loader = json.loads
 
 def create_extra_resources(project_name, project_uid):
     if not extra_resources:
@@ -1051,9 +1059,13 @@ def create_extra_resources(project_name, project_uid):
     template = string.Template(extra_resources)
     text = template.safe_substitute(jupyterhub_namespace=namespace,
             project_namespace=project_name)
-    data = json.loads(text)
 
-    for body in data['items']:
+    data = extra_resources_loader(text)
+
+    if isinstance(data, dict) and data.get('kind') == 'List':
+        data = data['items']
+
+    for body in data:
         try:
             kind = body['kind']
             api_version = body['apiVersion']
@@ -1484,6 +1496,7 @@ def modify_pod_hook(spawner, pod):
     return pod
 
 c.KubeSpawner.modify_pod_hook = modify_pod_hook
+
 # Setup culling of terminal instances if timeout parameter is supplied.
 
 idle_timeout = os.environ.get('IDLE_TIMEOUT')
