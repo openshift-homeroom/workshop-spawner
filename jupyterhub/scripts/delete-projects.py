@@ -108,6 +108,54 @@ def pod_exists(name):
 
     return False
 
+def purge_project(name):
+    for resource_type in api_client.resources:
+        try:
+            if resource_type.namespaced:
+                objects = resource_type.get(namespace=name)
+                for obj in objects.items:
+                    if obj.metadata.deletionTimestamp and obj.metadata.finalizers:
+                        # Since the project is stuck in terminating, we
+                        # remove any finalizers which might be blocking
+                        # it. Finalizers can be left around with nothing
+                        # to remove them because there is no gaurantee
+                        # what order resources will be deleted when a
+                        # project is deleted. Thus an application, for
+                        # example an operator which would remove the
+                        # finalizer when a CRD is deleted, might get
+                        # deleted before the objects with the finalizer,
+                        # and so the objects can't then be deleted.
+
+                        body = {
+                            'kind': obj.kind,
+                            'apiVersion': obj.apiVersion,
+                            'metadata': {
+                                'name': obj.metadata.name,
+                                'finalizers': None
+                            }
+                        }
+
+                        print('WARNING: deleting finalizers on resource: %s' % body)
+
+                    try:
+                        resource_type.patch(namespace=name, body=body,
+                                content_type='application/merge-patch+json')
+
+                    except ApiException as e:
+                        print('ERROR: failed to delete finalizers: %s' % body, e)
+                        
+                    except Exception as e:
+                        print('ERROR: failed to delete finalizers: %s' % body, e)
+
+        except ApiException as e:
+            if e.status not in (403, 405):
+                print('ERROR: failed to query resources %s' % resource, e)
+
+        except Exception as e:
+            print('ERROR: failed to query resources %s' % resource, e)
+
+    pass
+
 def delete_project(name):
     try:
         project_resource.delete(name=name)
@@ -115,7 +163,10 @@ def delete_project(name):
         print('INFO: deleted project %s' % name)
 
     except ApiException as e:
-        if e.status != 404:
+        if e.status == 409:
+            print('WARNING: project %s is still terminating' % name)
+            purge_project(name)
+        elif e.status != 404:
             print('ERROR: failed to delete project %s:' % name, e)
         else:
             print('INFO: project %s already deleted' % name)
