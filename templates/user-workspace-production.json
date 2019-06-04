@@ -170,6 +170,7 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
@@ -181,6 +182,7 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-edit",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
@@ -406,6 +408,7 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-hub",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
@@ -428,6 +431,7 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-cfg",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
@@ -442,6 +446,7 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-res",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
@@ -456,6 +461,7 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-env",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
@@ -472,6 +478,7 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
@@ -665,10 +672,11 @@
             }
         },
         {
-            "apiVersion": "v1",
             "kind": "PersistentVolumeClaim",
+            "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-hub-data",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
@@ -690,6 +698,7 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
@@ -721,12 +730,13 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}",
-                "annotations": {
-                    "kubernetes.io/tls-acme": "${LETS_ENCRYPT}"
-                },
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
+                },
+                "annotations": {
+                    "kubernetes.io/tls-acme": "${LETS_ENCRYPT}"
                 }
             },
             "spec": {
@@ -750,6 +760,7 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-app",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
@@ -775,6 +786,7 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
@@ -797,6 +809,7 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
@@ -914,6 +927,7 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
@@ -945,6 +959,7 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak",
+                "namespace": "${PROJECT_NAME}",
                 "annotations": {
                     "kubernetes.io/tls-acme": "${LETS_ENCRYPT}"
                 },
@@ -973,6 +988,7 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak-data",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
@@ -990,10 +1006,11 @@
             }
         },
         {
-            "apiVersion": "v1",
             "kind": "DeploymentConfig",
+            "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak-db",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
@@ -1098,6 +1115,7 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak-db",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "spawner": "user-workspace"
