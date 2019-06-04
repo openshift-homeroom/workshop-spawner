@@ -45,10 +45,10 @@ role_binding_resource = api_client.resources.get(
      api_version='rbac.authorization.k8s.io/v1', kind='RoleBinding')
 
 project_cache = {}
-user_cache = {}
+account_cache = {}
 orphan_cache = {}
 
-Project = namedtuple('Project', ['name', 'user', 'pod'])
+Project = namedtuple('Project', ['name', 'account', 'pod'])
 
 def get_projects():
     project_details = []
@@ -66,7 +66,7 @@ def get_projects():
                         annotations['spawner/namespace'] == namespace and
                         annotations['spawner/deployment'] == application_name):
                     project_details.append(Project(project.metadata.name,
-                            annotations['spawner/username'],
+                            annotations['spawner/account'],
                             annotations['spawner/session']))
 
     except Exception as e:
@@ -74,24 +74,24 @@ def get_projects():
 
     return project_details
 
-def get_users():
-    user_details = []
+def get_accounts():
+    account_details = []
 
     hub_name = '%s-%s' % (application_name, namespace)
 
     try:
-        users = service_account_resource.get(namespace=namespace)
+        accounts = service_account_resource.get(namespace=namespace)
 
-        for user in users.items:
-            labels = user.metadata.labels
-            hub_label = labels and labels['hub']
-            if hub_label == hub_name:
-                user_details.append(user)
+        for account in accounts.items:
+            labels = account.metadata.labels
+            hub_label = labels and labels['app']
+            if hub_label == hub_name and labels['user']:
+                account_details.append(account)
 
     except Exception as e:
-        print('ERROR: failed to list users:', e)
+        print('ERROR: failed to list accounts:', e)
 
-    return user_details
+    return account_details
 
 def pod_exists(name):
     try:
@@ -174,19 +174,19 @@ def delete_project(name):
     except Exception as e:
         print('ERROR: failed to delete project %s:' % name, e)
 
-def delete_user(name):
+def delete_account(name):
     try:
         service_account_resource.delete(namespace=namespace, name=name)
-        print('INFO: deleted user %s' % name)
+        print('INFO: deleted account %s' % name)
 
     except ApiException as e:
         if e.status != 404:
-            print('ERROR: failed to delete user %s:' % name, e)
+            print('ERROR: failed to delete account %s:' % name, e)
         else:
-            print('INFO: user %s already deleted' % name)
+            print('INFO: account %s already deleted' % name)
 
     except Exception as e:
-        print('ERROR: failed to delete user %s:' % name, e)
+        print('ERROR: failed to delete account %s:' % name, e)
 
 def purge():
     now = time.time()
@@ -197,7 +197,7 @@ def purge():
         if not project in project_cache:
             project_cache[project] = now
 
-        user_cache.setdefault(project.user, set()).add(project)
+        account_cache.setdefault(project.account, set()).add(project)
 
     for project in projects:
         if pod_exists(project.pod):
@@ -205,31 +205,31 @@ def purge():
 
     for project, last_seen in list(project_cache.items()):
         if now - last_seen > 150.0:
-            user_cache[project.user].remove(project)
+            account_cache[project.account].remove(project)
 
-            if not user_cache[project.user]:
-                delete_user(project.user)
+            if not account_cache[project.account]:
+                delete_account(project.account)
 
-                del user_cache[project.user]
+                del account_cache[project.account]
 
             delete_project(project.name)
 
             del project_cache[project]
 
-    users = get_users()
+    accounts = get_accounts()
 
-    for user in users:
-        name = user.metadata.name
-        if not name in user_cache:
+    for account in accounts:
+        name = account.metadata.name
+        if not name in account_cache:
             if not name in orphan_cache:
                 orphan_cache[name] = now
 
     for name, last_seen in list(orphan_cache.items()):
-        if name in user_cache:
+        if name in account_cache:
             del orphan_cache[name]
 
         elif now - last_seen > 150.0:
-            delete_user(name)
+            delete_account(name)
 
             del orphan_cache[name]
 

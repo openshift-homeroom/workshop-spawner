@@ -242,13 +242,14 @@ namespace_template = string.Template("""
         "name": "${name}",
         "labels": {
             "app": "${hub}",
-            "spawner": "learning-portal"
+            "spawner": "user-workspace",
+            "user": "${username}"
         },
         "annotations": {
             "spawner/requestor": "${requestor}",
             "spawner/namespace": "${namespace}",
             "spawner/deployment": "${deployment}",
-            "spawner/username": "${username}",
+            "spawner/account": "${account}",
             "spawner/session": "${session}"
         },
         "ownerReferences": [
@@ -272,7 +273,9 @@ service_account_template = string.Template("""
     "metadata": {
         "name": "${name}",
         "labels": {
-            "hub": "${hub}"
+            "app": "${hub}",
+            "spawner": "user-workspace",
+            "user": "${username}"
         }
     }
 }
@@ -285,7 +288,9 @@ role_binding_template = string.Template("""
     "metadata": {
         "name": "${name}-${tag}",
         "labels": {
-            "hub": "${hub}"
+            "app": "${hub}",
+            "spawner": "user-workspace",
+            "user": "${username}"
         }
     },
     "subjects": [
@@ -979,7 +984,9 @@ service_template = string.Template("""
     "metadata": {
         "name": "${name}",
         "labels": {
-            "hub": "${hub}"
+            "app": "${hub}",
+            "spawner": "user-workspace",
+            "user": "${username}"
         },
         "ownerReferences": [
             {
@@ -995,7 +1002,8 @@ service_template = string.Template("""
     "spec": {
         "type": "ClusterIP",
         "selector": {
-            "hub": "${hub}",
+            "app": "${hub}",
+            "spawner": "user-workspace",
             "user": "${username}"
         },
         "ports": []
@@ -1010,7 +1018,8 @@ route_template = string.Template("""
     "metadata": {
         "name": "${name}-${port}",
         "labels": {
-            "hub": "${hub}",
+            "app": "${hub}",
+            "spawner": "user-workspace",
             "user": "${username}",
             "port": "${port}"
         },
@@ -1123,7 +1132,8 @@ def modify_pod_hook(spawner, pod):
     while True:
         try:
             text = service_account_template.safe_substitute(
-                    namespace=namespace, name=user_account_name, hub=hub)
+                    namespace=namespace, name=user_account_name, hub=hub,
+                    username=short_name)
             body = json.loads(text)
 
             service_account_object = service_account_resource.create(
@@ -1217,9 +1227,9 @@ def modify_pod_hook(spawner, pod):
 
         text = namespace_template.safe_substitute(name=project_name,
                 hub=hub, requestor=service_account_name, namespace=namespace,
-                deployment=application_name, username=user_account_name,
+                deployment=application_name, account=user_account_name,
                 session=pod.metadata.name, owner=project_owner.metadata.name,
-                uid=project_owner.metadata.uid)
+                uid=project_owner.metadata.uid, username=short_name)
         body = json.loads(text)
 
         namespace_resource.create(body=body)
@@ -1264,7 +1274,7 @@ def modify_pod_hook(spawner, pod):
     try:
         text = role_binding_template.safe_substitute(
                 namespace=namespace, name=hub_account_name, tag='admin',
-                role='admin', hub=hub)
+                role='admin', hub=hub, username=short_name)
         body = json.loads(text)
 
         role_binding_resource.create(namespace=project_name, body=body)
@@ -1395,7 +1405,7 @@ def modify_pod_hook(spawner, pod):
     try:
         text = role_binding_template.safe_substitute(
                 namespace=namespace, name=user_account_name, tag='admin',
-                role='admin', hub=hub)
+                role='admin', hub=hub, username=short_name)
         body = json.loads(text)
 
         role_binding_resource.create(namespace=project_name, body=body)
@@ -1416,7 +1426,8 @@ def modify_pod_hook(spawner, pod):
     try:
         text = role_binding_template.safe_substitute(
                 namespace=namespace, name=user_account_name,
-                tag='session-rules', role=hub+'-session-rules', hub=hub)
+                tag='session-rules', role=hub+'-session-rules', hub=hub,
+                username=short_name)
         body = json.loads(text)
 
         role_binding_resource.create(namespace=project_name, body=body)
