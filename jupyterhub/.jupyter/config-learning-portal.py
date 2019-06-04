@@ -26,22 +26,6 @@ from jupyterhub.utils import url_path_join
 
 from kubernetes.client.rest import ApiException
 
-service_account_resource = api_client.resources.get(
-     api_version='v1', kind='ServiceAccount')
-
-service_account_template = string.Template("""
-{
-    "kind": "ServiceAccount",
-    "apiVersion": "v1",
-    "metadata": {
-        "name": "${name}",
-        "labels": {
-            "hub": "${hub}"
-        }
-    }
-}
-""")
-
 class AnonymousUser(object):
 
     def __init__(self, name):
@@ -102,40 +86,6 @@ class AutoAuthenticateHandler(BaseHandler):
             self.set_login_cookie(raw_user)
 
         user = yield gen.maybe_future(self.process_user(raw_user, self))
-
-        # Ensure that a service account exists corresponding to the
-        # user.
-        #
-        # XXX Disable this for now and leave until spawning the pod.
-        # If do it here and client doesn't support cookies, the redirect
-        # loop results in a service account being created each time
-        # through the loop.
-
-        # while True:
-        #     hub = '%s-%s' % (application_name, namespace)
-        #     account_name = '%s-%s' % (hub, user.name)
-        #
-        #     try:
-        #         text = service_account_template.safe_substitute(
-        #                 namespace=namespace, name=account_name, hub=hub)
-        #         body = json.loads(text)
-        #
-        #         service_account_resource.create(namespace=namespace, body=body)
-        #
-        #     except ApiException as e:
-        #         if e.status != 409:
-        #             print('ERROR: Error creating service account. %s' % e)
-        #             raise
-        #
-        #         else:
-        #             break
-        #
-        #     except Exception as e:
-        #         print('ERROR: Error creating service account. %s' % e)
-        #         raise
-        #
-        #     else:
-        #         break
 
         self.redirect(self.get_argument("next", user.url))
 
@@ -300,13 +250,14 @@ namespace_template = string.Template("""
         "name": "${name}",
         "labels": {
             "app": "${hub}",
-            "spawner": "learning-portal"
+            "spawner": "learning-portal",
+            "user": "${username}"
         },
         "annotations": {
             "spawner/requestor": "${requestor}",
             "spawner/namespace": "${namespace}",
             "spawner/deployment": "${deployment}",
-            "spawner/username": "${username}",
+            "spawner/account": "${account}",
             "spawner/session": "${session}"
         },
         "ownerReferences": [
@@ -323,6 +274,21 @@ namespace_template = string.Template("""
 }
 """)
 
+service_account_template = string.Template("""
+{
+    "kind": "ServiceAccount",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "${name}",
+        "labels": {
+            "app": "${hub}",
+            "spawner": "learning-portal",
+            "user": "${username}"
+        }
+    }
+}
+""")
+
 role_binding_template = string.Template("""
 {
     "kind": "RoleBinding",
@@ -330,7 +296,9 @@ role_binding_template = string.Template("""
     "metadata": {
         "name": "${name}-${tag}",
         "labels": {
-            "hub": "${hub}"
+            "app": "${hub}",
+            "spawner": "learning-portal",
+            "user": "${username}"
         }
     },
     "subjects": [
@@ -1024,7 +992,9 @@ service_template = string.Template("""
     "metadata": {
         "name": "${name}",
         "labels": {
-            "hub": "${hub}"
+            "app": "${hub}",
+            "spawner": "learning-portal",
+            "user": "${username}"
         },
         "ownerReferences": [
             {
@@ -1040,7 +1010,8 @@ service_template = string.Template("""
     "spec": {
         "type": "ClusterIP",
         "selector": {
-            "hub": "${hub}",
+            "app": "${hub}",
+            "spawner": "learning-portal",
             "user": "${username}"
         },
         "ports": []
@@ -1055,7 +1026,8 @@ route_template = string.Template("""
     "metadata": {
         "name": "${name}-${port}",
         "labels": {
-            "hub": "${hub}",
+            "app": "${hub}",
+            "spawner": "learning-portal",
             "user": "${username}",
             "port": "${port}"
         },
@@ -1168,7 +1140,8 @@ def modify_pod_hook(spawner, pod):
     while True:
         try:
             text = service_account_template.safe_substitute(
-                    namespace=namespace, name=user_account_name, hub=hub)
+                    namespace=namespace, name=user_account_name, hub=hub,
+                    username=short_name)
             body = json.loads(text)
 
             service_account_object = service_account_resource.create(
@@ -1262,9 +1235,9 @@ def modify_pod_hook(spawner, pod):
 
         text = namespace_template.safe_substitute(name=project_name,
                 hub=hub, requestor=service_account_name, namespace=namespace,
-                deployment=application_name, username=user_account_name,
+                deployment=application_name, account=user_account_name,
                 session=pod.metadata.name, owner=project_owner.metadata.name,
-                uid=project_owner.metadata.uid)
+                uid=project_owner.metadata.uid, username=short_name)
         body = json.loads(text)
 
         namespace_resource.create(body=body)
@@ -1309,7 +1282,7 @@ def modify_pod_hook(spawner, pod):
     try:
         text = role_binding_template.safe_substitute(
                 namespace=namespace, name=hub_account_name, tag='admin',
-                role='admin', hub=hub)
+                role='admin', hub=hub, username=short_name)
         body = json.loads(text)
 
         role_binding_resource.create(namespace=project_name, body=body)
@@ -1440,7 +1413,7 @@ def modify_pod_hook(spawner, pod):
     try:
         text = role_binding_template.safe_substitute(
                 namespace=namespace, name=user_account_name, tag='admin',
-                role='admin', hub=hub)
+                role='admin', hub=hub, username=short_name)
         body = json.loads(text)
 
         role_binding_resource.create(namespace=project_name, body=body)
@@ -1461,7 +1434,8 @@ def modify_pod_hook(spawner, pod):
     try:
         text = role_binding_template.safe_substitute(
                 namespace=namespace, name=user_account_name,
-                tag='session-rules', role=hub+'-session-rules', hub=hub)
+                tag='session-rules', role=hub+'-session-rules', hub=hub,
+                username=short_name)
         body = json.loads(text)
 
         role_binding_resource.create(namespace=project_name, body=body)
