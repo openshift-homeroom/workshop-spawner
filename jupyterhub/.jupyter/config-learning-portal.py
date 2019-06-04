@@ -26,24 +26,6 @@ from jupyterhub.utils import url_path_join
 
 from kubernetes.client.rest import ApiException
 
-service_account_resource = api_client.resources.get(
-     api_version='v1', kind='ServiceAccount')
-
-service_account_template = string.Template("""
-{
-    "kind": "ServiceAccount",
-    "apiVersion": "v1",
-    "metadata": {
-        "name": "${name}",
-        "labels": {
-            "app": "${hub}",
-            "spawner": "learning-portal",
-            "user": "${username}"
-        }
-    }
-}
-""")
-
 class AnonymousUser(object):
 
     def __init__(self, name):
@@ -288,6 +270,21 @@ namespace_template = string.Template("""
                 "uid": "${uid}"
             }
         ]
+    }
+}
+""")
+
+service_account_template = string.Template("""
+{
+    "kind": "ServiceAccount",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "${name}",
+        "labels": {
+            "app": "${hub}",
+            "spawner": "learning-portal",
+            "user": "${username}"
+        }
     }
 }
 """)
