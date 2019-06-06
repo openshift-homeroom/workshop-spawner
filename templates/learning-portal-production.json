@@ -62,7 +62,7 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-spawner:3.2.1",
+            "value": "quay.io/openshiftlabs/workshop-spawner:3.2.2",
             "required": true
         },
         {
