@@ -121,6 +121,7 @@ c.KubeSpawner.common_labels = {
 
 c.KubeSpawner.extra_labels = {
     'spawner': 'learning-portal',
+    'class': 'session',
     'user': '{username}'
 }
 
@@ -251,6 +252,7 @@ namespace_template = string.Template("""
         "labels": {
             "app": "${hub}",
             "spawner": "learning-portal",
+            "class": "session",
             "user": "${username}"
         },
         "annotations": {
@@ -283,6 +285,7 @@ service_account_template = string.Template("""
         "labels": {
             "app": "${hub}",
             "spawner": "learning-portal",
+            "class": "session",
             "user": "${username}"
         }
     }
@@ -298,6 +301,7 @@ role_binding_template = string.Template("""
         "labels": {
             "app": "${hub}",
             "spawner": "learning-portal",
+            "class": "session",
             "user": "${username}"
         }
     },
@@ -994,6 +998,7 @@ service_template = string.Template("""
         "labels": {
             "app": "${hub}",
             "spawner": "learning-portal",
+            "class": "session",
             "user": "${username}"
         },
         "ownerReferences": [
@@ -1028,6 +1033,7 @@ route_template = string.Template("""
         "labels": {
             "app": "${hub}",
             "spawner": "learning-portal",
+            "class": "session",
             "user": "${username}",
             "port": "${port}"
         },
