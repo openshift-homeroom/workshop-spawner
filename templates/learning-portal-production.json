@@ -135,7 +135,8 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             }
         },
@@ -147,7 +148,8 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             },
             "subjects": [
@@ -167,7 +169,8 @@
                 "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             },
             "rules": [
@@ -285,7 +288,8 @@
                 "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             },
             "subjects": [
@@ -306,7 +310,8 @@
                 "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner-rules",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             },
             "rules": "${{SPAWNER_RULES}}"
@@ -318,7 +323,8 @@
                 "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner-rules",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             },
             "subjects": [
@@ -339,7 +345,8 @@
                 "name": "${APPLICATION_NAME}-${PROJECT_NAME}-session-rules",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             },
             "rules": "${{SESSION_RULES}}"
@@ -351,7 +358,8 @@
                 "name": "${APPLICATION_NAME}-${PROJECT_NAME}-session-rules",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             },
             "subjects": [
@@ -373,7 +381,8 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             },
             "spec": {
@@ -396,7 +405,8 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             },
             "data": {
@@ -411,7 +421,8 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             },
             "data": {
@@ -426,7 +437,8 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             },
             "data": {
@@ -443,7 +455,8 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             },
             "spec": {
@@ -477,7 +490,9 @@
                     "metadata": {
                         "labels": {
                             "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                            "deploymentconfig": "${APPLICATION_NAME}"
+                            "deploymentconfig": "${APPLICATION_NAME}",
+                            "spawner": "learning-portal",
+                            "class": "spawner"
                         }
                     },
                     "spec": {
@@ -637,7 +652,8 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             },
             "spec": {
@@ -659,7 +675,8 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             },
             "spec": {
@@ -691,7 +708,8 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 },
                 "annotations": {
                     "kubernetes.io/tls-acme": "${LETS_ENCRYPT}"
@@ -721,7 +739,8 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "learning-portal"
+                    "spawner": "learning-portal",
+                    "class": "spawner"
                 }
             },
             "spec": {
@@ -733,7 +752,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.11.0"
+                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.12.0"
                         }
                     }
                 ]
