@@ -8,11 +8,14 @@ The environment created for each user is pre-populated with OpenShift and Kubern
 Quick start instructions
 ------------------------
 
-To quickly see what the terminal environment looks like, run:
+To quickly see what the terminal environment looks like, as a cluster admin, run:
 
 ```
-$ oc new-app https://raw.githubusercontent.com/openshift-labs/workshop-spawner/master/templates/hosted-workshop-production.json
+$ oc new-app https://raw.githubusercontent.com/openshift-labs/workshop-spawner/master/templates/hosted-workshop-production.json --param PROJECT_NAME=`oc project --short` --param CLUSTER_SUBDOMAIN=apps.openshiftcluster.com
 ```
+
+Replace ``apps.openshiftcluster.com`` with the actual sub domain that routes for
+applications deployed to the cluster would use.
 
 This will create a deployment for the ``terminals`` application. Check the output from ``oc new-app`` for the public URL the application can be accessed with, or run the following command to get details of the route.
 
@@ -43,3 +46,9 @@ Using project "user1".
 Login using the ``oc login`` command is done against the internal REST API access point for the cluster, using information automatically set within the user environment. It is not necessary to provide the URL for the OpenShift cluster if logging in to the same cluster. If prompted to, you will need to accept the certificate.
 
 The command for deploying the user environments will use pre-built images hosted on the quay.io image registry. The image for the user environment has versions of ``oc`` and ``kubectl`` for multiple OpenShift versions and will automatically use the appropriate version for the OpenShift cluster the user environments are running in.
+
+To delete the deployment, run:
+
+```
+oc delete all,serviceaccount,configmap,secret,persistentvolumeclaim,rolebinding,oauthclient -l app=workshop-`oc project --short`
+```
