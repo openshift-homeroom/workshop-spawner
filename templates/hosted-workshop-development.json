@@ -336,6 +336,7 @@
                         "containers": [
                             {
                                 "name": "spawner",
+                                "image": "${APPLICATION_NAME}-hub:latest",
                                 "ports": [
                                     {
                                         "containerPort": 8080,
