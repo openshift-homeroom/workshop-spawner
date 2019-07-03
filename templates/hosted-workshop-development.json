@@ -161,7 +161,7 @@
                     "class": "spawner"
                 }
             },
-            "secret": "${CONSOLE_OAUTH_SECRET}",
+            "secret": "${OAUTH_CLIENT_SECRET}",
             "grantMethod": "auto",
             "redirectURIs": [
                 "https://${APPLICATION_NAME}-${PROJECT_NAME}.${CLUSTER_SUBDOMAIN}/hub/oauth_callback"
