@@ -197,6 +197,10 @@ c.KubeSpawner.extra_containers.extend([
                 "value": "disabled"
             },
             {
+                "name": "BRIDGE_K8S_AUTH",
+                "value": "bearer-token"
+            },
+            {
                 "name": "BRIDGE_BRANDING",
                 "value": console_branding
             }
