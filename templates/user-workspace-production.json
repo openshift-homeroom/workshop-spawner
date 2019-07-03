@@ -62,12 +62,12 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-spawner:3.2.2",
+            "value": "quay.io/openshiftlabs/workshop-spawner:4.0.0",
             "required": true
         },
         {
             "name": "KEYCLOAK_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-keycloak:3.2.2",
+            "value": "quay.io/openshiftlabs/workshop-keycloak:4.0.0",
             "required": true
         },
         {
@@ -794,7 +794,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-dashboard:2.12.0"
+                            "name": "quay.io/openshiftlabs/workshop-dashboard:3.3.3"
                         }
                     }
                 ]

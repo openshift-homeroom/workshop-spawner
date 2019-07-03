@@ -40,14 +40,16 @@ os.environ['OPENSHIFT_AUTH_API_URL'] = oauth_issuer_address
 from oauthenticator.openshift import OpenShiftOAuthenticator
 c.JupyterHub.authenticator_class = OpenShiftOAuthenticator
 
-client_id = 'system:serviceaccount:%s:%s' % (namespace, service_account_name)
+OpenShiftOAuthenticator.scope = ['user:full']
+
+client_id = '%s-%s-console' % (application_name, namespace)
+client_secret = os.environ['OAUTH_CLIENT_SECRET']
 
 c.OpenShiftOAuthenticator.client_id = client_id
-
-with open(os.path.join(service_account_path, 'token')) as fp:
-    client_secret = fp.read().strip()
-
 c.OpenShiftOAuthenticator.client_secret = client_secret
+c.Authenticator.enable_auth_state = True
+
+c.CryptKeeper.keys = [ client_secret.encode('utf-8') ]
 
 c.OpenShiftOAuthenticator.oauth_callback_url = (
         'https://%s/hub/oauth_callback' % public_hostname)
@@ -59,6 +61,18 @@ c.Authenticator.auto_login = True
 c.JupyterHub.admin_access = True
 
 c.Authenticator.admin_users = set(os.environ.get('ADMIN_USERS', '').split())
+
+# Override labels on pods so matches label used by the spawner.
+
+c.KubeSpawner.common_labels = {
+    'app': '%s-%s' % (application_name, namespace)
+}
+
+c.KubeSpawner.extra_labels = {
+    'spawner': 'hosted-workshop',
+    'class': 'session',
+    'user': '{username}'
+}
 
 # Mount config map for user provided environment variables for the
 # terminal and workshop.
@@ -145,6 +159,65 @@ if volume_size:
         }
     ])
 
+# Deploy embedded web console as a separate container within the same
+# pod as the terminal instance. Currently use latest, but need to tie
+# this to the specific OpenShift version once OpenShift 4.0 is released.
+
+console_branding = os.environ.get('CONSOLE_BRANDING', 'openshift')
+console_version = os.environ.get('CONSOLE_VERSION', '4.2.0')
+
+c.KubeSpawner.extra_containers.extend([
+    {
+        "name": "console",
+        "image": "quay.io/openshift/origin-console:%s" % console_version,
+        "command": [ "/opt/bridge/bin/bridge" ],
+        "env": [
+            {
+                "name": "BRIDGE_K8S_MODE",
+                "value": "in-cluster"
+            },
+            {
+                "name": "BRIDGE_LISTEN",
+                "value": "http://0.0.0.0:10083"
+            },
+            {
+                "name": "BRIDGE_BASE_ADDRESS",
+                "value": "https://%s/" % public_hostname
+            },
+            {
+                "name": "BRIDGE_BASE_PATH",
+                "value": "/user/{unescaped_username}/console/"
+            },
+            {
+                "name": "BRIDGE_PUBLIC_DIR",
+                "value": "/opt/bridge/static"
+            },
+            {
+                "name": "BRIDGE_USER_AUTH",
+                "value": "disabled"
+            },
+            {
+                "name": "BRIDGE_K8S_AUTH",
+                "value": "bearer-token"
+            },
+            {
+                "name": "BRIDGE_BRANDING",
+                "value": console_branding
+            }
+        ],
+        "resources": {
+            "limits": {
+                "memory": os.environ.get('CONSOLE_MEMORY', '128Mi')
+            },
+            "requests": {
+                "memory": os.environ.get('CONSOLE_MEMORY', '128Mi')
+            }
+        }
+    }
+])
+
+c.Spawner.environment['CONSOLE_URL'] = 'http://localhost:10083'
+
 # Read user logins file and set up rules to mapping to passwords.
 
 user_logins_exact = {}
@@ -174,6 +247,29 @@ def lookup_user_details(user):
 
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
+    # Set the session access token from the OpenShift login in
+    # both the terminal and console containers. We still mount
+    # the service account token still as well because the console
+    # needs the SSL certificate contained in it when accessing
+    # the cluster REST API.
+
+    auth_state = yield spawner.user.get_auth_state()
+
+    pod.spec.containers[0].env.append(
+            dict(name='OPENSHIFT_TOKEN', value=auth_state['access_token']))
+
+    pod.spec.containers[-1].env.append(
+            dict(name='BRIDGE_K8S_AUTH_BEARER_TOKEN',
+            value=auth_state['access_token']))
+
+    pod.spec.service_account_name = '%s-%s-user' % (application_name, namespace)
+    pod.spec.automount_service_account_token = True
+
+    # See if a project needs to be created automatically. The
+    # password is skipped now and isn't being used. This mechanism
+    # using user_logins.csv will be removed and replaced with
+    # something else.
+
     details = lookup_user_details(spawner.user.name)
 
     if details:
@@ -197,123 +293,6 @@ def modify_pod_hook(spawner, pod):
 
             pod.spec.containers[0].env.append(
                     dict(name='PROJECT_NAMESPACE', value=spawner.user.name))
-
-        pod.spec.volumes.extend([
-            {
-                'name': 'kubeconfig',
-                'emptyDir': {}
-            }
-        ])
-
-        if not pod.spec.init_containers:
-            pod.spec.init_containers = []
-
-        pod.spec.init_containers.extend([
-            {
-                'name': 'setup-environ',
-                'image': '%s' % pod.spec.containers[0].image,
-                'command': [ '/opt/workshop/bin/setup-environ.sh' ],
-                'env': [
-                    {
-                        'name': 'OPENSHIFT_USERNAME',
-                        'value': spawner.user.name
-                    },
-                    {
-                        'name': 'OPENSHIFT_PASSWORD',
-                        'value': password
-                    }
-                ],
-                "resources": {
-                    "limits": {
-                        "memory": os.environ.get('WORKSHOP_MEMORY', '128Mi')
-                    },
-                    "requests": {
-                        "memory": os.environ.get('WORKSHOP_MEMORY', '128Mi')
-                    }
-                },
-                'volumeMounts': [
-                    {
-                        'name': 'kubeconfig',
-                        'mountPath': '/var/run/workshop'
-                    }
-                ]
-            }
-        ])
-
-        pod.spec.containers[0].volume_mounts.extend([
-            {
-                'name': 'kubeconfig',
-                'mountPath': '/var/run/workshop'
-            }
-        ])
-
-        console_branding = os.environ.get('CONSOLE_BRANDING', 'openshift')
-        console_version = os.environ.get('CONSOLE_VERSION', '4.2.0')
-
-        pod.spec.containers.extend([
-            {
-                "name": "console",
-                "image": "quay.io/openshift/origin-console:%s" % console_version,
-                "command": [ "bash", "-c", "set -x; export BRIDGE_K8S_AUTH_BEARER_TOKEN=`cat /var/run/workshop/token`; /opt/bridge/bin/bridge" ],
-                "env": [
-                    {
-                        "name": "BRIDGE_BRANDING",
-                        "value": "openshift"
-                    },
-                    {
-                        "name": "BRIDGE_K8S_MODE",
-                        "value": "in-cluster"
-                    },
-                    {
-                        "name": "BRIDGE_LISTEN",
-                        "value": "http://0.0.0.0:10083"
-                    },
-                    {
-                        "name": "BRIDGE_BASE_ADDRESS",
-                        "value": "https://%s/" % public_hostname
-                    },
-                    {
-                        "name": "BRIDGE_BASE_PATH",
-                        "value": "/user/%s/console/" % spawner.user.name
-                    },
-                    {
-                        "name": "BRIDGE_PUBLIC_DIR",
-                        "value": "/opt/bridge/static"
-                    },
-                    {
-                        "name": "BRIDGE_USER_AUTH",
-                        "value": "disabled"
-                    },
-                    {
-                        "name": "BRIDGE_K8S_AUTH",
-                        "value": "bearer-token"
-                    },
-                    {
-                        "name": "BRIDGE_BRANDING",
-                        "value": console_branding
-                    }
-                ],
-                "resources": {
-                    "limits": {
-                        "memory": os.environ.get('CONSOLE_MEMORY', '128Mi')
-                    },
-                    "requests": {
-                        "memory": os.environ.get('CONSOLE_MEMORY', '128Mi')
-                    }
-                },
-                'volumeMounts': [
-                    {
-                        'name': 'kubeconfig',
-                        'mountPath': '/var/run/workshop'
-                    }
-                ]
-            }
-        ])
-
-        pod.spec.containers[0].env.append(dict(name='CONSOLE_URL',
-            value='http://localhost:10083'))
-
-        pod.spec.automount_service_account_token = True
 
     else:
         # No project is created automatically. Assume that the project
