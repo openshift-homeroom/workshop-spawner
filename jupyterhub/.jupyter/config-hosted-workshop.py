@@ -248,10 +248,8 @@ def modify_pod_hook(spawner, pod):
     project = os.environ.get('OPENSHIFT_PROJECT')
 
     if project:
-        value = project.format(username=spawner.user.name)
-        if value != project:
-            project = value
-
+        name = project.format(username=spawner.user.name)
+        if name != project:
             pod.spec.containers[0].env.append(
                     dict(name='PROJECT_NAMESPACE', value=name))
 
