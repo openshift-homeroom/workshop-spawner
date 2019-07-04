@@ -20,7 +20,7 @@
         },
         {
             "name": "APPLICATION_NAME",
-            "value": "workshop",
+            "value": "terminal",
             "required": true
         },
         {
