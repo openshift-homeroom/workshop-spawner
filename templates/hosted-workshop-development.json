@@ -62,7 +62,7 @@
             "value": ""
         },
         {
-            "name": "USER_LOGINS",
+            "name": "OPENSHIFT_PROJECT",
             "value": ""
         },
         {
@@ -215,8 +215,7 @@
                 }
             },
             "data": {
-                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}",
-                "user_logins.csv": "${USER_LOGINS}"
+                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
             }
         },
         {
@@ -409,6 +408,10 @@
                                     {
                                         "name": "ADMIN_USERS",
                                         "value": "${ADMIN_USERS}"
+                                    },
+                                    {
+                                        "name": "OPENSHIFT_PROJECT",
+                                        "value": "${OPENSHIFT_PROJECT}"
                                     },
                                     {
                                         "name": "IDLE_TIMEOUT",

@@ -218,31 +218,6 @@ c.KubeSpawner.extra_containers.extend([
 
 c.Spawner.environment['CONSOLE_URL'] = 'http://localhost:10083'
 
-# Read user logins file and set up rules to mapping to passwords.
-
-user_logins_exact = {}
-
-user_logins_match = []
-
-if os.path.exists('/opt/app-root/configs/user_logins.csv'):
-    with open('/opt/app-root/configs/user_logins.csv') as fp:
-        for line in fp.readlines():
-            line = line.strip()
-            if line:
-                user, password, project = line.split(',')
-                if '*' in user or '?' in user or '[' in user:
-                    user_logins_match.append((user, password, project))
-                else:
-                    user_logins_exact[user] = (password, project)
-
-def lookup_user_details(user):
-    if user in user_logins_exact:
-        return user_logins_exact[user]
-
-    for pattern, password, project in user_logins_match:
-        if fnmatch(user, pattern):
-            return (password, project)
-
 # Make modifications to pod based on user and type of session.
 
 @gen.coroutine
@@ -265,41 +240,25 @@ def modify_pod_hook(spawner, pod):
     pod.spec.service_account_name = '%s-%s-user' % (application_name, namespace)
     pod.spec.automount_service_account_token = True
 
-    # See if a project needs to be created automatically. The
-    # password is skipped now and isn't being used. This mechanism
-    # using user_logins.csv will be removed and replaced with
-    # something else.
+    # See if a template for the project name has been specified.
+    # Try expanding the name, substituting the username. If the
+    # result is different then we use it, not if it is the same
+    # which would suggest it isn't unique.
 
-    details = lookup_user_details(spawner.user.name)
+    project = os.environ.get('OPENSHIFT_PROJECT')
 
-    if details:
-        password, project = details
-
-        password = password.format(username=spawner.user.name)
-        project = project.format(username=spawner.user.name)
-
-        if project:
-            pod.spec.containers[0].env.append(
-                    dict(name='PROJECT_NAMESPACE', value=project))
-
-            # Create project name if it doesn't exist.
+    if project:
+        value = project.format(username=spawner.user.name)
+        if value != project:
+            project = value
 
             pod.spec.containers[0].env.append(
-                    dict(name='OPENSHIFT_PROJECT', value=project))
+                    dict(name='PROJECT_NAMESPACE', value=name))
 
-        else:
-            # No project is created automatically. Assume that the project
-            # which should be used is the same as the users name.
+            # Ensure project is created if it doesn't exist.
 
             pod.spec.containers[0].env.append(
-                    dict(name='PROJECT_NAMESPACE', value=spawner.user.name))
-
-    else:
-        # No project is created automatically. Assume that the project
-        # which should be used is the same as the users name.
-
-        pod.spec.containers[0].env.append(
-                dict(name='PROJECT_NAMESPACE', value=spawner.user.name))
+                    dict(name='OPENSHIFT_PROJECT', value=name))
 
     return pod
 
