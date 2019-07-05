@@ -174,6 +174,26 @@ def modify_pod_hook(spawner, pod):
     pod.spec.containers[0].env.append(
             dict(name='OPENSHIFT_TOKEN', value=auth_state['access_token']))
 
+    pod.spec.service_account_name = '%s-%s-user' % (application_name, namespace)
+
+    # See if a template for the project name has been specified.
+    # Try expanding the name, substituting the username. If the
+    # result is different then we use it, not if it is the same
+    # which would suggest it isn't unique.
+
+    project = os.environ.get('OPENSHIFT_PROJECT')
+
+    if project:
+        name = project.format(username=spawner.user.name)
+        if name != project:
+            pod.spec.containers[0].env.append(
+                    dict(name='PROJECT_NAMESPACE', value=name))
+
+            # Ensure project is created if it doesn't exist.
+
+            pod.spec.containers[0].env.append(
+                    dict(name='OPENSHIFT_PROJECT', value=name))
+
     return pod
 
 c.KubeSpawner.modify_pod_hook = modify_pod_hook
