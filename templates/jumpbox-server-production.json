@@ -9,6 +9,11 @@
     },
     "parameters": [
         {
+            "name": "PROJECT_NAME",
+            "value": "",
+            "required": true
+        },
+        {
             "name": "APPLICATION_NAME",
             "value": "jumpbox",
             "required": true
@@ -125,9 +130,25 @@
             "kind": "ServiceAccount",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-hub",
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
+                }
+            }
+        },
+        {
+            "kind": "ServiceAccount",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-user",
+                "namespace": "${PROJECT_NAME}",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
                 }
             }
         },
@@ -136,14 +157,17 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-edit",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
                 }
             },
             "subjects": [
                 {
                     "kind": "ServiceAccount",
-                    "name": "${APPLICATION_NAME}-hub"
+                    "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub"
                 }
             ],
             "roleRef": {
@@ -155,8 +179,11 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-hub",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
                 }
             },
             "spec": {
@@ -176,8 +203,11 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-cfg",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
                 }
             },
             "data": {
@@ -189,8 +219,11 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-env",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
                 }
             },
             "data": {
@@ -204,8 +237,11 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
                 }
             },
             "spec": {
@@ -232,18 +268,18 @@
                 ],
                 "replicas": 1,
                 "selector": {
-                    "app": "${APPLICATION_NAME}",
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "deploymentconfig": "${APPLICATION_NAME}"
                 },
                 "template": {
                     "metadata": {
                         "labels": {
-                            "app": "${APPLICATION_NAME}",
+                            "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                             "deploymentconfig": "${APPLICATION_NAME}"
                         }
                     },
                     "spec": {
-                        "serviceAccountName": "${APPLICATION_NAME}-hub",
+                        "serviceAccountName": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
                         "containers": [
                             {
                                 "name": "spawner",
@@ -365,8 +401,11 @@
             "kind": "PersistentVolumeClaim",
             "metadata": {
                 "name": "${APPLICATION_NAME}-hub-data",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
                 }
             },
             "spec": {
@@ -385,8 +424,11 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
                 }
             },
             "spec": {
@@ -405,7 +447,7 @@
                     }
                 ],
                 "selector": {
-                    "app": "${APPLICATION_NAME}",
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "deploymentconfig": "${APPLICATION_NAME}"
                 }
             }
@@ -415,11 +457,14 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}",
+                "namespace": "${PROJECT_NAME}",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
+                },
                 "annotations": {
                     "kubernetes.io/tls-acme": "${LETS_ENCRYPT}"
-                },
-                "labels": {
-                    "app": "${APPLICATION_NAME}"
                 }
             },
             "spec": {
@@ -443,8 +488,11 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-app",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
                 }
             },
             "spec": {
@@ -467,8 +515,11 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
                 }
             },
             "spec": {
@@ -488,8 +539,11 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
                 }
             },
             "spec": {
@@ -516,14 +570,14 @@
                 ],
                 "replicas": 1,
                 "selector": {
-                    "app": "${APPLICATION_NAME}",
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "deploymentconfig": "${APPLICATION_NAME}-keycloak"
                 },
                 "template": {
                     "metadata": {
                         "name": "${APPLICATION_NAME}-keycloak",
                         "labels": {
-                            "app": "${APPLICATION_NAME}",
+                            "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                             "deploymentconfig": "${APPLICATION_NAME}-keycloak"
                         }
                     },
@@ -604,8 +658,11 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
                 }
             },
             "spec": {
@@ -624,7 +681,7 @@
                     }
                 ],
                 "selector": {
-                    "app": "${APPLICATION_NAME}",
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "deploymentconfig": "${APPLICATION_NAME}-keycloak"
                 }
             }
@@ -634,11 +691,14 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak",
+                "namespace": "${PROJECT_NAME}",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
+                },
                 "annotations": {
                     "kubernetes.io/tls-acme": "${LETS_ENCRYPT}"
-                },
-                "labels": {
-                    "app": "${APPLICATION_NAME}"
                 }
             },
             "spec": {
@@ -661,8 +721,11 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak-data",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
                 }
             },
             "spec": {
@@ -681,14 +744,17 @@
             "kind": "DeploymentConfig",
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak-db",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
                 }
             },
             "spec": {
                 "replicas": 1,
                 "selector": {
-                    "app": "${APPLICATION_NAME}",
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "deploymentconfig": "${APPLICATION_NAME}-keycloak-db"
                 },
                 "strategy": {
@@ -697,7 +763,7 @@
                 "template": {
                     "metadata": {
                         "labels": {
-                            "app": "${APPLICATION_NAME}",
+                            "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                             "deploymentconfig": "${APPLICATION_NAME}-keycloak-db"
                         }
                     },
@@ -784,8 +850,11 @@
             "apiVersion": "v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}-keycloak-db",
+                "namespace": "${PROJECT_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}"
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "jumpbox-server",
+                    "class": "spawner"
                 }
             },
             "spec": {
@@ -798,7 +867,7 @@
                     }
                 ],
                 "selector": {
-                    "app": "${APPLICATION_NAME}",
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                     "deploymentconfig": "${APPLICATION_NAME}-keycloak-db"
                 }
             }

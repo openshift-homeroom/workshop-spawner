@@ -37,6 +37,18 @@ c.JupyterHub.admin_access = True
 
 c.Authenticator.admin_users = set(os.environ.get('ADMIN_USERS', '').split())
 
+# Override labels on pods so matches label used by the spawner.
+
+c.KubeSpawner.common_labels = {
+    'app': '%s-%s' % (application_name, namespace)
+}
+
+c.KubeSpawner.extra_labels = {
+    'spawner': 'jumpbox-server',
+    'class': 'session',
+    'user': '{username}'
+}
+
 # Mount config map for user provided environment variables for the
 # terminal and workshop.
 
@@ -121,6 +133,10 @@ if volume_size:
             ]
         }
     ])
+
+# Run as our own service account which doesn't have any access rights.
+
+c.KubeSpawner.service_account = '%s-%s-user' % (application_name, namespace)
 
 # Setup culling of terminal instances if timeout parameter is supplied.
 
