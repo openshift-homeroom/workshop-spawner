@@ -1,33 +1,58 @@
-# This file provides configuration specific to the 'jumpbox-server'
+# This file provides configuration specific to the 'terminal-server'
 # deployment mode. In this mode authentication for JupyterHub is done
-# against a KeyCloak authentication server.
+# against the OpenShift cluster using OAuth.
 
-# Configure standalone KeyCloak as the authentication provider for users.
+# Work out the public server address for the OpenShift OAuth endpoint.
+# Make sure the request is done in a session so the connection is closed
+# and later calls against the REST API don't attempt to reuse it. This
+# is just to avoid potential for any problems with connection reuse.
 
-keycloak_name = '%s-keycloak' % application_name
-keycloak_hostname = extract_hostname(routes, keycloak_name)
-keycloak_realm = 'homeroom'
+import json
+import requests
 
-os.environ['OAUTH2_TOKEN_URL'] = 'https://%s/auth/realms/%s/protocol/openid-connect/token' % (keycloak_hostname, keycloak_realm)
-os.environ['OAUTH2_AUTHORIZE_URL'] = 'https://%s/auth/realms/%s/protocol/openid-connect/auth' % (keycloak_hostname, keycloak_realm)
-os.environ['OAUTH2_USERDATA_URL'] = 'https://%s/auth/realms/%s/protocol/openid-connect/userinfo' % (keycloak_hostname, keycloak_realm)
+from fnmatch import fnmatch
 
-os.environ['OAUTH2_TLS_VERIFY'] = '0'
-os.environ['OAUTH_TLS_VERIFY'] = '0'
+from tornado import web, gen
 
-os.environ['OAUTH2_USERNAME_KEY'] = 'preferred_username'
+kubernetes_service_host = os.environ['KUBERNETES_SERVICE_HOST']
+kubernetes_service_port = os.environ['KUBERNETES_SERVICE_PORT']
 
-from oauthenticator.generic import GenericOAuthenticator
-c.JupyterHub.authenticator_class = GenericOAuthenticator
+kubernetes_server_url = 'https://%s:%s' % (kubernetes_service_host,
+        kubernetes_service_port)
 
-c.OAuthenticator.login_service = "KeyCloak"
+oauth_metadata_url = '%s/.well-known/oauth-authorization-server' % kubernetes_server_url
 
-c.OAuthenticator.oauth_callback_url = 'https://%s/hub/oauth_callback' % public_hostname
+with requests.Session() as session:
+    response = session.get(oauth_metadata_url, verify=False)
+    data = json.loads(response.content.decode('UTF-8'))
+    oauth_issuer_address = data['issuer']
 
-c.OAuthenticator.client_id = 'homeroom'
-c.OAuthenticator.client_secret = os.environ.get('OAUTH_CLIENT_SECRET')
+# Enable the OpenShift authenticator. The OPENSHIFT_URL environment
+# variable must be set before importing the authenticator as it only
+# reads it when module is first imported. From OpenShift 4.0 we need
+# to supply separate URLs for Kubernetes server and OAuth server.
 
-c.OAuthenticator.tls_verify = False
+os.environ['OPENSHIFT_URL'] = oauth_issuer_address
+
+os.environ['OPENSHIFT_REST_API_URL'] = kubernetes_server_url
+os.environ['OPENSHIFT_AUTH_API_URL'] = oauth_issuer_address
+
+from oauthenticator.openshift import OpenShiftOAuthenticator
+c.JupyterHub.authenticator_class = OpenShiftOAuthenticator
+
+OpenShiftOAuthenticator.scope = ['user:full']
+
+client_id = '%s-%s-console' % (application_name, namespace)
+client_secret = os.environ['OAUTH_CLIENT_SECRET']
+
+c.OpenShiftOAuthenticator.client_id = client_id
+c.OpenShiftOAuthenticator.client_secret = client_secret
+c.Authenticator.enable_auth_state = True
+
+c.CryptKeeper.keys = [ client_secret.encode('utf-8') ]
+
+c.OpenShiftOAuthenticator.oauth_callback_url = (
+        'https://%s/hub/oauth_callback' % public_hostname)
 
 c.Authenticator.auto_login = True
 
@@ -44,7 +69,7 @@ c.KubeSpawner.common_labels = {
 }
 
 c.KubeSpawner.extra_labels = {
-    'spawner': 'jumpbox-server',
+    'spawner': 'terminal-server',
     'class': 'session',
     'user': '{username}'
 }
@@ -134,9 +159,44 @@ if volume_size:
         }
     ])
 
-# Run as our own service account which doesn't have any access rights.
+# Make modifications to pod based on user and type of session.
 
-c.KubeSpawner.service_account = '%s-%s-user' % (application_name, namespace)
+@gen.coroutine
+def modify_pod_hook(spawner, pod):
+    # Set the session access token from the OpenShift login in
+    # both the terminal and console containers. We still mount
+    # the service account token still as well because the console
+    # needs the SSL certificate contained in it when accessing
+    # the cluster REST API.
+
+    auth_state = yield spawner.user.get_auth_state()
+
+    pod.spec.containers[0].env.append(
+            dict(name='OPENSHIFT_TOKEN', value=auth_state['access_token']))
+
+    pod.spec.service_account_name = '%s-%s-user' % (application_name, namespace)
+
+    # See if a template for the project name has been specified.
+    # Try expanding the name, substituting the username. If the
+    # result is different then we use it, not if it is the same
+    # which would suggest it isn't unique.
+
+    project = os.environ.get('OPENSHIFT_PROJECT')
+
+    if project:
+        name = project.format(username=spawner.user.name)
+        if name != project:
+            pod.spec.containers[0].env.append(
+                    dict(name='PROJECT_NAMESPACE', value=name))
+
+            # Ensure project is created if it doesn't exist.
+
+            pod.spec.containers[0].env.append(
+                    dict(name='OPENSHIFT_PROJECT', value=name))
+
+    return pod
+
+c.KubeSpawner.modify_pod_hook = modify_pod_hook
 
 # Setup culling of terminal instances if timeout parameter is supplied.
 
@@ -157,8 +217,6 @@ if idle_timeout and int(idle_timeout):
 c.Spawner.environment['RESTART_URL'] = '/restart'
 
 # Redirect handler for sending /restart back to home page for user.
-
-from tornado import web, gen
 
 from jupyterhub.handlers import BaseHandler
 

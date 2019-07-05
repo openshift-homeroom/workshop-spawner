@@ -2,9 +2,9 @@
     "kind": "Template",
     "apiVersion": "v1",
     "metadata": {
-        "name": "hosted-workshop-development",
+        "name": "terminal-server-production",
         "annotations": {
-            "openshift.io/display-name": "Hosted Workshop (Development)"
+            "openshift.io/display-name": "Terminal Server (Production)"
         }
     },
     "parameters": [
@@ -20,17 +20,7 @@
         },
         {
             "name": "APPLICATION_NAME",
-            "value": "workshop",
-            "required": true
-        },
-        {
-            "name": "GIT_REPOSITORY_URL",
-            "value": "https://github.com/openshift-labs/workshop-spawner.git",
-            "required": true
-        },
-        {
-            "name": "GIT_REPOSITORY_REF",
-            "value": "develop",
+            "value": "terminal",
             "required": true
         },
         {
@@ -75,8 +65,8 @@
             "required": false
         },
         {
-            "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/jupyteronopenshift/jupyterhub:3.0.7",
+            "name": "SPAWNER_IMAGE",
+            "value": "quay.io/openshiftlabs/workshop-spawner:4.1.0",
             "required": true
         },
         {
@@ -132,7 +122,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             }
@@ -145,7 +135,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             }
@@ -157,7 +147,7 @@
                 "name": "${APPLICATION_NAME}-${PROJECT_NAME}-console",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -175,7 +165,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -197,9 +187,20 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
+            },
+            "spec": {
+                "tags": [
+                    {
+                        "name": "latest",
+                        "from": {
+                            "kind": "DockerImage",
+                            "name": "${SPAWNER_IMAGE}"
+                        }
+                    }
+                ]
             }
         },
         {
@@ -210,7 +211,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -226,7 +227,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -237,52 +238,6 @@
             }
         },
         {
-            "kind": "BuildConfig",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}-hub",
-                "namespace": "${PROJECT_NAME}",
-                "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
-                    "class": "spawner"
-                }
-            },
-            "spec": {
-                "triggers": [
-                    {
-                        "type": "ConfigChange"
-                    },
-                    {
-                        "type": "ImageChange"
-                    }
-                ],
-                "source": {
-                    "type": "Git",
-                    "git": {
-                        "uri": "${GIT_REPOSITORY_URL}",
-                        "ref": "${GIT_REPOSITORY_REF}"
-                    },
-                    "contextDir": "jupyterhub"
-                },
-                "strategy": {
-                    "type": "Source",
-                    "sourceStrategy": {
-                        "from": {
-                            "kind": "DockerImage",
-                            "name": "${JUPYTERHUB_IMAGE}"
-                        }
-                    }
-                },
-                "output": {
-                    "to": {
-                        "kind": "ImageStreamTag",
-                        "name": "${APPLICATION_NAME}-hub:latest"
-                    }
-                }
-            }
-        },
-        {
             "kind": "DeploymentConfig",
             "apiVersion": "v1",
             "metadata": {
@@ -290,7 +245,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -326,7 +281,7 @@
                         "labels": {
                             "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                             "deploymentconfig": "${APPLICATION_NAME}",
-                            "spawner": "hosted-workshop",
+                            "spawner": "terminal-server",
                             "class": "spawner"
                         }
                     },
@@ -375,7 +330,7 @@
                                 "env": [
                                     {
                                         "name": "CONFIGURATION_TYPE",
-                                        "value": "hosted-workshop"
+                                        "value": "terminal-server"
                                     },
                                     {
                                         "name": "APPLICATION_NAME",
@@ -473,7 +428,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -496,7 +451,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -529,7 +484,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 },
                 "annotations": {
@@ -560,7 +515,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -573,7 +528,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-dashboard:3.3.3"
+                            "name": "quay.io/openshiftlabs/workshop-terminal:2.10.2"
                         }
                     }
                 ]

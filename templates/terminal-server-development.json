@@ -2,9 +2,9 @@
     "kind": "Template",
     "apiVersion": "v1",
     "metadata": {
-        "name": "hosted-workshop-development",
+        "name": "terminal-server-development",
         "annotations": {
-            "openshift.io/display-name": "Hosted Workshop (Development)"
+            "openshift.io/display-name": "Terminal Server (Development)"
         }
     },
     "parameters": [
@@ -20,7 +20,7 @@
         },
         {
             "name": "APPLICATION_NAME",
-            "value": "workshop",
+            "value": "terminal",
             "required": true
         },
         {
@@ -132,7 +132,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             }
@@ -145,7 +145,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             }
@@ -157,7 +157,7 @@
                 "name": "${APPLICATION_NAME}-${PROJECT_NAME}-console",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -175,7 +175,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -197,7 +197,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             }
@@ -210,7 +210,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -226,7 +226,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -244,7 +244,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -290,7 +290,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -326,7 +326,7 @@
                         "labels": {
                             "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
                             "deploymentconfig": "${APPLICATION_NAME}",
-                            "spawner": "hosted-workshop",
+                            "spawner": "terminal-server",
                             "class": "spawner"
                         }
                     },
@@ -375,7 +375,7 @@
                                 "env": [
                                     {
                                         "name": "CONFIGURATION_TYPE",
-                                        "value": "hosted-workshop"
+                                        "value": "terminal-server"
                                     },
                                     {
                                         "name": "APPLICATION_NAME",
@@ -473,7 +473,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -496,7 +496,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -529,7 +529,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 },
                 "annotations": {
@@ -560,7 +560,7 @@
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "hosted-workshop",
+                    "spawner": "terminal-server",
                     "class": "spawner"
                 }
             },
@@ -573,7 +573,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-dashboard:3.3.3"
+                            "name": "quay.io/openshiftlabs/workshop-terminal:2.10.2"
                         }
                     }
                 ]

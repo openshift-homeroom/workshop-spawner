@@ -1455,10 +1455,6 @@ def modify_pod_hook(spawner, pod):
         print('ERROR: Error creating rolebinding for extras. %s' % e)
         raise
 
-    # Create any extra resources in the project required for a workshop.
-
-    create_extra_resources(project_name, project_uid)
-
     # Before can continue, need to poll looking to see if the secret for
     # the api token has been added to the service account. If don't do
     # this then pod creation will fail immediately. To do this, must get
@@ -1499,6 +1495,10 @@ def modify_pod_hook(spawner, pod):
         # If can't verify after multiple attempts, continue on anyway.
 
         print('WARNING: Could not verify account. %s' % user_account_name)
+
+    # Create any extra resources in the project required for a workshop.
+
+    create_extra_resources(project_name, project_uid)
 
     # Add environment variable for the project namespace for use in any
     # workshop content.
