@@ -657,7 +657,7 @@
                         }
                     },
                     "spec": {
-                        "serviceAccountName": "${APPLICATION_NAME}-hub",
+                        "serviceAccountName": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
                         "containers": [
                             {
                                 "name": "keycloak",
