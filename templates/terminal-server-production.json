@@ -66,7 +66,7 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-spawner:4.1.0",
+            "value": "quay.io/openshiftlabs/workshop-spawner:4.2.0",
             "required": true
         },
         {
@@ -79,6 +79,14 @@
         },
         {
             "name": "GATEWAY_ENVVARS",
+            "value": ""
+        },
+        {
+            "name": "DOWNLOAD_URL",
+            "value": ""
+        },
+        {
+            "name": "WORKSHOP_FILE",
             "value": ""
         },
         {
@@ -371,6 +379,14 @@
                                     {
                                         "name": "IDLE_TIMEOUT",
                                         "value": "${IDLE_TIMEOUT}"
+                                    },
+                                    {
+                                        "name": "DOWNLOAD_URL",
+                                        "value": "${DOWNLOAD_URL}"
+                                    },
+                                    {
+                                        "name": "WORKSHOP_FILE",
+                                        "value": "${WORKSHOP_FILE}"
                                     },
                                     {
                                         "name": "OC_VERSION",

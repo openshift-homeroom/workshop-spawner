@@ -92,6 +92,14 @@
             "value": ""
         },
         {
+            "name": "DOWNLOAD_URL",
+            "value": ""
+        },
+        {
+            "name": "WORKSHOP_FILE",
+            "value": ""
+        },
+        {
             "name": "OC_VERSION",
             "value": ""
         },
@@ -418,6 +426,14 @@
                                         "value": "${IDLE_TIMEOUT}"
                                     },
                                     {
+                                        "name": "DOWNLOAD_URL",
+                                        "value": "${DOWNLOAD_URL}"
+                                    },
+                                    {
+                                        "name": "WORKSHOP_FILE",
+                                        "value": "${WORKSHOP_FILE}"
+                                    },
+                                    {
                                         "name": "OC_VERSION",
                                         "value": "${OC_VERSION}"
                                     },
@@ -573,7 +589,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-dashboard:3.3.3"
+                            "name": "quay.io/openshiftlabs/workshop-dashboard:3.4.0"
                         }
                     }
                 ]

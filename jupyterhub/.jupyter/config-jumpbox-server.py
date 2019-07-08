@@ -134,6 +134,11 @@ if volume_size:
         }
     ])
 
+# Pass through environment variables with remote workshop details.
+
+c.Spawner.environment['DOWNLOAD_URL'] = os.environ.get('DOWNLOAD_URL', '')
+c.Spawner.environment['WORKSHOP_FILE'] = os.environ.get('WORKSHOP_FILE', '')
+
 # Run as our own service account which doesn't have any access rights.
 
 c.KubeSpawner.service_account = '%s-%s-user' % (application_name, namespace)

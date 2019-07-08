@@ -197,6 +197,11 @@ c.KubeSpawner.extra_containers.extend([
 
 c.Spawner.environment['CONSOLE_URL'] = 'http://localhost:10083'
 
+# Pass through environment variables with remote workshop details.
+
+c.Spawner.environment['DOWNLOAD_URL'] = os.environ.get('DOWNLOAD_URL', '')
+c.Spawner.environment['WORKSHOP_FILE'] = os.environ.get('WORKSHOP_FILE', '')
+
 # We need to ensure the service account does actually exist, and also
 # create a project for the user and a role binding which allows the
 # service account to work on that project. They need to be given admin

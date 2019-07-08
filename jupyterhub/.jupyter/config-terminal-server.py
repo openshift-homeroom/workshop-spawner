@@ -159,6 +159,11 @@ if volume_size:
         }
     ])
 
+# Pass through environment variables with remote workshop details.
+
+c.Spawner.environment['DOWNLOAD_URL'] = os.environ.get('DOWNLOAD_URL', '')
+c.Spawner.environment['WORKSHOP_FILE'] = os.environ.get('WORKSHOP_FILE', '')
+
 # Make modifications to pod based on user and type of session.
 
 @gen.coroutine
