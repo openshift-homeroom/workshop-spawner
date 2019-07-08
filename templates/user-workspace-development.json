@@ -88,6 +88,14 @@
             "value": ""
         },
         {
+            "name": "DOWNLOAD_URL",
+            "value": ""
+        },
+        {
+            "name": "WORKSHOP_FILE",
+            "value": ""
+        },
+        {
             "name": "OC_VERSION",
             "value": ""
         },
@@ -658,6 +666,14 @@
                                     {
                                         "name": "RESOURCE_BUDGET",
                                         "value": "${RESOURCE_BUDGET}"
+                                    },
+                                    {
+                                        "name": "DOWNLOAD_URL",
+                                        "value": "${DOWNLOAD_URL}"
+                                    },
+                                    {
+                                        "name": "WORKSHOP_FILE",
+                                        "value": "${WORKSHOP_FILE}"
                                     },
                                     {
                                         "name": "OC_VERSION",

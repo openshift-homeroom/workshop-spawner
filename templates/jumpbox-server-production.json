@@ -66,6 +66,14 @@
             "value": ""
         },
         {
+            "name": "DOWNLOAD_URL",
+            "value": ""
+        },
+        {
+            "name": "WORKSHOP_FILE",
+            "value": ""
+        },
+        {
             "name": "OC_VERSION",
             "value": ""
         },
@@ -347,6 +355,14 @@
                                     {
                                         "name": "IDLE_TIMEOUT",
                                         "value": "${IDLE_TIMEOUT}"
+                                    },
+                                    {
+                                        "name": "DOWNLOAD_URL",
+                                        "value": "${DOWNLOAD_URL}"
+                                    },
+                                    {
+                                        "name": "WORKSHOP_FILE",
+                                        "value": "${WORKSHOP_FILE}"
                                     },
                                     {
                                         "name": "OC_VERSION",
