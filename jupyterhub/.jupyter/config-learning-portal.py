@@ -1090,7 +1090,7 @@ def create_extra_resources(project_name, project_uid, user_account_name,
 
     template = string.Template(extra_resources)
     text = template.safe_substitute(jupyterhub_namespace=namespace,
-            spawner_namespace=namespace, project_namespace=project_name.
+            spawner_namespace=namespace, project_namespace=project_name,
             image_registry=image_registry, service_account=user_account_name,
             username=short_name, application_name=application_name)
 
