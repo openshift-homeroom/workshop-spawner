@@ -12,7 +12,6 @@
 # will be given a new instance.
 
 import string
-import json
 import time
 import functools
 import random

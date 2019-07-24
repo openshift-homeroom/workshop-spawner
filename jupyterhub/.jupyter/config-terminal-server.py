@@ -7,18 +7,9 @@
 # and later calls against the REST API don't attempt to reuse it. This
 # is just to avoid potential for any problems with connection reuse.
 
-import json
-import requests
-
 from fnmatch import fnmatch
 
 from tornado import web, gen
-
-kubernetes_service_host = os.environ['KUBERNETES_SERVICE_HOST']
-kubernetes_service_port = os.environ['KUBERNETES_SERVICE_PORT']
-
-kubernetes_server_url = 'https://%s:%s' % (kubernetes_service_host,
-        kubernetes_service_port)
 
 oauth_metadata_url = '%s/.well-known/oauth-authorization-server' % kubernetes_server_url
 

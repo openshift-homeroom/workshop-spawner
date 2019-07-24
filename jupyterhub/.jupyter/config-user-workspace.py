@@ -3,7 +3,6 @@
 # against a KeyCloak authentication server.
 
 import string
-import json
 import yaml
 
 from tornado import web, gen

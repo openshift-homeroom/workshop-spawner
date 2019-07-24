@@ -1,4 +1,7 @@
 import os
+import json
+
+import requests
 
 # This file provides common configuration for the different ways that
 # the deployment can run. Configuration specific to the different modes
@@ -14,6 +17,26 @@ import os
 application_name = os.environ.get('APPLICATION_NAME')
 
 configuration_type = os.environ.get('CONFIGURATION_TYPE', 'hosted-workshop')
+
+# Kubernetes REST API endpoint and cluster information.
+
+kubernetes_service_host = os.environ['KUBERNETES_SERVICE_HOST']
+kubernetes_service_port = os.environ['KUBERNETES_SERVICE_PORT']
+
+kubernetes_server_url = 'https://%s:%s' % (kubernetes_service_host,
+        kubernetes_service_port)
+
+kubernetes_server_version_url = '%s/version' % kubernetes_server_url
+
+with requests.Session() as session:
+    response = session.get(kubernetes_server_version_url, verify=False)
+    kubernetes_server_info = json.loads(response.content.decode('UTF-8'))
+
+image_registry = 'image-registry.openshift-image-registry.svc:5000'
+
+if kubernetes_server_info['major'] == '1':
+    if kubernetes_server_info['minor'] in ('10', '10+', '11', '11+'):
+        image_registry = 'docker-registry.default.svc:5000'
 
 # Override styling elements for the JupyterHub web pages.
 
