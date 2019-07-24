@@ -12,7 +12,6 @@
 # will be given a new instance.
 
 import string
-import json
 import time
 import functools
 import random
@@ -1080,13 +1079,20 @@ if os.path.exists('/opt/app-root/resources/extra_resources.json'):
         extra_resources = fp.read().strip()
         extra_resources_loader = json.loads
 
-def create_extra_resources(project_name, project_uid):
+def create_extra_resources(project_name, project_uid, user_account_name,
+        short_name):
+
     if not extra_resources:
         return
 
+    # Only passing 'jupyterhub_namespace' for backward compatibility.
+    # Should use 'spawner_namespace' going forward.
+
     template = string.Template(extra_resources)
     text = template.safe_substitute(jupyterhub_namespace=namespace,
-            project_namespace=project_name)
+            spawner_namespace=namespace, project_namespace=project_name,
+            image_registry=image_registry, service_account=user_account_name,
+            username=short_name, application_name=application_name)
 
     data = extra_resources_loader(text)
 
@@ -1503,7 +1509,8 @@ def modify_pod_hook(spawner, pod):
 
     # Create any extra resources in the project required for a workshop.
 
-    create_extra_resources(project_name, project_uid)
+    create_extra_resources(project_name, project_uid, user_account_name,
+            short_name)
 
     # Add environment variable for the project namespace for use in any
     # workshop content.
@@ -1567,8 +1574,8 @@ if idle_timeout and int(idle_timeout):
             'environment': dict(
                 PYTHONUNBUFFERED='1',
                 APPLICATION_NAME=application_name,
-                KUBERNETES_SERVICE_HOST=os.environ['KUBERNETES_SERVICE_HOST'],
-                KUBERNETES_SERVICE_PORT=os.environ['KUBERNETES_SERVICE_PORT']
+                KUBERNETES_SERVICE_HOST=kubernetes_service_host,
+                KUBERNETES_SERVICE_PORT=kubernetes_service_port
             ),
         }
     ])

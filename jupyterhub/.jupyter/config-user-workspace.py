@@ -3,7 +3,6 @@
 # against a KeyCloak authentication server.
 
 import string
-import json
 import yaml
 
 from tornado import web, gen
@@ -1072,13 +1071,20 @@ if os.path.exists('/opt/app-root/resources/extra_resources.json'):
         extra_resources = fp.read().strip()
         extra_resources_loader = json.loads
 
-def create_extra_resources(project_name, project_uid):
+def create_extra_resources(project_name, project_uid, user_account_name,
+        short_name):
+
     if not extra_resources:
         return
 
+    # Only passing 'jupyterhub_namespace' for backward compatibility.
+    # Should use 'spawner_namespace' going forward.
+
     template = string.Template(extra_resources)
     text = template.safe_substitute(jupyterhub_namespace=namespace,
-            project_namespace=project_name)
+            spawner_namespace=namespace, project_namespace=project_name,
+            image_registry=image_registry, service_account=user_account_name,
+            username=short_name, application_name=application_name)
 
     data = extra_resources_loader(text)
 
@@ -1495,7 +1501,8 @@ def modify_pod_hook(spawner, pod):
 
     # Create any extra resources in the project required for a workshop.
 
-    create_extra_resources(project_name, project_uid)
+    create_extra_resources(project_name, project_uid, user_account_name,
+            short_name)
 
     # Add environment variable for the project namespace for use in any
     # workshop content.
