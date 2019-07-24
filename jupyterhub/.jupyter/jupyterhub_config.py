@@ -45,7 +45,7 @@ c.JupyterHub.logo_file = '/opt/app-root/src/images/OpenShiftBanner.png'
 # Work out the service account name and name of the namespace that the
 # deployment is in.
 
-service_account_name = '%s-hub' %  application_name
+service_account_name = '%s-hub' % application_name
 
 service_account_path = '/var/run/secrets/kubernetes.io/serviceaccount'
 
