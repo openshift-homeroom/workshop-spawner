@@ -1566,8 +1566,8 @@ if idle_timeout and int(idle_timeout):
             'environment': dict(
                 PYTHONUNBUFFERED='1',
                 APPLICATION_NAME=application_name,
-                KUBERNETES_SERVICE_HOST=os.environ['KUBERNETES_SERVICE_HOST'],
-                KUBERNETES_SERVICE_PORT=os.environ['KUBERNETES_SERVICE_PORT']
+                KUBERNETES_SERVICE_HOST=kubernetes_service_host,
+                KUBERNETES_SERVICE_PORT=kubernetes_service_port
             ),
         }
     ])
