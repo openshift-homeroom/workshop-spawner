@@ -757,7 +757,7 @@
             "kind": "ImageStream",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-app",
+                "name": "${APPLICATION_NAME}",
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
