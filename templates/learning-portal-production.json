@@ -36,7 +36,13 @@
         },
         {
             "name": "CONSOLE_VERSION",
-            "value": "4.2.0"
+            "value": "",
+            "description": "OBSOLETE: Use CONSOLE_IMAGE instead."
+        },
+        {
+            "name": "CONSOLE_IMAGE",
+            "value": "quay.io/openshift/origin-console:4.1",
+            "required": true
         },
         {
             "name": "SERVER_LIMIT",
@@ -62,7 +68,7 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshiftlabs/workshop-spawner:4.3.0",
+            "value": "quay.io/openshiftlabs/workshop-spawner:4.4.0",
             "required": true
         },
         {
@@ -574,8 +580,8 @@
                                         "value": "${CONSOLE_BRANDING}"
                                     },
                                     {
-                                        "name": "CONSOLE_VERSION",
-                                        "value": "${CONSOLE_VERSION}"
+                                        "name": "CONSOLE_IMAGE",
+                                        "value": "${CONSOLE_IMAGE}"
                                     },
                                     {
                                         "name": "IDLE_TIMEOUT",
@@ -751,7 +757,7 @@
             "kind": "ImageStream",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-app",
+                "name": "${APPLICATION_NAME}",
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
@@ -768,7 +774,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-dashboard:3.6.2"
+                            "name": "quay.io/openshiftlabs/workshop-dashboard:3.7.1"
                         }
                     }
                 ]

@@ -543,7 +543,7 @@
             "kind": "ImageStream",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-app",
+                "name": "${APPLICATION_NAME}",
                 "namespace": "${PROJECT_NAME}",
                 "labels": {
                     "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
@@ -560,7 +560,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-terminal:2.11.2"
+                            "name": "quay.io/openshiftlabs/workshop-terminal:2.12.2"
                         }
                     }
                 ]

@@ -40,7 +40,7 @@ if kubernetes_server_info['major'] == '1':
 
 # Override styling elements for the JupyterHub web pages.
 
-c.JupyterHub.logo_file = '/opt/app-root/src/images/OpenShiftBanner.png'
+c.JupyterHub.logo_file = '/opt/app-root/src/images/HomeroomIcon.png'
 
 # Work out the service account name and name of the namespace that the
 # deployment is in.
@@ -93,7 +93,7 @@ c.JupyterHub.extra_handlers = []
 
 # Override the image details with that for the terminal or dashboard
 # image being used. The default is to assume that a image stream with
-# '-app' extension for the application name is used. The call to the
+# the same name as the application name is being used. The call to the
 # function resolve_image_name() is to try and resolve to image registry
 # when using image stream. This is to workaround issue that many
 # clusters do not have image policy controller configured correctly.
@@ -102,13 +102,13 @@ c.JupyterHub.extra_handlers = []
 # node each time when the image name is not explicitly provided. This is
 # so that during development, changes to the terminal image will always
 # be picked up. Someone developing a new image need only update the
-# 'latest' tag on the '-app' image using 'oc tag'. 
+# 'latest' tag on the image using 'oc tag'. 
 
 terminal_image = os.environ.get('TERMINAL_IMAGE')
 
 if not terminal_image:
     c.KubeSpawner.image_pull_policy = 'Always'
-    terminal_image = '%s-app:latest' % application_name
+    terminal_image = '%s:latest' % application_name
 
 c.KubeSpawner.image_spec = resolve_image_name(terminal_image)
 
