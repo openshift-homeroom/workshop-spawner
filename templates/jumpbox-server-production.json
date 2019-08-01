@@ -520,7 +520,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshiftlabs/workshop-terminal:2.11.2"
+                            "name": "quay.io/openshiftlabs/workshop-terminal:2.12.2"
                         }
                     }
                 ]
