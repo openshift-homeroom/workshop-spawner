@@ -41,7 +41,13 @@
         },
         {
             "name": "CONSOLE_VERSION",
-            "value": "4.2.0"
+            "value": "",
+            "description": "OBSOLETE: Use CONSOLE_IMAGE instead."
+        },
+        {
+            "name": "CONSOLE_IMAGE",
+            "value": "quay.io/openshift/origin-console:4.1",
+            "required": true
         },
         {
             "name": "VOLUME_SIZE",
@@ -361,8 +367,8 @@
                                         "value": "${CONSOLE_BRANDING}"
                                     },
                                     {
-                                        "name": "CONSOLE_VERSION",
-                                        "value": "${CONSOLE_VERSION}"
+                                        "name": "CONSOLE_IMAGE",
+                                        "value": "${CONSOLE_IMAGE}"
                                     },
                                     {
                                         "name": "VOLUME_SIZE",
