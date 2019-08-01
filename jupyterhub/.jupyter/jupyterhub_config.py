@@ -40,7 +40,7 @@ if kubernetes_server_info['major'] == '1':
 
 # Override styling elements for the JupyterHub web pages.
 
-c.JupyterHub.logo_file = '/opt/app-root/src/images/OpenShiftBanner.png'
+c.JupyterHub.logo_file = '/opt/app-root/src/images/HomeroomIcon.png'
 
 # Work out the service account name and name of the namespace that the
 # deployment is in.
