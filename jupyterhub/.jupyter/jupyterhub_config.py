@@ -18,6 +18,17 @@ application_name = os.environ.get('APPLICATION_NAME')
 
 configuration_type = os.environ.get('CONFIGURATION_TYPE', 'hosted-workshop')
 
+# Override files used for cookie secret and database so that uses the
+# user ID in the name. This is needed in case where deployment is
+# updated and the user ID changes. This can occur when granting the
+# spawner cluster admin role for some reason.
+
+if not os.environ.get('JUPYTERHUB_COOKIE_SECRET'):
+    c.JupyterHub.cookie_secret_file = '/opt/app-root/data/cookie_secret-%d' % os.getuid()
+
+if not os.environ.get('JUPYTERHUB_DATABASE_PASSWORD'):
+    c.JupyterHub.db_url = '/opt/app-root/data/database-%d.sqlite' % os.getuid()
+
 # Kubernetes REST API endpoint and cluster information.
 
 kubernetes_service_host = os.environ['KUBERNETES_SERVICE_HOST']
