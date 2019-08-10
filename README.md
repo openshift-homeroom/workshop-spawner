@@ -49,7 +49,7 @@ This will create a deployment called `portal`. Check the output from `oc new-app
 To delete the deployment, run:
 
 ```
-oc delete all,serviceaccount,configmap,secret,persistentvolumeclaim,rolebinding,clusterrole,clusterrolebinding -l app=portal-`oc project --short`
+oc delete all,serviceaccount,configmap,secret,rolebinding,clusterrole,clusterrolebinding -l app=portal-`oc project --short`
 ```
 
 Hosted workshop deployment
