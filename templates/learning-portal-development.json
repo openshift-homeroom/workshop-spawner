@@ -19,6 +19,10 @@
             "required": true
         },
         {
+            "name": "SPAWNER_PASSWORD",
+            "value": ""
+        },
+        {
             "name": "GIT_REPOSITORY_URL",
             "value": "https://github.com/openshift-labs/workshop-spawner.git",
             "required": true
@@ -632,6 +636,10 @@
                                     {
                                         "name": "APPLICATION_NAME",
                                         "value": "${APPLICATION_NAME}"
+                                    },
+                                    {
+                                        "name": "SPAWNER_PASSWORD",
+                                        "value": "${SPAWNER_PASSWORD}"
                                     },
                                     {
                                         "name": "TERMINAL_IMAGE",

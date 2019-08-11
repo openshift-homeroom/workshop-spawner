@@ -19,6 +19,10 @@
             "required": true
         },
         {
+            "name": "SPAWNER_PASSWORD",
+            "value": ""
+        },
+        {
             "name": "SPAWNER_ROLE",
             "value": "basic-user",
             "required": true
@@ -587,6 +591,10 @@
                                     {
                                         "name": "APPLICATION_NAME",
                                         "value": "${APPLICATION_NAME}"
+                                    },
+                                    {
+                                        "name": "SPAWNER_PASSWORD",
+                                        "value": "${SPAWNER_PASSWORD}"
                                     },
                                     {
                                         "name": "TERMINAL_IMAGE",

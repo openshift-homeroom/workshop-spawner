@@ -16,6 +16,7 @@ import time
 import functools
 import random
 import yaml
+import weakref
 
 from tornado import gen, web
 
@@ -111,6 +112,34 @@ class AutoAuthenticator(Authenticator):
         return url_path_join(base_url, 'login')
 
 c.JupyterHub.authenticator_class = AutoAuthenticator
+
+named_users = weakref.WeakValueDictionary()
+
+class NamedUserAuthenticator(Authenticator):
+    password = os.environ.get('SPAWNER_PASSWORD')
+
+    def generate_user(self, username):
+        user = named_users.get(username)
+
+        if user:
+            return user.name
+
+        while True:
+            name = generate_random_userid()
+            user = get_user_details(name)
+            if not user.active:
+                user.active = True
+                named_users[username] = user
+                return name
+
+    @gen.coroutine
+    def authenticate(self, handler, data):
+        if data['username'] and self.password:
+            if data['password'] == self.password:
+                return self.generate_user(data['username'])
+
+if NamedUserAuthenticator.password:
+    c.JupyterHub.authenticator_class = NamedUserAuthenticator
 
 # Override labels on pods so matches label used by the spawner.
 
