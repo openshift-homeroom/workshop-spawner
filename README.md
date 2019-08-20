@@ -10,11 +10,11 @@ Workshop base images
 
 Workshop content and any additional applications required are bundled as an image. The base image for the full workshop environment is:
 
-* https://github.com/openshift-labs/workshop-dashboard
+* https://github.com/openshift-homeroom/workshop-dashboard
 
 The base image if needing only an interactive terminal is:
 
-* https://github.com/openshift-labs/workshop-terminal
+* https://github.com/openshift-homeroom/workshop-terminal
 
 A workshop image would extend these to add their own content.
 
@@ -41,7 +41,7 @@ Learning portal deployment
 To use the learning portal configuration you must be a cluster admin. Run:
 
 ```
-oc new-app https://raw.githubusercontent.com/openshift-labs/workshop-spawner/master/templates/learning-portal-production.json --param PROJECT_NAME=`oc project --short`
+oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/learning-portal-production.json --param PROJECT_NAME=`oc project --short`
 ```
 
 This will create a deployment called `portal`. Check the output from `oc new-app` for the public URL the application can be accessed with, or run `oc get route`.
@@ -58,7 +58,7 @@ Hosted workshop deployment
 To use the hosted workshop configuration you must be a cluster admin. Run:
 
 ```
-oc new-app https://raw.githubusercontent.com/openshift-labs/workshop-spawner/master/templates/hosted-workshop-production.json --param PROJECT_NAME=`oc project --short` --param CLUSTER_SUBDOMAIN=apps.openshiftcluster.com
+oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/hosted-workshop-production.json --param PROJECT_NAME=`oc project --short` --param CLUSTER_SUBDOMAIN=apps.openshiftcluster.com
 ```
 
 Replace `apps.openshiftcluster.com` with the actual sub domain that routes for
@@ -80,7 +80,7 @@ Terminal server deployment
 To use the terminal server configuration, you must be a cluster admin. Run:
 
 ```
-oc new-app https://raw.githubusercontent.com/openshift-labs/workshop-spawner/master/templates/terminal-server-production.json --param PROJECT_NAME=`oc project --short` --param CLUSTER_SUBDOMAIN=apps.openshiftcluster.com
+oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/terminal-server-production.json --param PROJECT_NAME=`oc project --short` --param CLUSTER_SUBDOMAIN=apps.openshiftcluster.com
 ```
 
 Replace `apps.openshiftcluster.com` with the actual sub domain that routes for
@@ -102,7 +102,7 @@ User workspace deployment
 To use the user workspace configuration you must be a cluster admin. Run:
 
 ```
-oc new-app https://raw.githubusercontent.com/openshift-labs/workshop-spawner/master/templates/user-workspace-production.json --param PROJECT_NAME=`oc project --short`
+oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/user-workspace-production.json --param PROJECT_NAME=`oc project --short`
 ```
 
 This will create a deployment called `workspace`. Check the output from `oc new-app` for the public URL the application can be accessed with, or run `oc get route`.
@@ -119,7 +119,7 @@ Jumpbox server deployment
 To use the jumpbox server configuration you be any user with access to the project the deployment is being made to. Run:
 
 ```
-oc new-app https://raw.githubusercontent.com/openshift-labs/workshop-spawner/master/templates/jumpbox-server-production.json --param PROJECT_NAME=`oc project --short`
+oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/jumpbox-server-production.json --param PROJECT_NAME=`oc project --short`
 ```
 
 This will create a deployment called `jumpbox`. Check the output from `oc new-app` for the public URL the application can be accessed with, or run `oc get route`.
@@ -138,7 +138,7 @@ Each template provides a range of template parameters that can be supplied to cu
 For example, to override the default image for the user environment and supply a reference to a custom image for a specific workshop, use the `TERMINAL_IMAGE` template parameter. You can use the `APPLICATION_NAME` template parameter to override the name used for the deployment.
 
 ```
-oc new-app https://raw.githubusercontent.com/openshift-labs/workshop-spawner/master/templates/learning-portal-production.json --param PROJECT_NAME=`oc project --short` --param APPLICATION_NAME=lab-kubernetes-fundamentals --param TERMINAL_IMAGE=quay.io/openshiftlabs/lab-kubernetes-fundamentals:master
+oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/learning-portal-production.json --param PROJECT_NAME=`oc project --short` --param APPLICATION_NAME=lab-kubernetes-fundamentals --param TERMINAL_IMAGE=quay.io/openshiftlabs/lab-kubernetes-fundamentals:master
 ```
 
 Look at the individual template files in the templates directory for the list of parameters they accept.
