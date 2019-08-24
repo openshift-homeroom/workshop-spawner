@@ -115,6 +115,13 @@ c.JupyterHub.authenticator_class = AutoAuthenticator
 
 named_users = weakref.WeakValueDictionary()
 
+user_count = 0
+
+def generate_sequential_userid():
+    global user_count
+    user_count += 1
+    return 'user%d' % user_count
+
 class NamedUserAuthenticator(Authenticator):
     password = os.environ.get('SPAWNER_PASSWORD')
 
@@ -125,7 +132,7 @@ class NamedUserAuthenticator(Authenticator):
             return user.name
 
         while True:
-            name = generate_random_userid()
+            name = generate_sequential_userid()
             user = get_user_details(name)
             if not user.active:
                 user.active = True
