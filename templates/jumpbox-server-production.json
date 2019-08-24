@@ -45,12 +45,12 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshifthomeroom/workshop-spawner:5.0.0",
+            "value": "quay.io/openshifthomeroom/workshop-spawner:5.0.1",
             "required": true
         },
         {
             "name": "KEYCLOAK_IMAGE",
-            "value": "quay.io/openshifthomeroom/workshop-keycloak:5.0.0",
+            "value": "quay.io/openshifthomeroom/workshop-keycloak:5.0.1",
             "required": true
         },
         {
