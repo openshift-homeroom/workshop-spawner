@@ -29,6 +29,11 @@
             "required": true
         },
         {
+            "name": "SPAWNER_ROLE",
+            "value": "admin",
+            "required": true
+        },
+        {
             "name": "SPAWNER_MEMORY",
             "value": "768Mi"
         },
@@ -195,6 +200,30 @@
                     "spawner": "user-workspace",
                     "class": "spawner"
                 }
+            }
+        },
+        {
+            "kind": "ClusterRoleBinding",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner-role",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace",
+                    "class": "spawner"
+                }
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
+                    "namespace": "${PROJECT_NAME}"
+                }
+            ],
+            "roleRef": {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "ClusterRole",
+                "name": "${SPAWNER_ROLE}"
             }
         },
         {
