@@ -170,6 +170,9 @@ if os.environ.get('KUBECTL_VERSION'):
 
 # Load configuration corresponding to the deployment mode.
 
+c.Spawner.environment['DEPLOYMENT_TYPE'] = 'spawner'
+c.Spawner.environment['CONFIGURATION_TYPE'] = configuration_type
+
 config_root = '/opt/app-root/src/.jupyter'
 config_file = '%s/config-%s.py' % (config_root, configuration_type)
 
