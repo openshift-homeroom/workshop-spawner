@@ -24,7 +24,7 @@
         },
         {
             "name": "SPAWNER_ROLE",
-            "value": "basic-user",
+            "value": "admin",
             "required": true
         },
         {
