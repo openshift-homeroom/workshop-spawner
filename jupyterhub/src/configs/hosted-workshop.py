@@ -28,6 +28,9 @@ os.environ['OPENSHIFT_URL'] = oauth_issuer_address
 os.environ['OPENSHIFT_REST_API_URL'] = kubernetes_server_url
 os.environ['OPENSHIFT_AUTH_API_URL'] = oauth_issuer_address
 
+import sys
+del sys.modules['oauthenticator.openshift']
+
 from oauthenticator.openshift import OpenShiftOAuthenticator
 c.JupyterHub.authenticator_class = OpenShiftOAuthenticator
 

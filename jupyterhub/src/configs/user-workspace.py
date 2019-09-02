@@ -24,6 +24,9 @@ os.environ['OAUTH_TLS_VERIFY'] = '0'
 
 os.environ['OAUTH2_USERNAME_KEY'] = 'preferred_username'
 
+import sys
+del sys.modules['oauthenticator.generic']
+
 from oauthenticator.generic import GenericOAuthenticator
 c.JupyterHub.authenticator_class = GenericOAuthenticator
 
