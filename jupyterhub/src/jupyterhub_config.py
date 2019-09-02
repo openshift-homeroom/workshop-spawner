@@ -144,12 +144,20 @@ c.JupyterHub.hub_connect_ip = application_name
 
 c.ConfigurableHTTPProxy.api_url = 'http://127.0.0.1:8082'
 
-c.Spawner.start_timeout = 120
+c.Spawner.start_timeout = 180
 c.Spawner.http_timeout = 60
 
-c.KubeSpawner.port = 8080
+c.KubeSpawner.port = 10080
 
-c.KubeSpawner.common_labels = { 'app': application_name }
+c.KubeSpawner.common_labels = {
+    'app': '%s-%s' % (application_name, namespace)
+}
+
+c.KubeSpawner.extra_labels = {
+    'spawner': configuration_type,
+    'class': 'session',
+    'user': '{username}'
+}
 
 c.KubeSpawner.uid = os.getuid()
 c.KubeSpawner.fs_gid = os.getuid()
@@ -160,9 +168,10 @@ c.KubeSpawner.extra_annotations = {
 
 c.KubeSpawner.cmd = ['start-singleuser.sh']
 
-c.KubeSpawner.pod_name_template = '%s-nb-{username}' % application_name
+c.KubeSpawner.pod_name_template = '%s-%s-{username}' % (
+        application_name, namespace)
 
-c.JupyterHub.admin_access = True
+c.JupyterHub.admin_access = False
 
 if os.environ.get('JUPYTERHUB_COOKIE_SECRET'):
     c.JupyterHub.cookie_secret = os.environ[
@@ -176,12 +185,8 @@ c.JupyterHub.authenticator_class = 'tmpauthenticator.TmpAuthenticator'
 
 c.JupyterHub.spawner_class = 'kubespawner.KubeSpawner'
 
-c.KubeSpawner.image_spec = resolve_image_name(
-        os.environ.get('JUPYTERHUB_NOTEBOOK_IMAGE',
-        's2i-minimal-notebook:3.6'))
-
-if os.environ.get('JUPYTERHUB_NOTEBOOK_MEMORY'):
-    c.Spawner.mem_limit = convert_size_to_bytes(os.environ['JUPYTERHUB_NOTEBOOK_MEMORY'])
+c.Spawner.mem_limit = convert_size_to_bytes(
+        os.environ.get('WORKSHOP_MEMORY', '512Mi'))
 
 # Workaround bug in minishift where a service cannot be contacted from a
 # pod which backs the service. For further details see the minishift issue
@@ -260,20 +265,6 @@ service_account_path = '/var/run/secrets/kubernetes.io/serviceaccount'
 with open(os.path.join(service_account_path, 'namespace')) as fp:
     namespace = fp.read().strip()
 
-# Override the default name template for the pod so we include both the
-# application name and namespace. Don't change this as 'event' module
-# relies on it being this name to make it easier to match up a pod to
-# the temporary project created for that session.
-
-c.KubeSpawner.pod_name_template = '%s-%s-{username}' % (
-        application_name, namespace)
-
-# Use a higher port number for the terminals spawned by JupyterHub so
-# that secondary applications run from within the terminal can use port
-# 8080 for testing, or so that port can be exposed by a separate route.
-
-c.KubeSpawner.port = 10080
-
 # Initialise the set of environment variables to be empty so we know it
 # is a dict. This is so we can incrementally add values as we go along.
 
@@ -319,13 +310,6 @@ if not terminal_image:
     terminal_image = '%s:latest' % application_name
 
 c.KubeSpawner.image_spec = resolve_image_name(terminal_image)
-
-# Set the default amount of memory provided to a pod. This might be
-# overridden on a case by case for images if a profile list is supplied
-# so users have a choice of images when deploying workshop content.
-
-c.Spawner.mem_limit = convert_size_to_bytes(
-        os.environ.get('WORKSHOP_MEMORY', '512Mi'))
 
 # Work out hostname for the exposed route of the JupyterHub server. This
 # is tricky as we need to use the REST API to query it. We assume that

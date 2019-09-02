@@ -53,18 +53,6 @@ c.JupyterHub.admin_access = True
 
 c.Authenticator.admin_users = set(os.environ.get('ADMIN_USERS', '').split())
 
-# Override labels on pods so matches label used by the spawner.
-
-c.KubeSpawner.common_labels = {
-    'app': '%s-%s' % (application_name, namespace)
-}
-
-c.KubeSpawner.extra_labels = {
-    'spawner': 'hosted-workshop',
-    'class': 'session',
-    'user': '{username}'
-}
-
 # Mount config map for user provided environment variables for the
 # terminal and workshop.
 
