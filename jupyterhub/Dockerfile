@@ -5,11 +5,11 @@ USER root
 # Install required system packages.
 
 RUN HOME=/root && \
-    INSTALL_PKGS="sudo rh-python36 rh-python36-python-devel \
+    INSTALL_PKGS="sudo jq rh-python36 rh-python36-python-devel \
         rh-python36-python-setuptools rh-python36-python-pip \
         httpd24 httpd24-httpd-devel httpd24-mod_ssl httpd24-mod_auth_kerb \
         httpd24-mod_ldap httpd24-mod_session" && \
-    yum install -y centos-release-scl && \
+    yum install -y centos-release-scl epel-release && \
     yum install -y --setopt=tsflags=nodocs \
         --enablerepo=centosplus $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \

@@ -2,6 +2,10 @@
 
 set -x
 
+# Read any custom environment variables.
+
+. /opt/app-root/src/jupyterhub_config.sh
+
 # Start the JupyterHub instance.
 
 trap 'kill -TERM $PID' TERM INT
