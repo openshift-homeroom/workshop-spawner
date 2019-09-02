@@ -1,6 +1,5 @@
 kubernetes==9.0.1
-#jupyterhub==1.0.0
-jupyterhub<1.0.0
+jupyterhub==1.0.0
 jupyterhub-kubespawner==0.10.1
 jupyterhub-tmpauthenticator==0.6
 oauthenticator==0.9.0
