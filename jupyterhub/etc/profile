@@ -1,7 +1,5 @@
 unset BASH_ENV PROMPT_COMMAND ENV
 
-echo PROFILE
-
 # Add entry to /etc/passwd file.
 
 STATUS=0 && whoami &> /dev/null || STATUS=$? && true

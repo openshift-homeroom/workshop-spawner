@@ -31,7 +31,8 @@ RUN HOME=/root && \
 
 # Common environment variables.
 
-ENV NPM_CONFIG_PREFIX=/opt/app-root \
+ENV HOME=/opt/app-root \
+    NPM_CONFIG_PREFIX=/opt/app-root \
     PYTHONUNBUFFERED=1 \
     PYTHONIOENCODING=UTF-8 \
     LC_ALL=en_US.UTF-8 \
@@ -45,16 +46,11 @@ COPY . /opt/app-root/
 RUN chown -R 1001:0 /opt/app-root && \
     fix-permissions /opt/app-root
 
+WORKDIR /opt/app-root/src
+
 USER 1001
 
-RUN mkdir /opt/app-root/data && \
-    source scl_source enable rh-python36 && \
-    source scl_source enable rh-nodejs10 && \
-    source scl_source enable httpd24 && \
-    virtualenv /opt/app-root && \
-    source /opt/app-root/bin/activate && \
-    pip install -U pip setuptools wheel && \
-    pip install -r requirements.txt && \
+RUN /opt/app-root/etc/build.sh && \
     fix-permissions /opt/app-root
 
 # Finish environment setup.

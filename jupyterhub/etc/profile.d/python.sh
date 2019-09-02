@@ -1,2 +1,5 @@
 source scl_source enable rh-python36
-source /opt/app-root/bin/activate
+
+if [ -f /opt/app-root/bin/activate ]; then
+    source /opt/app-root/bin/activate
+fi
