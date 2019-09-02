@@ -86,11 +86,6 @@
             "required": false
         },
         {
-            "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/jupyteronopenshift/jupyterhub:3.0.7",
-            "required": true
-        },
-        {
             "name": "TERMINAL_ENVVARS",
             "value": ""
         },
@@ -477,7 +472,7 @@
                     "dockerStrategy": {
                         "from": {
                             "kind": "DockerImage",
-                            "name": "${JUPYTERHUB_IMAGE}"
+                            "name": "centos/s2i-base-centos7:latest"
                         }
                     }
                 },
