@@ -6,7 +6,7 @@ set -x
 
 trap 'kill -TERM $PID' TERM INT
 
-/opt/app-root/src/start-jupyterhub.sh &
+jupyterhub -f /opt/app-root/src/jupyterhub_config.py &
 
 PID=$!
 wait $PID

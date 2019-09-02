@@ -105,10 +105,10 @@ for i in `seq 1 $NUMBER_OF_USERS`; do
     echo "Creating user user$i"
 
     python -c "import json; \
-	print(json.dumps({'usernames':['user$i']}))" > /tmp/user$$.json
+        print(json.dumps({'usernames':['user$i']}))" > /tmp/user$$.json
 
     curl -k -H "Authorization: token $ACCESS_TOKEN" -X POST \
-	-d @/tmp/user$$.json "$REST_API_URL/users"
+        -d @/tmp/user$$.json "$REST_API_URL/users"
 
     rm -f /tmp/users$$.json
 

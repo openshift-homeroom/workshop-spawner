@@ -1598,6 +1598,12 @@ if idle_timeout and int(idle_timeout):
             'name': 'cull-idle',
             'admin': True,
             'command': cull_idle_servers_cmd,
+            'environment': dict(
+                ENV="/opt/app-root/etc/profile",
+                BASH_ENV="/opt/app-root/etc/profile",
+                PROMPT_COMMAND=". /opt/app-root/etc/profile",
+                PYTHONUNBUFFERED='1'
+            ),
         }
     ])
 
@@ -1608,7 +1614,9 @@ if idle_timeout and int(idle_timeout):
             'name': 'delete-projects',
             'command': delete_projects_cmd,
             'environment': dict(
-                PYTHONUNBUFFERED='1',
+                ENV="/opt/app-root/etc/profile",
+                BASH_ENV="/opt/app-root/etc/profile",
+                PROMPT_COMMAND=". /opt/app-root/etc/profile",
                 APPLICATION_NAME=application_name,
                 KUBERNETES_SERVICE_HOST=kubernetes_service_host,
                 KUBERNETES_SERVICE_PORT=kubernetes_service_port
