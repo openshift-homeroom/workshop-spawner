@@ -196,6 +196,11 @@ if idle_timeout and int(idle_timeout):
             'name': 'cull-idle',
             'admin': True,
             'command': cull_idle_servers_cmd,
+            'environment': dict(
+                ENV="/opt/app-root/etc/profile",
+                BASH_ENV="/opt/app-root/etc/profile",
+                PROMPT_COMMAND=". /opt/app-root/etc/profile"
+            ),
         }
     ])
 

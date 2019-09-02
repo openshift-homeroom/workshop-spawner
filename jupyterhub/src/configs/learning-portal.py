@@ -1589,8 +1589,7 @@ if idle_timeout and int(idle_timeout):
             'environment': dict(
                 ENV="/opt/app-root/etc/profile",
                 BASH_ENV="/opt/app-root/etc/profile",
-                PROMPT_COMMAND=". /opt/app-root/etc/profile",
-                PYTHONUNBUFFERED='1'
+                PROMPT_COMMAND=". /opt/app-root/etc/profile"
             ),
         }
     ])
