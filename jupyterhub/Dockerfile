@@ -26,7 +26,7 @@ RUN echo "auth requisite pam_deny.so" >> /etc/pam.d/su && \
 # Install configurable HTTP proxy.
 
 RUN HOME=/root && \
-    source scl_source enable rh-nodejs10 && \
+    source scl_source enable $NODEJS_SCL && \
     npm install -g configurable-http-proxy
 
 # Common environment variables.

@@ -4,7 +4,7 @@
 
 source scl_source enable httpd24
 source scl_source enable rh-python36
-source scl_source enable rh-nodejs10
+source scl_source enable $NODEJS_SCL
 
 # Create the Python virtual environment.
 
