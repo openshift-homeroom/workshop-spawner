@@ -289,7 +289,7 @@ class RestartRedirectHandler(BaseHandler):
     @web.authenticated
     @gen.coroutine
     def get(self, *args):
-        user = self.get_current_user()
+        user = yield self.get_current_user()
         if user.running:
             status = yield user.spawner.poll_and_notify()
             if status is None:

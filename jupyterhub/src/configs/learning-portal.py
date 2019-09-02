@@ -58,7 +58,7 @@ class AutoAuthenticateHandler(BaseHandler):
 
     @gen.coroutine
     def get(self):
-        raw_user = self.get_current_user()
+        raw_user = yield self.get_current_user()
 
         if raw_user:
             if self.force_new_server and raw_user.running:
@@ -1635,7 +1635,7 @@ class RestartRedirectHandler(BaseHandler):
     @web.authenticated
     @gen.coroutine
     def get(self, *args):
-        user = self.get_current_user()
+        user = yield self.get_current_user()
 
         if user.running:
             status = yield user.spawner.poll_and_notify()
