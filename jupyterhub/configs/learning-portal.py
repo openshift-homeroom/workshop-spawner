@@ -1584,29 +1584,29 @@ idle_timeout = os.environ.get('IDLE_TIMEOUT', '600')
 max_session_age = os.environ.get('MAX_SESSION_AGE')
 
 if idle_timeout and int(idle_timeout):
-    cull_idle_servers_args = ['cull-idle-servers']
+    cull_idle_servers_cmd = ['/opt/app-root/src/scripts/cull-idle-servers.sh']
 
-    cull_idle_servers_args.append('--cull-every=60')
-    cull_idle_servers_args.append('--timeout=%s' % idle_timeout)
-    cull_idle_servers_args.append('--cull-users')
+    cull_idle_servers_cmd.append('--cull-every=60')
+    cull_idle_servers_cmd.append('--timeout=%s' % idle_timeout)
+    cull_idle_servers_cmd.append('--cull-users')
 
     if max_session_age:
-        cull_idle_servers_args.append('--max-age=%s' % max_session_age)
+        cull_idle_servers_cmd.append('--max-age=%s' % max_session_age)
 
     c.JupyterHub.services.extend([
         {
             'name': 'cull-idle',
             'admin': True,
-            'command': cull_idle_servers_args,
+            'command': cull_idle_servers_cmd,
         }
     ])
 
-    delete_projects_args = ['/opt/app-root/src/scripts/delete-projects.sh']
+    delete_projects_cmd = ['/opt/app-root/src/scripts/delete-projects.sh']
 
     c.JupyterHub.services.extend([
         {
             'name': 'delete-projects',
-            'command': delete_projects_args,
+            'command': delete_projects_cmd,
             'environment': dict(
                 PYTHONUNBUFFERED='1',
                 APPLICATION_NAME=application_name,

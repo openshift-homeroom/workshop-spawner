@@ -280,8 +280,8 @@
                     "contextDir": "jupyterhub"
                 },
                 "strategy": {
-                    "type": "Source",
-                    "sourceStrategy": {
+                    "type": "Docker",
+                    "dockerStrategy": {
                         "from": {
                             "kind": "DockerImage",
                             "name": "${JUPYTERHUB_IMAGE}"

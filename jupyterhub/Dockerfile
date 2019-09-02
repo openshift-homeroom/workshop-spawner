@@ -1,4 +1,4 @@
-FROM quay.io/jupyteronopenshift/jupyterhub:3.0.7
+FROM centos/python-36-centos7:latest
 
 USER root
 
@@ -7,8 +7,15 @@ COPY . /tmp/src
 RUN rm -rf /tmp/src/.git* && \
     chown -R 1001 /tmp/src && \
     chgrp -R 0 /tmp/src && \
-    chmod -R g+w /tmp/src
+    chmod -R g+w /tmp/src && \
+    mv /tmp/src/.s2i/bin /tmp/scripts
 
 USER 1001
 
-RUN /opt/app-root/builder/assemble
+ENV PATH=/opt/app-root/src/node_modules/.bin:$PATH \
+    NPM_CONFIG_PREFIX=/opt/app-root \
+    PYTHONPATH=/opt/app-root/src
+
+RUN /tmp/scripts/assemble
+
+CMD [ "/tmp/scripts/run" ]

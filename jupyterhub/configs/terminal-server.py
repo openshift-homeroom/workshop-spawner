@@ -199,11 +199,15 @@ c.KubeSpawner.modify_pod_hook = modify_pod_hook
 idle_timeout = os.environ.get('IDLE_TIMEOUT')
 
 if idle_timeout and int(idle_timeout):
+    cull_idle_servers_cmd = ['/opt/app-root/src/scripts/cull-idle-servers.sh']
+
+    cull_idle_servers_cmd.append('--timeout=%s' % idle_timeout)
+
     c.JupyterHub.services.extend([
         {
             'name': 'cull-idle',
             'admin': True,
-            'command': ['cull-idle-servers', '--timeout=%s' % idle_timeout],
+            'command': cull_idle_servers_cmd,
         }
     ])
 
