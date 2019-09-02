@@ -19,7 +19,7 @@ with requests.Session() as session:
     oauth_issuer_address = data['issuer']
 
 # Enable the OpenShift authenticator. Environments variables have
-# already been set from the hosted-workshop.sh script file.
+# already been set from the terminal-server.sh script file.
 
 from oauthenticator.openshift import OpenShiftOAuthenticator
 c.JupyterHub.authenticator_class = OpenShiftOAuthenticator
