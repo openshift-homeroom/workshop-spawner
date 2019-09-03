@@ -23,6 +23,7 @@ with requests.Session() as session:
 
 c.JupyterHub.authenticator_class = "openshift"
 
+from oauthenticator.openshift import OpenShiftOAuthenticator
 OpenShiftOAuthenticator.scope = ['user:full']
 
 client_id = '%s-%s-console' % (application_name, namespace)
