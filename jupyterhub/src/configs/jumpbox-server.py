@@ -4,6 +4,7 @@
 
 # Configure standalone KeyCloak as the authentication provider for users.
 
+"""
 keycloak_name = '%s-keycloak' % application_name
 keycloak_hostname = extract_hostname(routes, keycloak_name)
 keycloak_realm = 'homeroom'
@@ -19,6 +20,7 @@ os.environ['OAUTH2_USERNAME_KEY'] = 'preferred_username'
 
 import sys
 del sys.modules['oauthenticator.generic']
+"""
 
 from oauthenticator.generic import GenericOAuthenticator
 c.JupyterHub.authenticator_class = GenericOAuthenticator
