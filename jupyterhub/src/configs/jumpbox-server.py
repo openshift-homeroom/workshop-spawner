@@ -6,7 +6,7 @@
 # users. Environments variables have already been set from the
 # jumpbox-server.sh script file.
 
-c.JupyterHub.authenticator_class = "oauthenticator.generic"
+c.JupyterHub.authenticator_class = "generic-oauth"
 
 c.OAuthenticator.login_service = "KeyCloak"
 
