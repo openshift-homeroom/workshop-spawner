@@ -3,7 +3,7 @@ ACCESS_TOKEN=`cat /var/run/secrets/kubernetes.io/serviceaccount/token`
 NAMESPACE=`cat /var/run/secrets/kubernetes.io/serviceaccount/namespace`
 
 NAMESPACE_URL="$SERVER_URL/apis/route.openshift.io/v1/namespaces/$NAMESPACE"
-ROUTES_URL="$NAMESPACES_URL/routes/$APPLICATION_NAME-keycloak"
+ROUTES_URL="$NAMESPACE_URL/routes/$APPLICATION_NAME-keycloak"
 
 KEYCLOAK_NAME="$APPLICATION_NAME-keycloak"
 
