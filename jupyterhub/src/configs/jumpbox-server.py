@@ -2,28 +2,11 @@
 # deployment mode. In this mode authentication for JupyterHub is done
 # against a KeyCloak authentication server.
 
-# Configure standalone KeyCloak as the authentication provider for users.
+# Configure standalone KeyCloak as the authentication provider for
+# users. Environments variables have already been set from the
+# jumpbox-server.sh script file.
 
-"""
-keycloak_name = '%s-keycloak' % application_name
-keycloak_hostname = extract_hostname(routes, keycloak_name)
-keycloak_realm = 'homeroom'
-
-os.environ['OAUTH2_TOKEN_URL'] = 'https://%s/auth/realms/%s/protocol/openid-connect/token' % (keycloak_hostname, keycloak_realm)
-os.environ['OAUTH2_AUTHORIZE_URL'] = 'https://%s/auth/realms/%s/protocol/openid-connect/auth' % (keycloak_hostname, keycloak_realm)
-os.environ['OAUTH2_USERDATA_URL'] = 'https://%s/auth/realms/%s/protocol/openid-connect/userinfo' % (keycloak_hostname, keycloak_realm)
-
-os.environ['OAUTH2_TLS_VERIFY'] = '0'
-os.environ['OAUTH_TLS_VERIFY'] = '0'
-
-os.environ['OAUTH2_USERNAME_KEY'] = 'preferred_username'
-
-import sys
-del sys.modules['oauthenticator.generic']
-"""
-
-from oauthenticator.generic import GenericOAuthenticator
-c.JupyterHub.authenticator_class = GenericOAuthenticator
+c.JupyterHub.authenticator_class = "oauthenticator.generic:GenericOAuthenticator"
 
 c.OAuthenticator.login_service = "KeyCloak"
 
