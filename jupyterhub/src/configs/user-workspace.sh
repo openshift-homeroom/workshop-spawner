@@ -8,8 +8,7 @@ ROUTES_URL="$NAMESPACE_URL/routes/$APPLICATION_NAME-keycloak"
 KEYCLOAK_NAME="$APPLICATION_NAME-keycloak"
 
 KEYCLOAK_HOSTNAME=`curl -s -k -H "Authorization: Bearer $ACCESS_TOKEN" \
-    $ROUTES_URL | python -c "import json, sys; \
-    data = json.loads(sys.stdin.read()); print(data['spec']['host'])"`
+    $ROUTES_URL | jq -r '.spec.host'`
 
 KEYCLOAK_REALM="homeroom"
 
