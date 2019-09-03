@@ -933,7 +933,7 @@
                     "dockerStrategy": {
                         "from": {
                             "kind": "DockerImage",
-                            "name": "jboss/keycloak-openshift:4.0.0.Final"
+                            "name": "jboss/keycloak-openshift:4.8.3.Final"
                         }
                     }
                 },
