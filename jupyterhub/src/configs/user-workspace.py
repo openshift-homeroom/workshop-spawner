@@ -13,7 +13,7 @@ from kubernetes.client.rest import ApiException
 # users. Environments variables have already been set from the
 # user-workspace.sh script file.
 
-c.JupyterHub.authenticator_class = "oauthenticator.generic:GenericOAuthenticator"
+c.JupyterHub.authenticator_class = "oauthenticator.generic"
 
 c.OAuthenticator.login_service = "KeyCloak"
 
