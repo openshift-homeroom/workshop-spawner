@@ -21,8 +21,7 @@ with requests.Session() as session:
 # Enable the OpenShift authenticator. Environments variables have
 # already been set from the hosted-workshop.sh script file.
 
-from oauthenticator.openshift import OpenShiftOAuthenticator
-c.JupyterHub.authenticator_class = OpenShiftOAuthenticator
+c.JupyterHub.authenticator_class = "oauthenticator.openshift:OpenShiftOAuthenticator"
 
 OpenShiftOAuthenticator.scope = ['user:full']
 
