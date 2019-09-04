@@ -9,7 +9,7 @@ from kubernetes.client.rest import ApiException
 from kubernetes.client.configuration import Configuration
 from kubernetes.config.incluster_config import load_incluster_config
 from kubernetes.client.api_client import ApiClient
-from openshift.dynamic import DynamicClient
+from openshift.dynamic import DynamicClient, Resource
 
 service_account_path = '/var/run/secrets/kubernetes.io/serviceaccount'
 
@@ -119,7 +119,7 @@ def namespaced_resources():
                         if domain:
                             version = '%s/%s' % (domain, version)
                         resource = api_client.resources.get(api_version=version, kind=kind)
-                        if resource.namespaced:
+                        if type(resource) == Resource and resource.namespaced:
                             yield resource
                 except Exception:
                     pass
@@ -163,7 +163,7 @@ def purge_project(name):
                     print('ERROR: failed to delete finalizers: %s' % body, e)
 
         except ApiException as e:
-            if e.status not in (403, 405):
+            if e.status not in (403, 404, 405):
                 print('ERROR: failed to query resources %s' % resource_type, e)
 
         except Exception as e:
@@ -208,7 +208,8 @@ def purge():
 
     projects = get_projects()
 
-    print('INFO: checking projects: %s' % projects)
+    if projects:
+        print('INFO: checking for projects to be deleted: %s' % projects)
 
     for project in projects:
         if not project in project_cache:
