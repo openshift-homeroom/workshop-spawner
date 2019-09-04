@@ -9,6 +9,8 @@ import json
 import requests
 import wrapt
 
+from tornado import gen
+
 from kubernetes.client.rest import ApiException
 
 from kubernetes.client.configuration import Configuration
@@ -326,6 +328,60 @@ if os.environ.get('ODO_VERSION'):
     c.Spawner.environment['ODO_VERSION'] = os.environ.get('ODO_VERSION')
 if os.environ.get('KUBECTL_VERSION'):
     c.Spawner.environment['KUBECTL_VERSION'] = os.environ.get('KUBECTL_VERSION')
+
+# Common functions for creating projects, injecting resources etc.
+
+@gen.coroutine
+def setup_project_namespace(spawner, project_name, role, budget):
+    # Wait for project to exist before continuing.
+
+    for _ in range(30):
+        try:
+            project = project_resource.get(name=project_name)
+
+        except ApiException as e:
+            if e.status == 404:
+                yield gen.sleep(0.1)
+                continue
+
+            print('ERROR: Error querying project. %s' % e)
+            raise
+
+        else:
+            break
+
+    else:
+        # If can't verify project created, carry on anyway.
+
+        print('ERROR: Could not verify project creation. %s' % project_name)
+
+        raise Exception('Could not verify project creation. %s' % project_name)
+
+    # Create role binding in the project so the hub service account
+    # can delete project when done. Will fail if the project hasn't
+    # actually been created yet.
+
+    hub = '%s-%s' % (application_name, namespace)
+    short_name = spawner.user.name
+    user_account_name = '%s-%s' % (hub, short_name)
+    hub_account_name = '%s-hub' % hub
+
+    try:
+        text = role_binding_template.safe_substitute(
+                namespace=namespace, name=user_account_name, tag=role,
+                role=role, hub=hub, username=short_name)
+        body = json.loads(text)
+
+        role_binding_resource.create(namespace=project_name, body=body)
+
+    except ApiException as e:
+        if e.status != 409:
+            print('ERROR: Error creating role binding for hub. %s' % e)
+            raise
+
+    except Exception as e:
+        print('ERROR: Error creating rolebinding for hub. %s' % e)
+        raise
 
 # Load configuration corresponding to the deployment mode.
 

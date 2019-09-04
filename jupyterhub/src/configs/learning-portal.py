@@ -1103,8 +1103,9 @@ if os.path.exists('/opt/app-root/resources/extra_resources.json'):
         extra_resources = fp.read().strip()
         extra_resources_loader = json.loads
 
-def create_extra_resources(project_name, project_uid, user_account_name,
-        short_name):
+@gen.coroutine
+def create_extra_resources(spawner, project_name, project_uid,
+        user_account_name, short_name):
 
     if not extra_resources:
         return
@@ -1128,14 +1129,17 @@ def create_extra_resources(project_name, project_uid, user_account_name,
             kind = body['kind']
             api_version = body['apiVersion']
 
-            if kind.lower() in ('securitycontextconstraints', 'clusterrolebinding'):
+            if kind.lower() in ('securitycontextconstraints',
+                    'clusterrolebinding', 'namespace'):
                 body['metadata']['ownerReferences'] = [dict(
                     apiVersion='v1', kind='Namespace', blockOwnerDeletion=False,
                     controller=True, name=project_name, uid=project_uid)]
 
             resource = api_client.resources.get(api_version=api_version, kind=kind)
 
-            resource.create(namespace=project_name, body=body)
+            target_namespace = body['metadata'].get('namespace', project_name)
+
+            resource.create(namespace=target_namespace, body=body)
 
         except ApiException as e:
             if e.status != 409:
@@ -1148,6 +1152,16 @@ def create_extra_resources(project_name, project_uid, user_account_name,
         except Exception as e:
             print('ERROR: Error creating resource %s. %s' % (body, e))
             raise
+
+        if kind.lower() == 'namespace':
+            annotations = body['metadata'].get('annotations', {})
+            role = annotations.get('session/role', 'admin')
+
+            default_budget = os.environ.get('RESOURCE_BUDGET', 'default')
+            budget = annotations.get('session/budget', default_budget)
+
+            yield setup_project_namespace(spawner, body['metadata']['name'],
+                    role, budget)
 
 project_owner_name = '%s-%s-spawner' % (application_name, namespace)
 
@@ -1533,8 +1547,8 @@ def modify_pod_hook(spawner, pod):
 
     # Create any extra resources in the project required for a workshop.
 
-    create_extra_resources(project_name, project_uid, user_account_name,
-            short_name)
+    yield create_extra_resources(spawner, project_name, project_uid,
+            user_account_name, short_name)
 
     # Add environment variable for the project namespace for use in any
     # workshop content.
