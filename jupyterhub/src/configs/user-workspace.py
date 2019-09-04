@@ -1338,7 +1338,7 @@ def modify_pod_hook(spawner, pod):
     # Delete any resource quotas applied to the project that may conflict
     # with the resource quotas being applied.
 
-    if resource_budget not in ('default', 'unlimited'):
+    if resource_budget != 'default':
         try:
             resource_quotas = resource_quota_resource.get(namespace=project_name)
 
