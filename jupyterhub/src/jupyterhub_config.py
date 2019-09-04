@@ -1283,6 +1283,112 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
         print('ERROR: Error creating rolebinding for extras. %s' % e)
         raise
 
+    # Determine what project resources need to be used.
+
+    if budget != 'unlimited':
+        if budget not in resource_budget_mapping:
+            budget = 'default'
+        elif not resource_budget_mapping[budget]:
+            budget = 'default'
+
+    if budget not in ('default', 'unlimited'):
+        budget_item = resource_budget_mapping[budget]
+
+        resource_limits_definition = budget_item['resource-limits']
+        compute_resources_definition = budget_item['compute-resources']
+        compute_resources_timebound_definition = budget_item['compute-resources-timebound']
+        object_counts_definition = budget_item['object-counts']
+
+    # Delete any limit ranges applied to the project that may conflict
+    # with the limit range being applied. For the case of unlimited, we
+    # delete any being applied but don't replace it.
+
+    if budget != 'default':
+        try:
+            limit_ranges = limit_range_resource.get(
+                        namespace=project_name)
+
+        except ApiException as e:
+            print('ERROR: Error querying limit ranges. %s' % e)
+            raise
+
+        for limit_range in limit_ranges.items:
+            try:
+                limit_range_resource.delete(namespace=project_name,
+                    name=limit_range.metadata.name)
+
+            except ApiException as e:
+                print('ERROR: Error deleting limit range. %s' % e)
+                raise
+
+    # Create limit ranges for the project so any deployments will have
+    # default memory/cpu min and max values.
+
+    if budget not in ('default', 'unlimited'):
+        try:
+            body = resource_limits_definition
+
+            limit_range_resource.create(namespace=project_name, body=body)
+
+        except ApiException as e:
+            if e.status != 409:
+                print('ERROR: Error creating limit range. %s' % e)
+                raise
+
+    # Delete any resource quotas applied to the project that may conflict
+    # with the resource quotas being applied.
+
+    if budget != 'default':
+        try:
+            resource_quotas = resource_quota_resource.get(namespace=project_name)
+
+        except ApiException as e:
+            print('ERROR: Error querying resource quotas. %s' % e)
+            raise
+
+        for resource_quota in resource_quotas.items:
+            try:
+                resource_quota_resource.delete(namespace=project_name,
+                    name=resource_quota.metadata.name)
+
+            except ApiException as e:
+                print('ERROR: Error deleting resource quota. %s' % e)
+                raise
+
+    # Create resource quotas for the project so there is a maximum for
+    # what resources can be used.
+
+    if budget not in ('default', 'unlimited'):
+        try:
+            body = compute_resources_definition
+
+            resource_quota_resource.create(namespace=project_name, body=body)
+
+        except ApiException as e:
+            if e.status != 409:
+                print('ERROR: Error creating compute resources quota. %s' % e)
+                raise
+
+        try:
+            body = compute_resources_timebound_definition
+
+            resource_quota_resource.create(namespace=project_name, body=body)
+
+        except ApiException as e:
+            if e.status != 409:
+                print('ERROR: Error creating compute resources timebound quota. %s' % e)
+                raise
+
+        try:
+            body = object_counts_definition
+
+            resource_quota_resource.create(namespace=project_name, body=body)
+
+        except ApiException as e:
+            if e.status != 409:
+                print('ERROR: Error creating object counts quota. %s' % e)
+                raise
+
     # Return the project UID for later use as owner UID if needed.
 
     return project_uid
