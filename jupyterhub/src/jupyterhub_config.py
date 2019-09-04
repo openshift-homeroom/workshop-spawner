@@ -1183,7 +1183,7 @@ route_template = string.Template("""
 """)
 
 @gen.coroutine
-def setup_project_namespace(spawner, project_name, role, budget):
+def setup_project_namespace(spawner, pod, project_name, role, budget):
     # Wait for project to exist before continuing.
 
     for _ in range(30):
@@ -1207,6 +1207,8 @@ def setup_project_namespace(spawner, project_name, role, budget):
         print('ERROR: Could not verify project creation. %s' % project_name)
 
         raise Exception('Could not verify project creation. %s' % project_name)
+
+    project_uid = project.metadata.uid
 
     # Create role binding in the project so the hub service account
     # can delete project when done. Will fail if the project hasn't
@@ -1234,6 +1236,8 @@ def setup_project_namespace(spawner, project_name, role, budget):
     except Exception as e:
         print('ERROR: Error creating rolebinding for hub. %s' % e)
         raise
+
+    return project_uid
 
 extra_resources = {}
 extra_resources_loader = None
@@ -1317,8 +1321,8 @@ def create_extra_resources(spawner, pod, project_name, project_uid,
             default_budget = os.environ.get('RESOURCE_BUDGET', 'default')
             budget = annotations.get('session/budget', default_budget)
 
-            yield setup_project_namespace(spawner, body['metadata']['name'],
-                    role, budget)
+            yield setup_project_namespace(spawner, pod,
+                    body['metadata']['name'], role, budget)
 
 @gen.coroutine
 def wait_on_service_account(user_account_name):

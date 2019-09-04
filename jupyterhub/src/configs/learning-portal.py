@@ -379,55 +379,14 @@ def modify_pod_hook(spawner, pod):
         print('ERROR: Error creating project. %s' % e)
         raise
 
-    for _ in range(30):
-        try:
-            project = project_resource.get(name=project_name)
-
-        except ApiException as e:
-            if e.status == 404:
-                yield gen.sleep(0.1)
-                continue
-
-            print('ERROR: Error querying project. %s' % e)
-            raise
-
-        else:
-            break
-
-    else:
-        # If can't verify project created, carry on anyway.
-
-        print('ERROR: Could not verify project creation. %s' % project_name)
-
-        raise Exception('Could not verify project creation. %s' % project_name)
-
-    project_uid = project.metadata.uid
-
-    # Create role binding in the project so the hub service account
-    # can delete project when done. Will fail if the project hasn't
-    # actually been created yet.
-
-    try:
-        text = role_binding_template.safe_substitute(
-                configuration=configuration_type, namespace=namespace,
-                name=hub_account_name, tag='admin', role='admin', hub=hub,
-                username=short_name)
-        body = json.loads(text)
-
-        role_binding_resource.create(namespace=project_name, body=body)
-
-    except ApiException as e:
-        if e.status != 409:
-            print('ERROR: Error creating role binding for hub. %s' % e)
-            raise
-
-    except Exception as e:
-        print('ERROR: Error creating rolebinding for hub. %s' % e)
-        raise
-
-    # Determine what project resources need to be used.
+    # Now set up the project permissions and resource budget.
 
     resource_budget = os.environ.get('RESOURCE_BUDGET', 'default')
+
+    project_uid = yield setup_project_namespace(spawner, pod, project_name,
+            'admin', resource_budget)
+
+    # Determine what project resources need to be used.
 
     if resource_budget != 'unlimited':
         if resource_budget not in resource_budget_mapping:
