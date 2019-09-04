@@ -585,40 +585,7 @@ def modify_pod_hook(spawner, pod):
     # the secrets from the service account and make sure they in turn
     # exist.
 
-    for _ in range(10):
-        try:
-            service_account = service_account_resource.get(
-                    namespace=namespace, name=user_account_name)
-
-            # Hope that all secrets added at same time and don't have
-            # to check names to verify api token secret added.
-
-            if service_account.secrets:
-                for item in service_account.secrets:
-                    try:
-                        secret = secret_resource.get(namespace=namespace,
-                                name=item['name'])
-
-                    except Exception as e:
-                        print('WARNING: Error fetching secret. %s' % e)
-                        yield gen.sleep(0.1)
-                        break
-
-                else:
-                    break
-
-            else:
-                yield gen.sleep(0.1)
-                continue
-
-        except Exception as e:
-            print('ERROR: Error fetching service account. %s' % e)
-            raise
-
-    else:
-        # If can't verify after multiple attempts, continue on anyway.
-
-        print('WARNING: Could not verify account. %s' % user_account_name)
+    yield wait_on_service_account(user_account_name)
 
     # Create any extra resources in the project required for a workshop.
 
