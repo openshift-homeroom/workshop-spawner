@@ -1261,6 +1261,28 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
         print('ERROR: Error creating rolebinding for user. %s' % e)
         raise
 
+    # Create role binding in the project so the users service account
+    # can perform additional actions declared through additional policy
+    # rules for a specific workshop session.
+
+    try:
+        text = role_binding_template.safe_substitute(
+                configuration=configuration_type, namespace=namespace,
+                name=user_account_name, tag='session-rules',
+                role=hub+'-session-rules', hub=hub, username=short_name)
+        body = json.loads(text)
+
+        role_binding_resource.create(namespace=project_name, body=body)
+
+    except ApiException as e:
+        if e.status != 409:
+            print('ERROR: Error creating role binding for extras. %s' % e)
+            raise
+
+    except Exception as e:
+        print('ERROR: Error creating rolebinding for extras. %s' % e)
+        raise
+
     # Return the project UID for later use as owner UID if needed.
 
     return project_uid

@@ -492,28 +492,6 @@ def modify_pod_hook(spawner, pod):
                 print('ERROR: Error creating object counts quota. %s' % e)
                 raise
 
-    # Create role binding in the project so the users service account
-    # can perform additional actions declared through additional policy
-    # rules for a specific workshop session.
-
-    try:
-        text = role_binding_template.safe_substitute(
-                configuration=configuration_type, namespace=namespace,
-                name=user_account_name, tag='session-rules',
-                role=hub+'-session-rules', hub=hub, username=short_name)
-        body = json.loads(text)
-
-        role_binding_resource.create(namespace=project_name, body=body)
-
-    except ApiException as e:
-        if e.status != 409:
-            print('ERROR: Error creating role binding for extras. %s' % e)
-            raise
-
-    except Exception as e:
-        print('ERROR: Error creating rolebinding for extras. %s' % e)
-        raise
-
     # Before can continue, need to poll looking to see if the secret for
     # the api token has been added to the service account. If don't do
     # this then pod creation will fail immediately. To do this, must get
