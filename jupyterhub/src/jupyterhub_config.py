@@ -333,67 +333,6 @@ if os.environ.get('KUBECTL_VERSION'):
 
 # Common functions for creating projects, injecting resources etc.
 
-@gen.coroutine
-def setup_project_namespace(spawner, project_name, role, budget):
-    # Wait for project to exist before continuing.
-
-    for _ in range(30):
-        try:
-            project = project_resource.get(name=project_name)
-
-        except ApiException as e:
-            if e.status == 404:
-                yield gen.sleep(0.1)
-                continue
-
-            print('ERROR: Error querying project. %s' % e)
-            raise
-
-        else:
-            break
-
-    else:
-        # If can't verify project created, carry on anyway.
-
-        print('ERROR: Could not verify project creation. %s' % project_name)
-
-        raise Exception('Could not verify project creation. %s' % project_name)
-
-    # Create role binding in the project so the hub service account
-    # can delete project when done. Will fail if the project hasn't
-    # actually been created yet.
-
-    hub = '%s-%s' % (application_name, namespace)
-    short_name = spawner.user.name
-    user_account_name = '%s-%s' % (hub, short_name)
-    hub_account_name = '%s-hub' % hub
-
-    try:
-        text = role_binding_template.safe_substitute(
-                configuration=configuration_type, namespace=namespace,
-                name=user_account_name, tag=role, role=role, hub=hub,
-                username=short_name)
-        body = json.loads(text)
-
-        role_binding_resource.create(namespace=project_name, body=body)
-
-    except ApiException as e:
-        if e.status != 409:
-            print('ERROR: Error creating role binding for hub. %s' % e)
-            raise
-
-    except Exception as e:
-        print('ERROR: Error creating rolebinding for hub. %s' % e)
-        raise
-
-# We need to ensure the service account does actually exist, and also
-# create a project for the user and a role binding which allows the
-# service account to work on that project. They need to be given admin
-# access so they can add other users to their project if necessary, or
-# grant service accounts in the project access to the project via the
-# REST API. The only place to do this is from the hook function for
-# modifying the pod specification before it is created.
-
 project_resource = api_client.resources.get(
      api_version='project.openshift.io/v1', kind='Project')
 
@@ -1242,6 +1181,59 @@ route_template = string.Template("""
     }
 }
 """)
+
+@gen.coroutine
+def setup_project_namespace(spawner, project_name, role, budget):
+    # Wait for project to exist before continuing.
+
+    for _ in range(30):
+        try:
+            project = project_resource.get(name=project_name)
+
+        except ApiException as e:
+            if e.status == 404:
+                yield gen.sleep(0.1)
+                continue
+
+            print('ERROR: Error querying project. %s' % e)
+            raise
+
+        else:
+            break
+
+    else:
+        # If can't verify project created, carry on anyway.
+
+        print('ERROR: Could not verify project creation. %s' % project_name)
+
+        raise Exception('Could not verify project creation. %s' % project_name)
+
+    # Create role binding in the project so the hub service account
+    # can delete project when done. Will fail if the project hasn't
+    # actually been created yet.
+
+    hub = '%s-%s' % (application_name, namespace)
+    short_name = spawner.user.name
+    user_account_name = '%s-%s' % (hub, short_name)
+    hub_account_name = '%s-hub' % hub
+
+    try:
+        text = role_binding_template.safe_substitute(
+                configuration=configuration_type, namespace=namespace,
+                name=user_account_name, tag=role, role=role, hub=hub,
+                username=short_name)
+        body = json.loads(text)
+
+        role_binding_resource.create(namespace=project_name, body=body)
+
+    except ApiException as e:
+        if e.status != 409:
+            print('ERROR: Error creating role binding for hub. %s' % e)
+            raise
+
+    except Exception as e:
+        print('ERROR: Error creating rolebinding for hub. %s' % e)
+        raise
 
 extra_resources = {}
 extra_resources_loader = None
