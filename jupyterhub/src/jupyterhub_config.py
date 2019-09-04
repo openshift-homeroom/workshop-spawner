@@ -1210,9 +1210,9 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
 
     project_uid = project.metadata.uid
 
-    # Create role binding in the project so the hub service account
-    # can delete project when done. Will fail if the project hasn't
-    # actually been created yet.
+    # Create role binding in the project so the hub service account can
+    # delete project when done. Will fail if the project hasn't actually
+    # been created yet.
 
     hub = '%s-%s' % (application_name, namespace)
     short_name = spawner.user.name
@@ -1222,7 +1222,7 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
     try:
         text = role_binding_template.safe_substitute(
                 configuration=configuration_type, namespace=namespace,
-                name=user_account_name, tag=role, role=role, hub=hub,
+                name=hub_account_name, tag='admin', role='admin', hub=hub,
                 username=short_name)
         body = json.loads(text)
 
