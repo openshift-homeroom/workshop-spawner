@@ -493,30 +493,6 @@ def modify_pod_hook(spawner, pod):
                 raise
 
     # Create role binding in the project so the users service account
-    # can create resources in it. Need to give it 'admin' role and not
-    # just 'edit' so that can grant roles to service accounts in the
-    # project. This means it could though delete the project itself, and
-    # if do that can't create a new one as has no rights to do that.
-
-    try:
-        text = role_binding_template.safe_substitute(
-                configuration=configuration_type, namespace=namespace,
-                name=user_account_name, tag='admin', role='admin', hub=hub,
-                username=short_name)
-        body = json.loads(text)
-
-        role_binding_resource.create(namespace=project_name, body=body)
-
-    except ApiException as e:
-        if e.status != 409:
-            print('ERROR: Error creating role binding for user. %s' % e)
-            raise
-
-    except Exception as e:
-        print('ERROR: Error creating rolebinding for user. %s' % e)
-        raise
-
-    # Create role binding in the project so the users service account
     # can perform additional actions declared through additional policy
     # rules for a specific workshop session.
 
