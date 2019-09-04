@@ -622,7 +622,7 @@ def modify_pod_hook(spawner, pod):
 
     # Create any extra resources in the project required for a workshop.
 
-    yield create_extra_resources(spawner, project_name, project_uid,
+    yield create_extra_resources(spawner, pod, project_name, project_uid,
             user_account_name, short_name)
 
     # Add environment variable for the project namespace for use in any
