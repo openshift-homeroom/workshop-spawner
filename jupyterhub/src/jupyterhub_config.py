@@ -1191,6 +1191,8 @@ def create_service_account(spawner, pod):
     user_account_name = '%s-%s' % (hub, short_name)
     hub_account_name = '%s-hub' % hub
 
+    owner_uid = None
+
     while True:
         try:
             text = service_account_template.safe_substitute(
