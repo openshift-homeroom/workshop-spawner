@@ -266,51 +266,7 @@ def modify_pod_hook(spawner, pod):
     # a service object mapping to the pod for the ports, and create
     # routes for each port.
 
-    exposed_ports = os.environ.get('EXPOSED_PORTS', '')
-
-    if exposed_ports:
-        exposed_ports = exposed_ports.split(',')
-
-        try:
-            text = service_template.safe_substitute(
-                    configuration=configuration_type, name=user_account_name,
-                    hub=hub, username=short_name, uid=owner_uid)
-            body = json.loads(text)
-
-            for port in exposed_ports:
-                body['spec']['ports'].append(dict(name='%s-tcp' % port,
-                        protocol="TCP", port=int(port), targetPort=int(port)))
-
-            service_resource.create(namespace=namespace, body=body)
-
-        except ApiException as e:
-            if e.status != 409:
-                print('ERROR: Error creating service. %s' % e)
-                raise
-
-        except Exception as e:
-            print('ERROR: Error creating service. %s' % e)
-            raise
-
-        for port in exposed_ports:
-            try:
-                host = '%s-%s.%s' % (user_account_name, port, cluster_subdomain)
-                text = route_template.safe_substitute(
-                        configuration=configuration_type,
-                        name=user_account_name, hub=hub, port='%s' % port,
-                        username=short_name, uid=owner_uid, host=host)
-                body = json.loads(text)
-
-                route_resource.create(namespace=namespace, body=body)
-
-            except ApiException as e:
-                if e.status != 409:
-                    print('ERROR: Error creating route. %s' % e)
-                    raise
-
-            except Exception as e:
-                print('ERROR: Error creating route. %s' % e)
-                raise
+    yield expose_service_ports(spawner, pod, owner_uid)
 
     # Create a project for just this user. Poll to make sure it is
     # created before continue.

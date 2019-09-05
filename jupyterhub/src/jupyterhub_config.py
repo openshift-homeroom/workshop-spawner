@@ -1529,6 +1529,59 @@ def create_extra_resources(spawner, pod, project_name, project_uid,
                     body['metadata']['name'], role, budget)
 
 @gen.coroutine
+def expose_service_ports(spawner, pod, owner_uid):
+    hub = '%s-%s' % (application_name, namespace)
+    short_name = spawner.user.name
+    user_account_name = '%s-%s' % (hub, short_name)
+    hub_account_name = '%s-hub' % hub
+
+    exposed_ports = os.environ.get('EXPOSED_PORTS', '')
+
+    if exposed_ports:
+        exposed_ports = exposed_ports.split(',')
+
+        try:
+            text = service_template.safe_substitute(
+                    configuration=configuration_type, name=user_account_name,
+                    hub=hub, username=short_name, uid=owner_uid)
+            body = json.loads(text)
+
+            for port in exposed_ports:
+                body['spec']['ports'].append(dict(name='%s-tcp' % port,
+                        protocol="TCP", port=int(port), targetPort=int(port)))
+
+            service_resource.create(namespace=namespace, body=body)
+
+        except ApiException as e:
+            if e.status != 409:
+                print('ERROR: Error creating service. %s' % e)
+                raise
+
+        except Exception as e:
+            print('ERROR: Error creating service. %s' % e)
+            raise
+
+        for port in exposed_ports:
+            try:
+                host = '%s-%s.%s' % (user_account_name, port, cluster_subdomain)
+                text = route_template.safe_substitute(
+                        configuration=configuration_type,
+                        name=user_account_name, hub=hub, port='%s' % port,
+                        username=short_name, uid=owner_uid, host=host)
+                body = json.loads(text)
+
+                route_resource.create(namespace=namespace, body=body)
+
+            except ApiException as e:
+                if e.status != 409:
+                    print('ERROR: Error creating route. %s' % e)
+                    raise
+
+            except Exception as e:
+                print('ERROR: Error creating route. %s' % e)
+                raise
+
+@gen.coroutine
 def wait_on_service_account(user_account_name):
     for _ in range(10):
         try:
