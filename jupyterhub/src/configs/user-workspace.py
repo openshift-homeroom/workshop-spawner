@@ -193,11 +193,6 @@ def modify_pod_hook(spawner, pod):
     pod.spec.automount_service_account_token = True
     pod.spec.service_account_name = user_account_name
 
-    # Grab the OpenShift user access token from the login state.
-
-    auth_state = yield spawner.user.get_auth_state()
-    access_token = auth_state['access_token']
-
     # Ensure that a service account exists corresponding to the user.
     # Need to do this as it may have been cleaned up if the session had
     # expired and user wasn't logged out in the browser.
