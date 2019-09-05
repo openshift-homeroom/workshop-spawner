@@ -30,6 +30,8 @@ application_name = os.environ.get('APPLICATION_NAME', 'homeroom')
 
 configuration_type = os.environ.get('CONFIGURATION_TYPE', 'hosted-workshop')
 
+homeroom_link = os.environ.get('HOMEROOM_LINK')
+
 # Work out the service account name and name of the namespace that the
 # deployment is in.
 

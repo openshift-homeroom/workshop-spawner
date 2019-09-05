@@ -378,8 +378,6 @@ if idle_timeout and int(idle_timeout):
 
 from jupyterhub.handlers import BaseHandler
 
-homeroom_link = os.environ.get('HOMEROOM_LINK')
-
 class RestartRedirectHandler(BaseHandler):
 
     @web.authenticated

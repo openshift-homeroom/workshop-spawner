@@ -296,8 +296,6 @@ c.Spawner.environment['RESTART_URL'] = '/restart'
 
 from jupyterhub.handlers import BaseHandler
 
-homeroom_link = os.environ.get('HOMEROOM_LINK')
-
 class RestartRedirectHandler(BaseHandler):
 
     @web.authenticated
