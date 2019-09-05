@@ -1488,7 +1488,7 @@ if os.path.exists('/opt/app-root/resources/extra_resources.json'):
         extra_resources_loader = json.loads
 
 @gen.coroutine
-def create_extra_resources(spawner, pod, project_name, project_uid,
+def create_extra_resources(spawner, pod, project_name, owner_uid,
         user_account_name, short_name):
 
     if not extra_resources:
@@ -1517,7 +1517,7 @@ def create_extra_resources(spawner, pod, project_name, project_uid,
                     'clusterrolebinding', 'namespace'):
                 body['metadata']['ownerReferences'] = [dict(
                     apiVersion='v1', kind='Namespace', blockOwnerDeletion=False,
-                    controller=True, name=project_name, uid=project_uid)]
+                    controller=True, name=project_name, uid=owner_uid)]
 
             if kind.lower() == 'namespace':
                 service_account_name = 'system:serviceaccount:%s:%s-%s-hub' % (
