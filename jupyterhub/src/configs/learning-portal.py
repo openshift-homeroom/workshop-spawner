@@ -11,18 +11,15 @@
 # '/restart' URL handler will cause any session to be restarted and they
 # will be given a new instance.
 
-import time
 import functools
 import random
 import weakref
 
-from tornado import gen, web
+from tornado import web
 
 from jupyterhub.auth import Authenticator
 from jupyterhub.handlers import BaseHandler
 from jupyterhub.utils import url_path_join
-
-from kubernetes.client.rest import ApiException
 
 class AnonymousUser(object):
 
@@ -244,14 +241,12 @@ except Exception as e:
 
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
-    # Create the service account. We know the user name is a UUID, but
-    # it is too long to use as is in project name, so we want to shorten.
-
     hub = '%s-%s' % (application_name, namespace)
     short_name = spawner.user.name
-    project_name = '%s-%s' % (hub, short_name)
     user_account_name = '%s-%s' % (hub, short_name)
     hub_account_name = '%s-hub' % hub
+
+    project_name = '%s-%s' % (hub, short_name)
 
     pod.spec.automount_service_account_token = True
     pod.spec.service_account_name = user_account_name
