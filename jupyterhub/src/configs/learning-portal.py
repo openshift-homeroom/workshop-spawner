@@ -260,48 +260,7 @@ def modify_pod_hook(spawner, pod):
     # Need to do this as it may have been cleaned up if the session had
     # expired and user wasn't logged out in the browser.
 
-    owner_uid = None
-
-    while True:
-        try:
-            text = service_account_template.safe_substitute(
-                    configuration=configuration_type, namespace=namespace,
-                    name=user_account_name, hub=hub, username=short_name)
-            body = json.loads(text)
-
-            service_account_object = service_account_resource.create(
-                    namespace=namespace, body=body)
-
-            owner_uid = service_account_object.metadata.uid
-
-        except ApiException as e:
-            if e.status != 409:
-                print('ERROR: Error creating service account. %s' % e)
-                raise
-
-            else:
-                break
-
-        except Exception as e:
-            print('ERROR: Error creating service account. %s' % e)
-            raise
-
-        else:
-            break
-
-    # If we didn't create a service account object as one already existed,
-    # we need to query the existing one to get the uid to use as owner.
-
-    if owner_uid is None:
-        try:
-            service_account_object = service_account_resource.get(
-                    namespace=namespace, name=user_account_name)
-
-            owner_uid = service_account_object.metadata.uid
-
-        except Exception as e:
-            print('ERROR: Error getting service account. %s' % e)
-            raise
+    owner_uid = yield create_service_account(spawner, pod)
 
     # If there are any exposed ports defined for the session, create
     # a service object mapping to the pod for the ports, and create

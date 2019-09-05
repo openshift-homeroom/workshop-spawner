@@ -1183,6 +1183,56 @@ route_template = string.Template("""
 """)
 
 @gen.coroutine
+def create_service_account(spawner, pod):
+    hub = '%s-%s' % (application_name, namespace)
+    short_name = spawner.user.name
+    user_account_name = '%s-%s' % (hub, short_name)
+    hub_account_name = '%s-hub' % hub
+
+    while True:
+        try:
+            text = service_account_template.safe_substitute(
+                    configuration=configuration_type, namespace=namespace,
+                    name=user_account_name, hub=hub, username=short_name)
+            body = json.loads(text)
+
+            service_account_object = service_account_resource.create(
+                    namespace=namespace, body=body)
+
+            owner_uid = service_account_object.metadata.uid
+
+        except ApiException as e:
+            if e.status != 409:
+                print('ERROR: Error creating service account. %s' % e)
+                raise
+
+            else:
+                break
+
+        except Exception as e:
+            print('ERROR: Error creating service account. %s' % e)
+            raise
+
+        else:
+            break
+
+    # If we didn't create a service account object as one already existed,
+    # we need to query the existing one to get the uid to use as owner.
+
+    if owner_uid is None:
+        try:
+            service_account_object = service_account_resource.get(
+                    namespace=namespace, name=user_account_name)
+
+            owner_uid = service_account_object.metadata.uid
+
+        except Exception as e:
+            print('ERROR: Error getting service account. %s' % e)
+            raise
+
+    return owner_uid
+
+@gen.coroutine
 def setup_project_namespace(spawner, pod, project_name, role, budget):
     # Wait for project to exist before continuing.
 
