@@ -9,7 +9,7 @@ from kubernetes.client.rest import ApiException
 from kubernetes.client.configuration import Configuration
 from kubernetes.config.incluster_config import load_incluster_config
 from kubernetes.client.api_client import ApiClient
-from openshift.dynamic import DynamicClient
+from openshift.dynamic import DynamicClient, Resource
 
 service_account_path = '/var/run/secrets/kubernetes.io/serviceaccount'
 
@@ -108,51 +108,66 @@ def pod_exists(name):
 
     return False
 
+def namespaced_resources():
+    api_groups = api_client.resources.parse_api_groups()
+
+    for api in api_groups.values():
+        for domain, items in api.items():
+            for version, group in items.items():
+                try:
+                    for kind in group.resources:
+                        if domain:
+                            version = '%s/%s' % (domain, version)
+                        resource = api_client.resources.get(api_version=version, kind=kind)
+                        if type(resource) == Resource and resource.namespaced:
+                            yield resource
+                except Exception:
+                    pass
+
 def purge_project(name):
-    for resource_type in api_client.resources:
+    for resource_type in namespaced_resources():
         try:
-            if resource_type.namespaced:
-                objects = resource_type.get(namespace=name)
-                for obj in objects.items:
-                    if obj.metadata.deletionTimestamp and obj.metadata.finalizers:
-                        # Since the project is stuck in terminating, we
-                        # remove any finalizers which might be blocking
-                        # it. Finalizers can be left around with nothing
-                        # to remove them because there is no gaurantee
-                        # what order resources will be deleted when a
-                        # project is deleted. Thus an application, for
-                        # example an operator which would remove the
-                        # finalizer when a CRD is deleted, might get
-                        # deleted before the objects with the finalizer,
-                        # and so the objects can't then be deleted.
+            objects = resource_type.get(namespace=name)
+            for obj in objects.items:
+                if obj.metadata.deletionTimestamp and obj.metadata.finalizers:
+                    # Since the project is stuck in terminating, we
+                    # remove any finalizers which might be blocking
+                    # it. Finalizers can be left around with nothing
+                    # to remove them because there is no gaurantee
+                    # what order resources will be deleted when a
+                    # project is deleted. Thus an application, for
+                    # example an operator which would remove the
+                    # finalizer when a CRD is deleted, might get
+                    # deleted before the objects with the finalizer,
+                    # and so the objects can't then be deleted.
 
-                        body = {
-                            'kind': obj.kind,
-                            'apiVersion': obj.apiVersion,
-                            'metadata': {
-                                'name': obj.metadata.name,
-                                'finalizers': None
-                            }
+                    body = {
+                        'kind': obj.kind,
+                        'apiVersion': obj.apiVersion,
+                        'metadata': {
+                            'name': obj.metadata.name,
+                            'finalizers': None
                         }
+                    }
 
-                        print('WARNING: deleting finalizers on resource: %s' % body)
+                    print('WARNING: deleting finalizers on resource: %s' % body)
 
-                    try:
-                        resource_type.patch(namespace=name, body=body,
-                                content_type='application/merge-patch+json')
+                try:
+                    resource_type.patch(namespace=name, body=body,
+                            content_type='application/merge-patch+json')
 
-                    except ApiException as e:
-                        print('ERROR: failed to delete finalizers: %s' % body, e)
-                        
-                    except Exception as e:
-                        print('ERROR: failed to delete finalizers: %s' % body, e)
+                except ApiException as e:
+                    print('ERROR: failed to delete finalizers: %s' % body, e)
+
+                except Exception as e:
+                    print('ERROR: failed to delete finalizers: %s' % body, e)
 
         except ApiException as e:
-            if e.status not in (403, 405):
-                print('ERROR: failed to query resources %s' % resource, e)
+            if e.status not in (403, 404, 405):
+                print('ERROR: failed to query resources %s' % resource_type, e)
 
         except Exception as e:
-            print('ERROR: failed to query resources %s' % resource, e)
+            print('ERROR: failed to query resources %s' % resource_type, e)
 
     pass
 
@@ -193,6 +208,9 @@ def purge():
 
     projects = get_projects()
 
+    if projects:
+        print('INFO: checking for projects to be deleted: %s' % projects)
+
     for project in projects:
         if not project in project_cache:
             project_cache[project] = now
@@ -204,7 +222,7 @@ def purge():
             project_cache[project] = now
 
     for project, last_seen in list(project_cache.items()):
-        if now - last_seen > 150.0:
+        if now - last_seen > 90.0:
             account_cache[project.account].remove(project)
 
             if not account_cache[project.account]:
@@ -228,7 +246,7 @@ def purge():
         if name in account_cache:
             del orphan_cache[name]
 
-        elif now - last_seen > 150.0:
+        elif now - last_seen > 90.0:
             delete_account(name)
 
             del orphan_cache[name]

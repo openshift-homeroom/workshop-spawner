@@ -29,6 +29,11 @@
             "required": true
         },
         {
+            "name": "SPAWNER_ROLE",
+            "value": "admin",
+            "required": true
+        },
+        {
             "name": "SPAWNER_MEMORY",
             "value": "768Mi"
         },
@@ -77,11 +82,6 @@
             "required": false
         },
         {
-            "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/jupyteronopenshift/jupyterhub:3.0.7",
-            "required": true
-        },
-        {
             "name": "TERMINAL_ENVVARS",
             "value": ""
         },
@@ -115,6 +115,11 @@
         },
         {
             "name": "JUPYTERHUB_CONFIG",
+            "value": "",
+            "required": false
+        },
+        {
+            "name": "JUPYTERHUB_ENVVARS",
             "value": "",
             "required": false
         },
@@ -195,6 +200,30 @@
                     "spawner": "user-workspace",
                     "class": "spawner"
                 }
+            }
+        },
+        {
+            "kind": "ClusterRoleBinding",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner-role",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace",
+                    "class": "spawner"
+                }
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
+                    "namespace": "${PROJECT_NAME}"
+                }
+            ],
+            "roleRef": {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "ClusterRole",
+                "name": "${SPAWNER_ROLE}"
             }
         },
         {
@@ -477,7 +506,7 @@
                     "dockerStrategy": {
                         "from": {
                             "kind": "DockerImage",
-                            "name": "${JUPYTERHUB_IMAGE}"
+                            "name": "centos/s2i-base-centos7:latest"
                         }
                     }
                 },
@@ -502,7 +531,8 @@
                 }
             },
             "data": {
-                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
+                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}",
+                "jupyterhub_config.sh": "${JUPYTERHUB_ENVVARS}"
             }
         },
         {
@@ -856,7 +886,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshifthomeroom/workshop-dashboard:4.0.0"
+                            "name": "quay.io/openshifthomeroom/workshop-dashboard:4.1.0"
                         }
                     }
                 ]
@@ -909,7 +939,7 @@
                     "dockerStrategy": {
                         "from": {
                             "kind": "DockerImage",
-                            "name": "jboss/keycloak-openshift:4.0.0.Final"
+                            "name": "jboss/keycloak-openshift:4.8.3.Final"
                         }
                     }
                 },

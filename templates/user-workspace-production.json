@@ -19,6 +19,11 @@
             "required": true
         },
         {
+            "name": "SPAWNER_ROLE",
+            "value": "admin",
+            "required": true
+        },
+        {
             "name": "SPAWNER_MEMORY",
             "value": "768Mi"
         },
@@ -68,12 +73,12 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshifthomeroom/workshop-spawner:5.0.1",
+            "value": "quay.io/openshifthomeroom/workshop-spawner:6.0.0",
             "required": true
         },
         {
             "name": "KEYCLOAK_IMAGE",
-            "value": "quay.io/openshifthomeroom/workshop-keycloak:5.0.1",
+            "value": "quay.io/openshifthomeroom/workshop-keycloak:6.0.0",
             "required": true
         },
         {
@@ -110,6 +115,11 @@
         },
         {
             "name": "JUPYTERHUB_CONFIG",
+            "value": "",
+            "required": false
+        },
+        {
+            "name": "JUPYTERHUB_ENVVARS",
             "value": "",
             "required": false
         },
@@ -190,6 +200,30 @@
                     "spawner": "user-workspace",
                     "class": "spawner"
                 }
+            }
+        },
+        {
+            "kind": "ClusterRoleBinding",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-spawner-role",
+                "labels": {
+                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "spawner": "user-workspace",
+                    "class": "spawner"
+                }
+            },
+            "subjects": [
+                {
+                    "kind": "ServiceAccount",
+                    "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
+                    "namespace": "${PROJECT_NAME}"
+                }
+            ],
+            "roleRef": {
+                "apiGroup": "rbac.authorization.k8s.io",
+                "kind": "ClusterRole",
+                "name": "${SPAWNER_ROLE}"
             }
         },
         {
@@ -462,7 +496,8 @@
                 }
             },
             "data": {
-                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
+                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}",
+                "jupyterhub_config.sh": "${JUPYTERHUB_ENVVARS}"
             }
         },
         {
@@ -816,7 +851,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshifthomeroom/workshop-dashboard:4.0.0"
+                            "name": "quay.io/openshifthomeroom/workshop-dashboard:4.1.0"
                         }
                     }
                 ]

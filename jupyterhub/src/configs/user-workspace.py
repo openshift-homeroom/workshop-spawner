@@ -1,49 +1,28 @@
-# This file provides configuration specific to the 'hosted-workshop'
+# This file provides configuration specific to the 'user-workspace'
 # deployment mode. In this mode authentication for JupyterHub is done
-# against the OpenShift cluster using OAuth.
+# against a KeyCloak authentication server.
 
-# Work out the public server address for the OpenShift OAuth endpoint.
-# Make sure the request is done in a session so the connection is closed
-# and later calls against the REST API don't attempt to reuse it. This
-# is just to avoid potential for any problems with connection reuse.
-
-from fnmatch import fnmatch
+import string
+import yaml
 
 from tornado import web, gen
 
-oauth_metadata_url = '%s/.well-known/oauth-authorization-server' % kubernetes_server_url
+from kubernetes.client.rest import ApiException
 
-with requests.Session() as session:
-    response = session.get(oauth_metadata_url, verify=False)
-    data = json.loads(response.content.decode('UTF-8'))
-    oauth_issuer_address = data['issuer']
+# Configure standalone KeyCloak as the authentication provider for
+# users. Environments variables have already been set from the
+# user-workspace.sh script file.
 
-# Enable the OpenShift authenticator. The OPENSHIFT_URL environment
-# variable must be set before importing the authenticator as it only
-# reads it when module is first imported. From OpenShift 4.0 we need
-# to supply separate URLs for Kubernetes server and OAuth server.
+c.JupyterHub.authenticator_class = "generic-oauth"
 
-os.environ['OPENSHIFT_URL'] = oauth_issuer_address
+c.OAuthenticator.login_service = "KeyCloak"
 
-os.environ['OPENSHIFT_REST_API_URL'] = kubernetes_server_url
-os.environ['OPENSHIFT_AUTH_API_URL'] = oauth_issuer_address
+c.OAuthenticator.oauth_callback_url = 'https://%s/hub/oauth_callback' % public_hostname
 
-from oauthenticator.openshift import OpenShiftOAuthenticator
-c.JupyterHub.authenticator_class = OpenShiftOAuthenticator
+c.OAuthenticator.client_id = 'homeroom'
+c.OAuthenticator.client_secret = os.environ.get('OAUTH_CLIENT_SECRET')
 
-OpenShiftOAuthenticator.scope = ['user:full']
-
-client_id = '%s-%s-console' % (application_name, namespace)
-client_secret = os.environ['OAUTH_CLIENT_SECRET']
-
-c.OpenShiftOAuthenticator.client_id = client_id
-c.OpenShiftOAuthenticator.client_secret = client_secret
-c.Authenticator.enable_auth_state = True
-
-c.CryptKeeper.keys = [ client_secret.encode('utf-8') ]
-
-c.OpenShiftOAuthenticator.oauth_callback_url = (
-        'https://%s/hub/oauth_callback' % public_hostname)
+c.OAuthenticator.tls_verify = False
 
 c.Authenticator.auto_login = True
 
@@ -52,18 +31,6 @@ c.Authenticator.auto_login = True
 c.JupyterHub.admin_access = True
 
 c.Authenticator.admin_users = set(os.environ.get('ADMIN_USERS', '').split())
-
-# Override labels on pods so matches label used by the spawner.
-
-c.KubeSpawner.common_labels = {
-    'app': '%s-%s' % (application_name, namespace)
-}
-
-c.KubeSpawner.extra_labels = {
-    'spawner': 'hosted-workshop',
-    'class': 'session',
-    'user': '{username}'
-}
 
 # Mount config map for user provided environment variables for the
 # terminal and workshop.
@@ -188,10 +155,6 @@ c.KubeSpawner.extra_containers.extend([
                 "value": "disabled"
             },
             {
-                "name": "BRIDGE_K8S_AUTH",
-                "value": "bearer-token"
-            },
-            {
                 "name": "BRIDGE_BRANDING",
                 "value": console_branding
             }
@@ -214,45 +177,89 @@ c.Spawner.environment['CONSOLE_URL'] = 'http://localhost:10083'
 c.Spawner.environment['DOWNLOAD_URL'] = os.environ.get('DOWNLOAD_URL', '')
 c.Spawner.environment['WORKSHOP_FILE'] = os.environ.get('WORKSHOP_FILE', '')
 
-# Make modifications to pod based on user and type of session.
+project_owner_name = '%s-%s-spawner' % (application_name, namespace)
+
+try:
+    project_owner = cluster_role_resource.get(project_owner_name)
+
+except Exception as e:
+    print('ERROR: Cannot get spawner cluster role %s. %s' % (project_owner_name, e))
+    raise
 
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
-    # Set the session access token from the OpenShift login in
-    # both the terminal and console containers. We still mount
-    # the service account token still as well because the console
-    # needs the SSL certificate contained in it when accessing
-    # the cluster REST API.
+    # Create the service account. We know the user name is a UUID, but
+    # it is too long to use as is in project name, so we want to shorten.
 
-    auth_state = yield spawner.user.get_auth_state()
+    hub = '%s-%s' % (application_name, namespace)
+    short_name = spawner.user.name
+    project_name = '%s-%s' % (hub, short_name)
+    user_account_name = '%s-%s' % (hub, short_name)
+    hub_account_name = '%s-hub' % hub
+
+    pod.spec.automount_service_account_token = True
+    pod.spec.service_account_name = user_account_name
+
+    # Ensure that a service account exists corresponding to the user.
+    # Need to do this as it may have been cleaned up if the session had
+    # expired and user wasn't logged out in the browser.
+
+    owner_uid = yield create_service_account(spawner, pod)
+
+    # If there are any exposed ports defined for the session, create
+    # a service object mapping to the pod for the ports, and create
+    # routes for each port.
+
+    yield expose_service_ports(spawner, pod, owner_uid)
+
+    # Create a project for just this user. Poll to make sure it is
+    # created before continue.
+
+    yield create_project_namespace(spawner, pod, project_name)
+
+    # Now set up the project permissions and resource budget.
+
+    resource_budget = os.environ.get('RESOURCE_BUDGET', 'default')
+
+    project_uid = yield setup_project_namespace(spawner, pod, project_name,
+            'admin', resource_budget)
+
+    # Before can continue, need to poll looking to see if the secret for
+    # the api token has been added to the service account. If don't do
+    # this then pod creation will fail immediately. To do this, must get
+    # the secrets from the service account and make sure they in turn
+    # exist.
+
+    yield wait_on_service_account(user_account_name)
+
+    # Create any extra resources in the project required for a workshop.
+
+    yield create_extra_resources(spawner, pod, project_name, project_uid,
+            user_account_name, short_name)
+
+    # Add environment variable for the project namespace for use in any
+    # workshop content.
 
     pod.spec.containers[0].env.append(
-            dict(name='OPENSHIFT_TOKEN', value=auth_state['access_token']))
+            dict(name='PROJECT_NAMESPACE', value=project_name))
 
-    pod.spec.containers[-1].env.append(
-            dict(name='BRIDGE_K8S_AUTH_BEARER_TOKEN',
-            value=auth_state['access_token']))
+    # Add environment variables for the namespace JupyterHub is running
+    # in and its name. Those with JUPYTERHUB prefix are for backwards
+    # compatibility and should not be used.
 
-    pod.spec.service_account_name = '%s-%s-user' % (application_name, namespace)
-    pod.spec.automount_service_account_token = True
+    pod.spec.containers[0].env.append(
+            dict(name='SPAWNER_NAMESPACE', value=namespace))
+    pod.spec.containers[0].env.append(
+            dict(name='SPAWNER_APPLICATION', value=application_name))
 
-    # See if a template for the project name has been specified.
-    # Try expanding the name, substituting the username. If the
-    # result is different then we use it, not if it is the same
-    # which would suggest it isn't unique.
+    pod.spec.containers[0].env.append(
+            dict(name='JUPYTERHUB_NAMESPACE', value=namespace))
+    pod.spec.containers[0].env.append(
+            dict(name='JUPYTERHUB_APPLICATION', value=application_name))
 
-    project = os.environ.get('OPENSHIFT_PROJECT')
-
-    if project:
-        name = project.format(username=spawner.user.name)
-        if name != project:
-            pod.spec.containers[0].env.append(
-                    dict(name='PROJECT_NAMESPACE', value=name))
-
-            # Ensure project is created if it doesn't exist.
-
-            pod.spec.containers[0].env.append(
-                    dict(name='OPENSHIFT_PROJECT', value=name))
+    if homeroom_link:
+        pod.spec.containers[0].env.append(
+                dict(name='HOMEROOM_LINK', value=homeroom_link))
 
     return pod
 
@@ -263,11 +270,20 @@ c.KubeSpawner.modify_pod_hook = modify_pod_hook
 idle_timeout = os.environ.get('IDLE_TIMEOUT')
 
 if idle_timeout and int(idle_timeout):
+    cull_idle_servers_cmd = ['/opt/app-root/src/scripts/cull-idle-servers.sh']
+
+    cull_idle_servers_cmd.append('--timeout=%s' % idle_timeout)
+
     c.JupyterHub.services.extend([
         {
             'name': 'cull-idle',
             'admin': True,
-            'command': ['cull-idle-servers', '--timeout=%s' % idle_timeout],
+            'command': cull_idle_servers_cmd,
+            'environment': dict(
+                ENV="/opt/app-root/etc/profile",
+                BASH_ENV="/opt/app-root/etc/profile",
+                PROMPT_COMMAND=". /opt/app-root/etc/profile"
+            ),
         }
     ])
 
@@ -285,12 +301,13 @@ class RestartRedirectHandler(BaseHandler):
     @web.authenticated
     @gen.coroutine
     def get(self, *args):
-        user = self.get_current_user()
+        user = yield self.get_current_user()
+
         if user.running:
             status = yield user.spawner.poll_and_notify()
             if status is None:
                 yield self.stop_single_user(user)
-        self.redirect('/hub/spawn')
+        self.redirect(homeroom_link or '/hub/spawn')
 
 c.JupyterHub.extra_handlers.extend([
     (r'/restart$', RestartRedirectHandler),

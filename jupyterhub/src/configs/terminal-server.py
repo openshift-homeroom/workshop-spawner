@@ -18,19 +18,12 @@ with requests.Session() as session:
     data = json.loads(response.content.decode('UTF-8'))
     oauth_issuer_address = data['issuer']
 
-# Enable the OpenShift authenticator. The OPENSHIFT_URL environment
-# variable must be set before importing the authenticator as it only
-# reads it when module is first imported. From OpenShift 4.0 we need
-# to supply separate URLs for Kubernetes server and OAuth server.
+# Enable the OpenShift authenticator. Environments variables have
+# already been set from the terminal-server.sh script file.
 
-os.environ['OPENSHIFT_URL'] = oauth_issuer_address
-
-os.environ['OPENSHIFT_REST_API_URL'] = kubernetes_server_url
-os.environ['OPENSHIFT_AUTH_API_URL'] = oauth_issuer_address
+c.JupyterHub.authenticator_class = "openshift"
 
 from oauthenticator.openshift import OpenShiftOAuthenticator
-c.JupyterHub.authenticator_class = OpenShiftOAuthenticator
-
 OpenShiftOAuthenticator.scope = ['user:full']
 
 client_id = '%s-%s-console' % (application_name, namespace)
@@ -52,18 +45,6 @@ c.Authenticator.auto_login = True
 c.JupyterHub.admin_access = True
 
 c.Authenticator.admin_users = set(os.environ.get('ADMIN_USERS', '').split())
-
-# Override labels on pods so matches label used by the spawner.
-
-c.KubeSpawner.common_labels = {
-    'app': '%s-%s' % (application_name, namespace)
-}
-
-c.KubeSpawner.extra_labels = {
-    'spawner': 'terminal-server',
-    'class': 'session',
-    'user': '{username}'
-}
 
 # Mount config map for user provided environment variables for the
 # terminal and workshop.
@@ -190,6 +171,24 @@ def modify_pod_hook(spawner, pod):
             pod.spec.containers[0].env.append(
                     dict(name='OPENSHIFT_PROJECT', value=name))
 
+    # Add environment variables for the namespace JupyterHub is running
+    # in and its name. Those with JUPYTERHUB prefix are for backwards
+    # compatibility and should not be used.
+
+    pod.spec.containers[0].env.append(
+            dict(name='SPAWNER_NAMESPACE', value=namespace))
+    pod.spec.containers[0].env.append(
+            dict(name='SPAWNER_APPLICATION', value=application_name))
+
+    pod.spec.containers[0].env.append(
+            dict(name='JUPYTERHUB_NAMESPACE', value=namespace))
+    pod.spec.containers[0].env.append(
+            dict(name='JUPYTERHUB_APPLICATION', value=application_name))
+
+    if homeroom_link:
+        pod.spec.containers[0].env.append(
+                dict(name='HOMEROOM_LINK', value=homeroom_link))
+
     return pod
 
 c.KubeSpawner.modify_pod_hook = modify_pod_hook
@@ -199,11 +198,20 @@ c.KubeSpawner.modify_pod_hook = modify_pod_hook
 idle_timeout = os.environ.get('IDLE_TIMEOUT')
 
 if idle_timeout and int(idle_timeout):
+    cull_idle_servers_cmd = ['/opt/app-root/src/scripts/cull-idle-servers.sh']
+
+    cull_idle_servers_cmd.append('--timeout=%s' % idle_timeout)
+
     c.JupyterHub.services.extend([
         {
             'name': 'cull-idle',
             'admin': True,
-            'command': ['cull-idle-servers', '--timeout=%s' % idle_timeout],
+            'command': cull_idle_servers_cmd,
+            'environment': dict(
+                ENV="/opt/app-root/etc/profile",
+                BASH_ENV="/opt/app-root/etc/profile",
+                PROMPT_COMMAND=". /opt/app-root/etc/profile"
+            ),
         }
     ])
 
@@ -221,7 +229,7 @@ class RestartRedirectHandler(BaseHandler):
     @web.authenticated
     @gen.coroutine
     def get(self, *args):
-        user = self.get_current_user()
+        user = yield self.get_current_user()
         if user.running:
             status = yield user.spawner.poll_and_notify()
             if status is None:

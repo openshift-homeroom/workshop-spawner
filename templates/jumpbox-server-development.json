@@ -54,11 +54,6 @@
             "required": false
         },
         {
-            "name": "JUPYTERHUB_IMAGE",
-            "value": "quay.io/jupyteronopenshift/jupyterhub:3.0.7",
-            "required": true
-        },
-        {
             "name": "TERMINAL_ENVVARS",
             "value": ""
         },
@@ -92,6 +87,11 @@
         },
         {
             "name": "JUPYTERHUB_CONFIG",
+            "value": "",
+            "required": false
+        },
+        {
+            "name": "JUPYTERHUB_ENVVARS",
             "value": "",
             "required": false
         },
@@ -234,7 +234,7 @@
                     "dockerStrategy": {
                         "from": {
                             "kind": "DockerImage",
-                            "name": "${JUPYTERHUB_IMAGE}"
+                            "name": "centos/s2i-base-centos7:latest"
                         }
                     }
                 },
@@ -259,7 +259,8 @@
                 }
             },
             "data": {
-                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
+                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}",
+                "jupyterhub_config.sh": "${JUPYTERHUB_ENVVARS}"
             }
         },
         {
@@ -560,7 +561,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshifthomeroom/workshop-terminal:3.0.0"
+                            "name": "quay.io/openshifthomeroom/workshop-terminal:3.0.1"
                         }
                     }
                 ]
@@ -613,7 +614,7 @@
                     "dockerStrategy": {
                         "from": {
                             "kind": "DockerImage",
-                            "name": "jboss/keycloak-openshift:4.0.0.Final"
+                            "name": "jboss/keycloak-openshift:4.8.3.Final"
                         }
                     }
                 },

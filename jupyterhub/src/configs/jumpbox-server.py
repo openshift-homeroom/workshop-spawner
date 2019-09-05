@@ -2,23 +2,11 @@
 # deployment mode. In this mode authentication for JupyterHub is done
 # against a KeyCloak authentication server.
 
-# Configure standalone KeyCloak as the authentication provider for users.
+# Configure standalone KeyCloak as the authentication provider for
+# users. Environments variables have already been set from the
+# jumpbox-server.sh script file.
 
-keycloak_name = '%s-keycloak' % application_name
-keycloak_hostname = extract_hostname(routes, keycloak_name)
-keycloak_realm = 'homeroom'
-
-os.environ['OAUTH2_TOKEN_URL'] = 'https://%s/auth/realms/%s/protocol/openid-connect/token' % (keycloak_hostname, keycloak_realm)
-os.environ['OAUTH2_AUTHORIZE_URL'] = 'https://%s/auth/realms/%s/protocol/openid-connect/auth' % (keycloak_hostname, keycloak_realm)
-os.environ['OAUTH2_USERDATA_URL'] = 'https://%s/auth/realms/%s/protocol/openid-connect/userinfo' % (keycloak_hostname, keycloak_realm)
-
-os.environ['OAUTH2_TLS_VERIFY'] = '0'
-os.environ['OAUTH_TLS_VERIFY'] = '0'
-
-os.environ['OAUTH2_USERNAME_KEY'] = 'preferred_username'
-
-from oauthenticator.generic import GenericOAuthenticator
-c.JupyterHub.authenticator_class = GenericOAuthenticator
+c.JupyterHub.authenticator_class = "generic-oauth"
 
 c.OAuthenticator.login_service = "KeyCloak"
 
@@ -36,18 +24,6 @@ c.Authenticator.auto_login = True
 c.JupyterHub.admin_access = True
 
 c.Authenticator.admin_users = set(os.environ.get('ADMIN_USERS', '').split())
-
-# Override labels on pods so matches label used by the spawner.
-
-c.KubeSpawner.common_labels = {
-    'app': '%s-%s' % (application_name, namespace)
-}
-
-c.KubeSpawner.extra_labels = {
-    'spawner': 'jumpbox-server',
-    'class': 'session',
-    'user': '{username}'
-}
 
 # Mount config map for user provided environment variables for the
 # terminal and workshop.
@@ -148,11 +124,20 @@ c.KubeSpawner.service_account = '%s-%s-user' % (application_name, namespace)
 idle_timeout = os.environ.get('IDLE_TIMEOUT')
 
 if idle_timeout and int(idle_timeout):
+    cull_idle_servers_cmd = ['/opt/app-root/src/scripts/cull-idle-servers.sh']
+
+    cull_idle_servers_cmd.append('--timeout=%s' % idle_timeout)
+
     c.JupyterHub.services.extend([
         {
             'name': 'cull-idle',
             'admin': True,
-            'command': ['cull-idle-servers', '--timeout=%s' % idle_timeout],
+            'command': cull_idle_servers_cmd,
+            'environment': dict(
+                ENV="/opt/app-root/etc/profile",
+                BASH_ENV="/opt/app-root/etc/profile",
+                PROMPT_COMMAND=". /opt/app-root/etc/profile"
+            ),
         }
     ])
 
@@ -172,7 +157,7 @@ class RestartRedirectHandler(BaseHandler):
     @web.authenticated
     @gen.coroutine
     def get(self, *args):
-        user = self.get_current_user()
+        user = yield self.get_current_user()
         if user.running:
             status = yield user.spawner.poll_and_notify()
             if status is None:

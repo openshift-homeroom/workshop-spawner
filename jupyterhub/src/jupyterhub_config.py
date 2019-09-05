@@ -1,257 +1,339 @@
-# This file provides configuration specific to the 'learning-portal'
-# deployment mode. In this mode, anonymous authentication is used, with
-# users being given their own unique service account and project to work
-# in. The project and service account will be deleted when the session
-# goes idle or the time limit for the session has expired.
+# This file provides common configuration for the different ways that
+# the deployment can run. Configuration specific to the different modes
+# will be read from separate files at the end of this configuration
+# file.
 
-# Use an anonymous authenticator. Users will be automatically assigned a
-# user name and don't need to provide a password. During the process of
-# doing the psuedo authentication, create a service account for them,
-# where the name of service account is their user name. The special
-# '/restart' URL handler will cause any session to be restarted and they
-# will be given a new instance.
-
+import os
+import json
 import string
-import time
-import functools
-import random
 import yaml
-import weakref
 
-from tornado import gen, web
+import requests
+import wrapt
 
-from jupyterhub.auth import Authenticator
-from jupyterhub.handlers import BaseHandler
-from jupyterhub.utils import url_path_join
+from tornado import gen
 
 from kubernetes.client.rest import ApiException
 
-class AnonymousUser(object):
+from kubernetes.client.configuration import Configuration
+from kubernetes.config.incluster_config import load_incluster_config
+from kubernetes.client.api_client import ApiClient
+from openshift.dynamic import DynamicClient
 
-    def __init__(self, name):
-        self.name = name
-        self.active = False
+# The application name and configuration type are passed in through the
+# template. The application name should be the value used for the
+# deployment, and more specifically, must match the name of the route.
+# The configuration type will vary based on the template, as the setup
+# required for each will be different.
 
-@functools.lru_cache(10000)
-def get_user_details(name):
-    return AnonymousUser(name)
+application_name = os.environ.get('APPLICATION_NAME', 'homeroom')
 
-random_userid_chars = 'bcdfghjklmnpqrstvwxyz0123456789'
+configuration_type = os.environ.get('CONFIGURATION_TYPE', 'hosted-workshop')
 
-def generate_random_userid(n=5):
-    return ''.join(random.choice(random_userid_chars) for _ in range(n))
+homeroom_link = os.environ.get('HOMEROOM_LINK')
 
-class AutoAuthenticateHandler(BaseHandler):
+# Work out the service account name and name of the namespace that the
+# deployment is in.
 
-    def initialize(self, force_new_server, process_user):
-        super().initialize()
-        self.force_new_server = force_new_server
-        self.process_user = process_user
+service_account_name = '%s-hub' % application_name
 
-    def generate_user(self):
-        while True:
-            name = generate_random_userid()
-            user = get_user_details(name)
-            if not user.active:
-                user.active = True
-                return name
+service_account_path = '/var/run/secrets/kubernetes.io/serviceaccount'
 
-    @gen.coroutine
-    def get(self):
-        raw_user = self.get_current_user()
+with open(os.path.join(service_account_path, 'namespace')) as fp:
+    namespace = fp.read().strip()
 
-        if raw_user:
-            if self.force_new_server and raw_user.running:
-                # Stop the user's current terminal instance if it is
-                # running so that they get a new one. Should hopefully
-                # only end up here if have hit the /restart URL path.
+# Determine the Kubernetes REST API endpoint and cluster information,
+# including working out the address of the internal image regstry.
 
-                status = yield raw_user.spawner.poll_and_notify()
-                if status is None:
-                    yield self.stop_single_user(raw_user)
+kubernetes_service_host = os.environ['KUBERNETES_SERVICE_HOST']
+kubernetes_service_port = os.environ['KUBERNETES_SERVICE_PORT']
 
-                # Also force a new user name be generated so don't have
-                # issues with browser caching web pages for anything
-                # want to be able to change for a demo. Only way to do
-                # this seems to be to clear the login cookie and force a
-                # redirect back to the top of the site, hoping we do not
-                # get into a loop.
+kubernetes_server_url = 'https://%s:%s' % (kubernetes_service_host,
+        kubernetes_service_port)
 
-                self.clear_login_cookie()
-                return self.redirect('/')
+kubernetes_server_version_url = '%s/version' % kubernetes_server_url
 
-        else:
-            username = self.generate_user()
-            raw_user = self.user_from_username(username)
-            self.set_login_cookie(raw_user)
+with requests.Session() as session:
+    response = session.get(kubernetes_server_version_url, verify=False)
+    kubernetes_server_info = json.loads(response.content.decode('UTF-8'))
 
-        user = yield gen.maybe_future(self.process_user(raw_user, self))
+image_registry = 'image-registry.openshift-image-registry.svc:5000'
 
-        self.redirect(self.get_argument("next", user.url))
+if kubernetes_server_info['major'] == '1':
+    if kubernetes_server_info['minor'] in ('10', '10+', '11', '11+'):
+        image_registry = 'docker-registry.default.svc:5000'
 
-class AutoAuthenticator(Authenticator):
+# Initialise the client for the REST API used doing configuration.
+#
+# XXX Currently have a workaround here for OpenShift 4.0 beta versions
+# which disables verification of the certificate. If don't use this the
+# Python openshift/kubernetes clients will fail. We also disable any
+# warnings from urllib3 to get rid of the noise in the logs this creates.
 
-    auto_login = True
-    login_service = 'auto'
+load_incluster_config()
 
-    force_new_server = True
+import urllib3
+urllib3.disable_warnings()
+instance = Configuration()
+instance.verify_ssl = False
+Configuration.set_default(instance)
 
-    def process_user(self, user, handler):
-        return user
+api_client = DynamicClient(ApiClient())
 
-    def get_handlers(self, app):
-        extra_settings = {
-            'force_new_server': self.force_new_server,
-            'process_user': self.process_user
-        }
-        return [
-            ('/login', AutoAuthenticateHandler, extra_settings)
-        ]
+image_stream_resource = api_client.resources.get(
+     api_version='image.openshift.io/v1', kind='ImageStream')
 
-    def login_url(self, base_url):
-        return url_path_join(base_url, 'login')
+route_resource = api_client.resources.get(
+     api_version='route.openshift.io/v1', kind='Route')
 
-c.JupyterHub.authenticator_class = AutoAuthenticator
+# Workaround bug in minishift where a service cannot be contacted from a
+# pod which backs the service. For further details see the minishift issue
+# https://github.com/minishift/minishift/issues/2400.
+#
+# What these workarounds do is monkey patch the JupyterHub proxy client
+# API code, and the code for creating the environment for local service
+# processes, and when it sees something which uses the service name as
+# the target in a URL, it replaces it with localhost. These work because
+# the proxy/service processes are in the same pod. It is not possible to
+# change hub_connect_ip to localhost because that is passed to other
+# pods which need to contact back to JupyterHub, and so it must be left
+# as the service name.
 
-named_users = weakref.WeakValueDictionary()
+@wrapt.patch_function_wrapper('jupyterhub.proxy', 'ConfigurableHTTPProxy.add_route')
+def _wrapper_add_route(wrapped, instance, args, kwargs):
+    def _extract_args(routespec, target, data, *_args, **_kwargs):
+        return (routespec, target, data, _args, _kwargs)
 
-user_count = 0
+    routespec, target, data, _args, _kwargs = _extract_args(*args, **kwargs)
 
-def generate_sequential_userid():
-    global user_count
-    user_count += 1
-    return 'user%d' % user_count
+    old = 'http://%s:%s' % (c.JupyterHub.hub_connect_ip, c.JupyterHub.hub_port)
+    new = 'http://127.0.0.1:%s' % c.JupyterHub.hub_port
 
-class NamedUserAuthenticator(Authenticator):
-    password = os.environ.get('SPAWNER_PASSWORD')
+    if target.startswith(old):
+        target = target.replace(old, new)
 
-    def generate_user(self, username):
-        user = named_users.get(username)
+    return wrapped(routespec, target, data, *_args, **_kwargs)
 
-        if user:
-            return user.name
+@wrapt.patch_function_wrapper('jupyterhub.spawner', 'LocalProcessSpawner.get_env')
+def _wrapper_get_env(wrapped, instance, args, kwargs):
+    env = wrapped(*args, **kwargs)
 
-        while True:
-            name = generate_sequential_userid()
-            user = get_user_details(name)
-            if not user.active:
-                user.active = True
-                named_users[username] = user
-                return name
+    target = env.get('JUPYTERHUB_API_URL')
 
-    @gen.coroutine
-    def authenticate(self, handler, data):
-        if data['username'] and self.password:
-            if data['password'] == self.password:
-                return self.generate_user(data['username'])
+    old = 'http://%s:%s' % (c.JupyterHub.hub_connect_ip, c.JupyterHub.hub_port)
+    new = 'http://127.0.0.1:%s' % c.JupyterHub.hub_port
 
-if NamedUserAuthenticator.password:
-    c.JupyterHub.authenticator_class = NamedUserAuthenticator
+    if target and target.startswith(old):
+        target = target.replace(old, new)
+        env['JUPYTERHUB_API_URL'] = target
 
-# Override labels on pods so matches label used by the spawner.
+    return env
+
+# Define all the defaults for for JupyterHub instance for our setup.
+
+c.JupyterHub.port = 8080
+
+c.JupyterHub.hub_ip = '0.0.0.0'
+c.JupyterHub.hub_port = 8081
+
+c.JupyterHub.hub_connect_ip = application_name
+
+c.ConfigurableHTTPProxy.api_url = 'http://127.0.0.1:8082'
+
+c.Spawner.start_timeout = 180
+c.Spawner.http_timeout = 60
+
+c.KubeSpawner.port = 10080
 
 c.KubeSpawner.common_labels = {
     'app': '%s-%s' % (application_name, namespace)
 }
 
 c.KubeSpawner.extra_labels = {
-    'spawner': 'learning-portal',
+    'spawner': configuration_type,
     'class': 'session',
     'user': '{username}'
 }
 
-# Mount config map for user provided environment variables for the
-# terminal and workshop.
+c.KubeSpawner.uid = os.getuid()
+c.KubeSpawner.fs_gid = os.getuid()
 
-c.KubeSpawner.volumes = [
-    {
-        'name': 'envvars',
-        'configMap': {
-            'name': '%s-env' % application_name,
-            'defaultMode': 420
-        }
+c.KubeSpawner.extra_annotations = {
+    "alpha.image.policy.openshift.io/resolve-names": "*"
+}
+
+c.KubeSpawner.cmd = ['start-singleuser.sh']
+
+c.KubeSpawner.pod_name_template = '%s-%s-{username}' % (
+        application_name, namespace)
+
+c.JupyterHub.admin_access = False
+
+if os.environ.get('JUPYTERHUB_COOKIE_SECRET'):
+    c.JupyterHub.cookie_secret = os.environ[
+            'JUPYTERHUB_COOKIE_SECRET'].encode('UTF-8')
+else:
+    c.JupyterHub.cookie_secret_file = '/opt/app-root/data/cookie_secret'
+
+c.JupyterHub.db_url = '/opt/app-root/data/database.sqlite'
+
+c.JupyterHub.authenticator_class = 'tmpauthenticator.TmpAuthenticator'
+
+c.JupyterHub.spawner_class = 'kubespawner.KubeSpawner'
+
+c.JupyterHub.logo_file = '/opt/app-root/src/images/HomeroomIcon.png'
+
+c.Spawner.environment = dict()
+
+c.JupyterHub.services = []
+
+c.KubeSpawner.init_containers = []
+
+c.KubeSpawner.extra_containers = []
+
+c.JupyterHub.extra_handlers = []
+
+# Determine amount of memory to allocate for workshop environment.
+
+def convert_size_to_bytes(size):
+    multipliers = {
+        'k': 1000,
+        'm': 1000**2,
+        'g': 1000**3,
+        't': 1000**4,
+        'ki': 1024,
+        'mi': 1024**2,
+        'gi': 1024**3,
+        'ti': 1024**4,
     }
-]
 
-c.KubeSpawner.volume_mounts = [
-    {
-        'name': 'envvars',
-        'mountPath': '/opt/workshop/envvars'
-    }
-]
+    size = str(size)
 
-# Deploy embedded web console as a separate container within the same
-# pod as the terminal instance. Currently use latest, but need to tie
-# this to the specific OpenShift version once OpenShift 4.0 is released.
+    for suffix in multipliers:
+        if size.lower().endswith(suffix):
+            return int(size[0:-len(suffix)]) * multipliers[suffix]
+    else:
+        if size.lower().endswith('b'):
+            return int(size[0:-1])
 
-console_branding = os.environ.get('CONSOLE_BRANDING', 'openshift')
-console_image = os.environ.get('CONSOLE_IMAGE', 'quay.io/openshift/origin-console:4.1')
+    try:
+        return int(size)
+    except ValueError:
+        raise RuntimeError('"%s" is not a valid memory specification. Must be an integer or a string with suffix K, M, G, T, Ki, Mi, Gi or Ti.' % size)
 
-c.KubeSpawner.extra_containers.extend([
-    {
-        "name": "console",
-        "image": console_image,
-        "command": [ "/opt/bridge/bin/bridge" ],
-        "env": [
-            {
-                "name": "BRIDGE_K8S_MODE",
-                "value": "in-cluster"
-            },
-            {
-                "name": "BRIDGE_LISTEN",
-                "value": "http://0.0.0.0:10083"
-            },
-            {
-                "name": "BRIDGE_BASE_ADDRESS",
-                "value": "https://%s/" % public_hostname
-            },
-            {
-                "name": "BRIDGE_BASE_PATH",
-                "value": "/user/{unescaped_username}/console/"
-            },
-            {
-                "name": "BRIDGE_PUBLIC_DIR",
-                "value": "/opt/bridge/static"
-            },
-            {
-                "name": "BRIDGE_USER_AUTH",
-                "value": "disabled"
-            },
-            {
-                "name": "BRIDGE_BRANDING",
-                "value": console_branding
-            }
-        ],
-        "resources": {
-            "limits": {
-                "memory": os.environ.get('CONSOLE_MEMORY', '128Mi')
-            },
-            "requests": {
-                "memory": os.environ.get('CONSOLE_MEMORY', '128Mi')
-            }
-        }
-    }
-])
+c.Spawner.mem_limit = convert_size_to_bytes(
+        os.environ.get('WORKSHOP_MEMORY', '512Mi'))
 
-c.Spawner.environment['CONSOLE_URL'] = 'http://localhost:10083'
+# Override the image details with that for the terminal or dashboard
+# image being used. The default is to assume that a image stream with
+# the same name as the application name is being used. The call to the
+# function resolve_image_name() is to try and resolve to image registry
+# when using image stream. This is to workaround issue that many
+# clusters do not have image policy controller configured correctly.
+#
+# Note that we set the policy that images will always be pulled to the
+# node each time when the image name is not explicitly provided. This is
+# so that during development, changes to the terminal image will always
+# be picked up. Someone developing a new image need only update the
+# 'latest' tag on the image using 'oc tag'. 
 
-# Pass through environment variables with remote workshop details.
+terminal_image = os.environ.get('TERMINAL_IMAGE')
 
-c.Spawner.environment['DOWNLOAD_URL'] = os.environ.get('DOWNLOAD_URL', '')
-c.Spawner.environment['WORKSHOP_FILE'] = os.environ.get('WORKSHOP_FILE', '')
+if not terminal_image:
+    c.KubeSpawner.image_pull_policy = 'Always'
+    terminal_image = '%s:latest' % application_name
 
-# Pass through for dashboard the URL where should be redirected in order
-# to restart a session, with a new instance created with fresh image.
+def resolve_image_name(name):
+    # If the image name contains a slash, we assume it is already
+    # referring to an image on some image registry. Even if it does
+    # not contain a slash, it may still be hosted on docker.io.
 
-c.Spawner.environment['RESTART_URL'] = '/restart'
+    if name.find('/') != -1:
+        return name
 
-# We need to ensure the service account does actually exist, and also
-# create a project for the user and a role binding which allows the
-# service account to work on that project. They need to be given admin
-# access so they can add other users to their project if necessary, or
-# grant service accounts in the project access to the project via the
-# REST API. The only place to do this is from the hook function for
-# modifying the pod specification before it is created.
+    # Separate actual source image name and tag for the image from the
+    # name. If the tag is not supplied, default to 'latest'.
+
+    parts = name.split(':', 1)
+
+    if len(parts) == 1:
+        source_image, tag = parts, 'latest'
+    else:
+        source_image, tag = parts
+
+    # See if there is an image stream in the current project with the
+    # target name.
+
+    try:
+        image_stream = image_stream_resource.get(namespace=namespace,
+                name=source_image)
+
+    except ApiException as e:
+        if e.status not in (403, 404):
+            raise
+
+        return name
+
+    # If we get here then the image stream exists with the target name.
+    # We need to determine if the tag exists. If it does exist, we
+    # extract out the full name of the image including the reference
+    # to the image registry it is hosted on.
+
+    if image_stream.status.tags:
+        for entry in image_stream.status.tags:
+            if entry.tag == tag:
+                registry_image = image_stream.status.dockerImageRepository
+                if registry_image:
+                    return '%s:%s' % (registry_image, tag)
+
+    # Use original value if can't find a matching tag.
+
+    return name
+
+c.KubeSpawner.image = resolve_image_name(terminal_image)
+
+# Work out hostname for the exposed route of the JupyterHub server. This
+# is tricky as we need to use the REST API to query it. We assume that
+# a secure route is always used. This is used when needing to do OAuth.
+
+routes = route_resource.get(namespace=namespace)
+
+def extract_hostname(routes, name):
+    for route in routes.items:
+        if route.metadata.name == name:
+            return route.spec.host
+
+public_hostname = extract_hostname(routes, application_name)
+
+if not public_hostname:
+    raise RuntimeError('Cannot calculate external host name for JupyterHub.')
+
+c.Spawner.environment['JUPYTERHUB_ROUTE'] = 'https://%s' % public_hostname
+
+# Work out the subdomain under which applications hosted in the cluster
+# are hosted. Calculate this from the route for the JupyterHub route if
+# not supplied explicitly.
+
+cluster_subdomain = os.environ.get('CLUSTER_SUBDOMAIN')
+
+if not cluster_subdomain:
+    cluster_subdomain = '.'.join(public_hostname.split('.')[1:])
+
+c.Spawner.environment['CLUSTER_SUBDOMAIN'] = cluster_subdomain
+
+# The terminal image will normally work out what versions of OpenShift
+# and Kubernetes command line tools should be used, based on the version
+# of OpenShift which is being used. Allow these to be overridden if
+# necessary.
+
+if os.environ.get('OC_VERSION'):
+    c.Spawner.environment['OC_VERSION'] = os.environ.get('OC_VERSION')
+if os.environ.get('ODO_VERSION'):
+    c.Spawner.environment['ODO_VERSION'] = os.environ.get('ODO_VERSION')
+if os.environ.get('KUBECTL_VERSION'):
+    c.Spawner.environment['KUBECTL_VERSION'] = os.environ.get('KUBECTL_VERSION')
+
+# Common functions for creating projects, injecting resources etc.
 
 project_resource = api_client.resources.get(
      api_version='project.openshift.io/v1', kind='Project')
@@ -291,7 +373,7 @@ namespace_template = string.Template("""
         "name": "${name}",
         "labels": {
             "app": "${hub}",
-            "spawner": "learning-portal",
+            "spawner": "${configuration}",
             "class": "session",
             "user": "${username}"
         },
@@ -324,7 +406,7 @@ service_account_template = string.Template("""
         "name": "${name}",
         "labels": {
             "app": "${hub}",
-            "spawner": "learning-portal",
+            "spawner": "${configuration}",
             "class": "session",
             "user": "${username}"
         }
@@ -340,7 +422,7 @@ role_binding_template = string.Template("""
         "name": "${name}-${tag}",
         "labels": {
             "app": "${hub}",
-            "spawner": "learning-portal",
+            "spawner": "${configuration}",
             "class": "session",
             "user": "${username}"
         }
@@ -1037,7 +1119,7 @@ service_template = string.Template("""
         "name": "${name}",
         "labels": {
             "app": "${hub}",
-            "spawner": "learning-portal",
+            "spawner": "${configuration}",
             "class": "session",
             "user": "${username}"
         },
@@ -1056,7 +1138,7 @@ service_template = string.Template("""
         "type": "ClusterIP",
         "selector": {
             "app": "${hub}",
-            "spawner": "learning-portal",
+            "spawner": "${configuration}",
             "user": "${username}"
         },
         "ports": []
@@ -1072,7 +1154,7 @@ route_template = string.Template("""
         "name": "${name}-${port}",
         "labels": {
             "app": "${hub}",
-            "spawner": "learning-portal",
+            "spawner": "${configuration}",
             "class": "session",
             "user": "${username}",
             "port": "${port}"
@@ -1102,99 +1184,18 @@ route_template = string.Template("""
 }
 """)
 
-extra_resources = {}
-extra_resources_loader = None
-
-if os.path.exists('/opt/app-root/resources/extra_resources.yaml'):
-    with open('/opt/app-root/resources/extra_resources.yaml') as fp:
-        extra_resources = fp.read().strip()
-        extra_resources_loader = yaml.safe_load
-
-if os.path.exists('/opt/app-root/resources/extra_resources.json'):
-    with open('/opt/app-root/resources/extra_resources.json') as fp:
-        extra_resources = fp.read().strip()
-        extra_resources_loader = json.loads
-
-def create_extra_resources(project_name, project_uid, user_account_name,
-        short_name):
-
-    if not extra_resources:
-        return
-
-    # Only passing 'jupyterhub_namespace' for backward compatibility.
-    # Should use 'spawner_namespace' going forward.
-
-    template = string.Template(extra_resources)
-    text = template.safe_substitute(jupyterhub_namespace=namespace,
-            spawner_namespace=namespace, project_namespace=project_name,
-            image_registry=image_registry, service_account=user_account_name,
-            username=short_name, application_name=application_name)
-
-    data = extra_resources_loader(text)
-
-    if isinstance(data, dict) and data.get('kind') == 'List':
-        data = data['items']
-
-    for body in data:
-        try:
-            kind = body['kind']
-            api_version = body['apiVersion']
-
-            if kind.lower() in ('securitycontextconstraints', 'clusterrolebinding'):
-                body['metadata']['ownerReferences'] = [dict(
-                    apiVersion='v1', kind='Namespace', blockOwnerDeletion=False,
-                    controller=True, name=project_name, uid=project_uid)]
-
-            resource = api_client.resources.get(api_version=api_version, kind=kind)
-
-            resource.create(namespace=project_name, body=body)
-
-        except ApiException as e:
-            if e.status != 409:
-                print('ERROR: Error creating resource %s. %s' % (body, e))
-                raise
-
-            else:
-                print('WARNING: Resource already exists %s.' % body)
-
-        except Exception as e:
-            print('ERROR: Error creating resource %s. %s' % (body, e))
-            raise
-
-project_owner_name = '%s-%s-spawner' % (application_name, namespace)
-
-try:
-    project_owner = cluster_role_resource.get(project_owner_name)
-
-except Exception as e:
-    print('ERROR: Cannot get spawner cluster role %s. %s' % (project_owner_name, e))
-    raise
-
 @gen.coroutine
-def modify_pod_hook(spawner, pod):
-    # Create the service account. We know the user name is a UUID, but
-    # it is too long to use as is in project name, so we want to shorten.
-
+def create_service_account(spawner, pod):
     hub = '%s-%s' % (application_name, namespace)
     short_name = spawner.user.name
-    project_name = '%s-%s' % (hub, short_name)
     user_account_name = '%s-%s' % (hub, short_name)
     hub_account_name = '%s-hub' % hub
-
-    pod.spec.automount_service_account_token = True
-    pod.spec.service_account_name = user_account_name
-
-    # Ensure that a service account exists corresponding to the user.
-    # Need to do this as it may have been cleaned up if the session had
-    # expired and user wasn't logged out in the browser.
-
-    owner_uid = None
 
     while True:
         try:
             text = service_account_template.safe_substitute(
-                    namespace=namespace, name=user_account_name, hub=hub,
-                    username=short_name)
+                    configuration=configuration_type, namespace=namespace,
+                    name=user_account_name, hub=hub, username=short_name)
             body = json.loads(text)
 
             service_account_object = service_account_resource.create(
@@ -1231,62 +1232,21 @@ def modify_pod_hook(spawner, pod):
             print('ERROR: Error getting service account. %s' % e)
             raise
 
-    # If there are any exposed ports defined for the session, create
-    # a service object mapping to the pod for the ports, and create
-    # routes for each port.
+    return owner_uid
 
-    exposed_ports = os.environ.get('EXPOSED_PORTS', '')
-
-    if exposed_ports:
-        exposed_ports = exposed_ports.split(',')
-
-        try:
-            text = service_template.safe_substitute(name=user_account_name,
-                    hub=hub, username=short_name, uid=owner_uid)
-            body = json.loads(text)
-
-            for port in exposed_ports:
-                body['spec']['ports'].append(dict(name='%s-tcp' % port,
-                        protocol="TCP", port=int(port), targetPort=int(port)))
-
-            service_resource.create(namespace=namespace, body=body)
-
-        except ApiException as e:
-            if e.status != 409:
-                print('ERROR: Error creating service. %s' % e)
-                raise
-
-        except Exception as e:
-            print('ERROR: Error creating service. %s' % e)
-            raise
-
-        for port in exposed_ports:
-            try:
-                host = '%s-%s.%s' % (user_account_name, port, cluster_subdomain)
-                text = route_template.safe_substitute(name=user_account_name,
-                        hub=hub, port='%s' % port, username=short_name,
-                        uid=owner_uid, host=host)
-                body = json.loads(text)
-
-                route_resource.create(namespace=namespace, body=body)
-
-            except ApiException as e:
-                if e.status != 409:
-                    print('ERROR: Error creating route. %s' % e)
-                    raise
-
-            except Exception as e:
-                print('ERROR: Error creating route. %s' % e)
-                raise
-
-    # Create a project for just this user. Poll to make sure it is
-    # created before continue.
+@gen.coroutine
+def create_project_namespace(spawner, pod, project_name):
+    hub = '%s-%s' % (application_name, namespace)
+    short_name = spawner.user.name
+    user_account_name = '%s-%s' % (hub, short_name)
+    hub_account_name = '%s-hub' % hub
 
     try:
         service_account_name = 'system:serviceaccount:%s:%s-%s-hub' % (
                 namespace, application_name, namespace)
 
-        text = namespace_template.safe_substitute(name=project_name,
+        text = namespace_template.safe_substitute(
+                configuration=configuration_type, name=project_name,
                 hub=hub, requestor=service_account_name, namespace=namespace,
                 deployment=application_name, account=user_account_name,
                 session=pod.metadata.name, owner=project_owner.metadata.name,
@@ -1303,6 +1263,10 @@ def modify_pod_hook(spawner, pod):
     except Exception as e:
         print('ERROR: Error creating project. %s' % e)
         raise
+
+@gen.coroutine
+def setup_project_namespace(spawner, pod, project_name, role, budget):
+    # Wait for project to exist before continuing.
 
     for _ in range(30):
         try:
@@ -1328,14 +1292,20 @@ def modify_pod_hook(spawner, pod):
 
     project_uid = project.metadata.uid
 
-    # Create role binding in the project so the hub service account
-    # can delete project when done. Will fail if the project hasn't
-    # actually been created yet.
+    # Create role binding in the project so the hub service account can
+    # delete project when done. Will fail if the project hasn't actually
+    # been created yet.
+
+    hub = '%s-%s' % (application_name, namespace)
+    short_name = spawner.user.name
+    user_account_name = '%s-%s' % (hub, short_name)
+    hub_account_name = '%s-hub' % hub
 
     try:
         text = role_binding_template.safe_substitute(
-                namespace=namespace, name=hub_account_name, tag='admin',
-                role='admin', hub=hub, username=short_name)
+                configuration=configuration_type, namespace=namespace,
+                name=hub_account_name, tag='admin', role='admin', hub=hub,
+                username=short_name)
         body = json.loads(text)
 
         role_binding_resource.create(namespace=project_name, body=body)
@@ -1349,29 +1319,73 @@ def modify_pod_hook(spawner, pod):
         print('ERROR: Error creating rolebinding for hub. %s' % e)
         raise
 
+    # Create role binding in the project so the users service account
+    # can create resources in it. Need to give it 'admin' role and not
+    # just 'edit' so that can grant roles to service accounts in the
+    # project. This means it could though delete the project itself, and
+    # if do that can't create a new one as has no rights to do that.
+
+    try:
+        text = role_binding_template.safe_substitute(
+                configuration=configuration_type, namespace=namespace,
+                name=user_account_name, tag=role, role=role, hub=hub,
+                username=short_name)
+        body = json.loads(text)
+
+        role_binding_resource.create(namespace=project_name, body=body)
+
+    except ApiException as e:
+        if e.status != 409:
+            print('ERROR: Error creating role binding for user. %s' % e)
+            raise
+
+    except Exception as e:
+        print('ERROR: Error creating rolebinding for user. %s' % e)
+        raise
+
+    # Create role binding in the project so the users service account
+    # can perform additional actions declared through additional policy
+    # rules for a specific workshop session.
+
+    try:
+        text = role_binding_template.safe_substitute(
+                configuration=configuration_type, namespace=namespace,
+                name=user_account_name, tag='session-rules',
+                role=hub+'-session-rules', hub=hub, username=short_name)
+        body = json.loads(text)
+
+        role_binding_resource.create(namespace=project_name, body=body)
+
+    except ApiException as e:
+        if e.status != 409:
+            print('ERROR: Error creating role binding for extras. %s' % e)
+            raise
+
+    except Exception as e:
+        print('ERROR: Error creating rolebinding for extras. %s' % e)
+        raise
+
     # Determine what project resources need to be used.
 
-    resource_budget = os.environ.get('RESOURCE_BUDGET', 'default')
+    if budget != 'unlimited':
+        if budget not in resource_budget_mapping:
+            budget = 'default'
+        elif not resource_budget_mapping[budget]:
+            budget = 'default'
 
-    if resource_budget != 'unlimited':
-        if resource_budget not in resource_budget_mapping:
-            resource_budget = 'default'
-        elif not resource_budget_mapping[resource_budget]:
-            resource_budget = 'default'
+    if budget not in ('default', 'unlimited'):
+        budget_item = resource_budget_mapping[budget]
 
-    if resource_budget not in ('default', 'unlimited'):
-        resource_budget_item = resource_budget_mapping[resource_budget]
-
-        resource_limits_definition = resource_budget_item['resource-limits']
-        compute_resources_definition = resource_budget_item['compute-resources']
-        compute_resources_timebound_definition = resource_budget_item['compute-resources-timebound']
-        object_counts_definition = resource_budget_item['object-counts']
+        resource_limits_definition = budget_item['resource-limits']
+        compute_resources_definition = budget_item['compute-resources']
+        compute_resources_timebound_definition = budget_item['compute-resources-timebound']
+        object_counts_definition = budget_item['object-counts']
 
     # Delete any limit ranges applied to the project that may conflict
     # with the limit range being applied. For the case of unlimited, we
     # delete any being applied but don't replace it.
 
-    if resource_budget != 'default':
+    if budget != 'default':
         try:
             limit_ranges = limit_range_resource.get(
                         namespace=project_name)
@@ -1392,7 +1406,7 @@ def modify_pod_hook(spawner, pod):
     # Create limit ranges for the project so any deployments will have
     # default memory/cpu min and max values.
 
-    if resource_budget not in ('default', 'unlimited'):
+    if budget not in ('default', 'unlimited'):
         try:
             body = resource_limits_definition
 
@@ -1406,7 +1420,7 @@ def modify_pod_hook(spawner, pod):
     # Delete any resource quotas applied to the project that may conflict
     # with the resource quotas being applied.
 
-    if resource_budget != 'default':
+    if budget != 'default':
         try:
             resource_quotas = resource_quota_resource.get(namespace=project_name)
 
@@ -1426,7 +1440,7 @@ def modify_pod_hook(spawner, pod):
     # Create resource quotas for the project so there is a maximum for
     # what resources can be used.
 
-    if resource_budget not in ('default', 'unlimited'):
+    if budget not in ('default', 'unlimited'):
         try:
             body = compute_resources_definition
 
@@ -1457,57 +1471,150 @@ def modify_pod_hook(spawner, pod):
                 print('ERROR: Error creating object counts quota. %s' % e)
                 raise
 
-    # Create role binding in the project so the users service account
-    # can create resources in it. Need to give it 'admin' role and not
-    # just 'edit' so that can grant roles to service accounts in the
-    # project. This means it could though delete the project itself, and
-    # if do that can't create a new one as has no rights to do that.
+    # Return the project UID for later use as owner UID if needed.
 
-    try:
-        text = role_binding_template.safe_substitute(
-                namespace=namespace, name=user_account_name, tag='admin',
-                role='admin', hub=hub, username=short_name)
-        body = json.loads(text)
+    return project_uid
 
-        role_binding_resource.create(namespace=project_name, body=body)
+extra_resources = {}
+extra_resources_loader = None
 
-    except ApiException as e:
-        if e.status != 409:
-            print('ERROR: Error creating role binding for user. %s' % e)
+if os.path.exists('/opt/app-root/resources/extra_resources.yaml'):
+    with open('/opt/app-root/resources/extra_resources.yaml') as fp:
+        extra_resources = fp.read().strip()
+        extra_resources_loader = yaml.safe_load
+
+if os.path.exists('/opt/app-root/resources/extra_resources.json'):
+    with open('/opt/app-root/resources/extra_resources.json') as fp:
+        extra_resources = fp.read().strip()
+        extra_resources_loader = json.loads
+
+@gen.coroutine
+def create_extra_resources(spawner, pod, project_name, project_uid,
+        user_account_name, short_name):
+
+    if not extra_resources:
+        return
+
+    # Only passing 'jupyterhub_namespace' for backward compatibility.
+    # Should use 'spawner_namespace' going forward.
+
+    template = string.Template(extra_resources)
+    text = template.safe_substitute(jupyterhub_namespace=namespace,
+            spawner_namespace=namespace, project_namespace=project_name,
+            image_registry=image_registry, service_account=user_account_name,
+            username=short_name, application_name=application_name)
+
+    data = extra_resources_loader(text)
+
+    if isinstance(data, dict) and data.get('kind') == 'List':
+        data = data['items']
+
+    for body in data:
+        try:
+            kind = body['kind']
+            api_version = body['apiVersion']
+
+            if kind.lower() in ('securitycontextconstraints',
+                    'clusterrolebinding', 'namespace'):
+                body['metadata']['ownerReferences'] = [dict(
+                    apiVersion='v1', kind='Namespace', blockOwnerDeletion=False,
+                    controller=True, name=project_name, uid=project_uid)]
+
+            if kind.lower() == 'namespace':
+                service_account_name = 'system:serviceaccount:%s:%s-%s-hub' % (
+                        namespace, application_name, namespace)
+
+                annotations = body['metadata'].setdefault('annotations', {})
+
+                annotations['spawner/requestor'] = service_account_name
+                annotations['spawner/namespace'] = namespace
+                annotations['spawner/deployment'] = application_name
+                annotations['spawner/account'] = user_account_name
+                annotations['spawner/session'] = pod.metadata.name
+
+            resource = api_client.resources.get(api_version=api_version, kind=kind)
+
+            target_namespace = body['metadata'].get('namespace', project_name)
+
+            resource.create(namespace=target_namespace, body=body)
+
+        except ApiException as e:
+            if e.status != 409:
+                print('ERROR: Error creating resource %s. %s' % (body, e))
+                raise
+
+            else:
+                print('WARNING: Resource already exists %s.' % body)
+
+        except Exception as e:
+            print('ERROR: Error creating resource %s. %s' % (body, e))
             raise
 
-    except Exception as e:
-        print('ERROR: Error creating rolebinding for user. %s' % e)
-        raise
+        if kind.lower() == 'namespace':
+            annotations = body['metadata'].get('annotations', {})
+            role = annotations.get('session/role', 'admin')
 
-    # Create role binding in the project so the users service account
-    # can perform additional actions declared through additional policy
-    # rules for a specific workshop session.
+            default_budget = os.environ.get('RESOURCE_BUDGET', 'default')
+            budget = annotations.get('session/budget', default_budget)
 
-    try:
-        text = role_binding_template.safe_substitute(
-                namespace=namespace, name=user_account_name,
-                tag='session-rules', role=hub+'-session-rules', hub=hub,
-                username=short_name)
-        body = json.loads(text)
+            yield setup_project_namespace(spawner, pod,
+                    body['metadata']['name'], role, budget)
 
-        role_binding_resource.create(namespace=project_name, body=body)
+@gen.coroutine
+def expose_service_ports(spawner, pod, owner_uid):
+    hub = '%s-%s' % (application_name, namespace)
+    short_name = spawner.user.name
+    user_account_name = '%s-%s' % (hub, short_name)
+    hub_account_name = '%s-hub' % hub
 
-    except ApiException as e:
-        if e.status != 409:
-            print('ERROR: Error creating role binding for extras. %s' % e)
+    exposed_ports = os.environ.get('EXPOSED_PORTS', '')
+
+    if exposed_ports:
+        exposed_ports = exposed_ports.split(',')
+
+        try:
+            text = service_template.safe_substitute(
+                    configuration=configuration_type, name=user_account_name,
+                    hub=hub, username=short_name, uid=owner_uid)
+            body = json.loads(text)
+
+            for port in exposed_ports:
+                body['spec']['ports'].append(dict(name='%s-tcp' % port,
+                        protocol="TCP", port=int(port), targetPort=int(port)))
+
+            service_resource.create(namespace=namespace, body=body)
+
+        except ApiException as e:
+            if e.status != 409:
+                print('ERROR: Error creating service. %s' % e)
+                raise
+
+        except Exception as e:
+            print('ERROR: Error creating service. %s' % e)
             raise
 
-    except Exception as e:
-        print('ERROR: Error creating rolebinding for extras. %s' % e)
-        raise
+        for port in exposed_ports:
+            try:
+                host = '%s-%s.%s' % (user_account_name, port, cluster_subdomain)
+                text = route_template.safe_substitute(
+                        configuration=configuration_type,
+                        name=user_account_name, hub=hub, port='%s' % port,
+                        username=short_name, uid=owner_uid, host=host)
+                body = json.loads(text)
 
-    # Before can continue, need to poll looking to see if the secret for
-    # the api token has been added to the service account. If don't do
-    # this then pod creation will fail immediately. To do this, must get
-    # the secrets from the service account and make sure they in turn
-    # exist.
+                route_resource.create(namespace=namespace, body=body)
 
+            except ApiException as e:
+                if e.status != 409:
+                    print('ERROR: Error creating route. %s' % e)
+                    raise
+
+            except Exception as e:
+                print('ERROR: Error creating route. %s' % e)
+                raise
+
+@gen.coroutine
+def wait_on_service_account(user_account_name):
     for _ in range(10):
         try:
             service_account = service_account_resource.get(
@@ -1543,99 +1650,22 @@ def modify_pod_hook(spawner, pod):
 
         print('WARNING: Could not verify account. %s' % user_account_name)
 
-    # Create any extra resources in the project required for a workshop.
+# Load configuration corresponding to the deployment mode.
 
-    create_extra_resources(project_name, project_uid, user_account_name,
-            short_name)
+c.Spawner.environment['DEPLOYMENT_TYPE'] = 'spawner'
+c.Spawner.environment['CONFIGURATION_TYPE'] = configuration_type
 
-    # Add environment variable for the project namespace for use in any
-    # workshop content.
+config_root = '/opt/app-root/src/configs'
+config_file = '%s/%s.py' % (config_root, configuration_type)
 
-    pod.spec.containers[0].env.append(
-            dict(name='PROJECT_NAMESPACE', value=project_name))
+if os.path.exists(config_file):
+    with open(config_file) as fp:
+        exec(compile(fp.read(), config_file, 'exec'), globals())
 
-    # Add environment variables for the namespace JupyterHub is running
-    # in and its name.
+# Load configuration provided via the environment.
 
-    pod.spec.containers[0].env.append(
-            dict(name='JUPYTERHUB_NAMESPACE', value=namespace))
-    pod.spec.containers[0].env.append(
-            dict(name='JUPYTERHUB_APPLICATION', value=application_name))
+environ_config_file = '/opt/app-root/configs/jupyterhub_config.py'
 
-    if homeroom_link:
-        pod.spec.containers[0].env.append(
-                dict(name='HOMEROOM_LINK', value=homeroom_link))
-
-    return pod
-
-c.KubeSpawner.modify_pod_hook = modify_pod_hook
-
-# Setup culling of terminal instances when idle or session expires, as
-# well as setup service to clean up service accounts and projects
-# related to old sessions. If a server limit is defined, also cap how
-# many can be run.
-
-server_limit = os.environ.get('SERVER_LIMIT')
-
-if server_limit:
-    c.JupyterHub.active_server_limit = int(server_limit)
-
-idle_timeout = os.environ.get('IDLE_TIMEOUT', '600')
-max_session_age = os.environ.get('MAX_SESSION_AGE')
-
-if idle_timeout and int(idle_timeout):
-    cull_idle_servers_args = ['cull-idle-servers']
-
-    cull_idle_servers_args.append('--cull-every=60')
-    cull_idle_servers_args.append('--timeout=%s' % idle_timeout)
-    cull_idle_servers_args.append('--cull-users')
-
-    if max_session_age:
-        cull_idle_servers_args.append('--max-age=%s' % max_session_age)
-
-    c.JupyterHub.services.extend([
-        {
-            'name': 'cull-idle',
-            'admin': True,
-            'command': cull_idle_servers_args,
-        }
-    ])
-
-    delete_projects_args = ['/opt/app-root/src/scripts/delete-projects.sh']
-
-    c.JupyterHub.services.extend([
-        {
-            'name': 'delete-projects',
-            'command': delete_projects_args,
-            'environment': dict(
-                PYTHONUNBUFFERED='1',
-                APPLICATION_NAME=application_name,
-                KUBERNETES_SERVICE_HOST=kubernetes_service_host,
-                KUBERNETES_SERVICE_PORT=kubernetes_service_port
-            ),
-        }
-    ])
-
-# Redirect handler for sending /restart back to home page for user.
-
-from jupyterhub.handlers import BaseHandler
-
-homeroom_link = os.environ.get('HOMEROOM_LINK')
-
-class RestartRedirectHandler(BaseHandler):
-
-    @web.authenticated
-    @gen.coroutine
-    def get(self, *args):
-        user = self.get_current_user()
-
-        if user.running:
-            status = yield user.spawner.poll_and_notify()
-            if status is None:
-                yield self.stop_single_user(user)
-        self.clear_login_cookie()
-        self.redirect(homeroom_link or '/hub/spawn')
-
-c.JupyterHub.extra_handlers.extend([
-    (r'/restart$', RestartRedirectHandler),
-])
+if os.path.exists(environ_config_file):
+    with open(environ_config_file) as fp:
+        exec(compile(fp.read(), environ_config_file, 'exec'), globals())

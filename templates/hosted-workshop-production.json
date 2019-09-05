@@ -72,7 +72,7 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshifthomeroom/workshop-spawner:5.0.1",
+            "value": "quay.io/openshifthomeroom/workshop-spawner:6.0.0",
             "required": true
         },
         {
@@ -109,6 +109,11 @@
         },
         {
             "name": "JUPYTERHUB_CONFIG",
+            "value": "",
+            "required": false
+        },
+        {
+            "name": "JUPYTERHUB_ENVVARS",
             "value": "",
             "required": false
         },
@@ -230,7 +235,8 @@
                 }
             },
             "data": {
-                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
+                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}",
+                "jupyterhub_config.sh": "${JUPYTERHUB_ENVVARS}"
             }
         },
         {
@@ -550,7 +556,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshifthomeroom/workshop-dashboard:4.0.0"
+                            "name": "quay.io/openshifthomeroom/workshop-dashboard:4.1.0"
                         }
                     }
                 ]

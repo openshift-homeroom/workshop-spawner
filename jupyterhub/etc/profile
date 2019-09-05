@@ -1,0 +1,20 @@
+unset BASH_ENV PROMPT_COMMAND ENV
+
+# Add entry to /etc/passwd file.
+
+STATUS=0 && whoami &> /dev/null || STATUS=$? && true
+
+if [[ "$STATUS" != "0" ]]; then
+    cat /etc/passwd | sed -e "s/^default:/builder:/" > /tmp/passwd
+    echo "default:x:$(id -u):$(id -g):,,,:/opt/app-root/src:/bin/bash" >> /tmp/passwd
+    cat /tmp/passwd > /etc/passwd
+    rm /tmp/passwd
+fi
+
+# Read in additional profile files.
+
+for i in /opt/app-root/etc/profile.d/*.sh /opt/app-root/etc/profile.d/sh.local; do
+    if [ -r "$i" ]; then
+        . "$i" >/dev/null
+    fi
+done
