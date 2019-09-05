@@ -271,28 +271,7 @@ def modify_pod_hook(spawner, pod):
     # Create a project for just this user. Poll to make sure it is
     # created before continue.
 
-    try:
-        service_account_name = 'system:serviceaccount:%s:%s-%s-hub' % (
-                namespace, application_name, namespace)
-
-        text = namespace_template.safe_substitute(
-                configuration=configuration_type, name=project_name,
-                hub=hub, requestor=service_account_name, namespace=namespace,
-                deployment=application_name, account=user_account_name,
-                session=pod.metadata.name, owner=project_owner.metadata.name,
-                uid=project_owner.metadata.uid, username=short_name)
-        body = json.loads(text)
-
-        namespace_resource.create(body=body)
-
-    except ApiException as e:
-        if e.status != 409:
-            print('ERROR: Error creating project. %s' % e)
-            raise
-
-    except Exception as e:
-        print('ERROR: Error creating project. %s' % e)
-        raise
+    yield create_project_namespace(spawner, pod, project_name)
 
     # Now set up the project permissions and resource budget.
 
