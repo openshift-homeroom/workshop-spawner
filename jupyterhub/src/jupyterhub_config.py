@@ -1268,6 +1268,11 @@ def create_project_namespace(spawner, pod, project_name):
 
 @gen.coroutine
 def setup_project_namespace(spawner, pod, project_name, role, budget):
+    hub = '%s-%s' % (application_name, namespace)
+    short_name = spawner.user.name
+    user_account_name = '%s-%s' % (hub, short_name)
+    hub_account_name = '%s-hub' % hub
+
     # Wait for project to exist before continuing.
 
     for _ in range(30):
@@ -1298,11 +1303,6 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
     # delete project when done. Will fail if the project hasn't actually
     # been created yet.
 
-    hub = '%s-%s' % (application_name, namespace)
-    short_name = spawner.user.name
-    user_account_name = '%s-%s' % (hub, short_name)
-    hub_account_name = '%s-hub' % hub
-
     try:
         text = role_binding_template.safe_substitute(
                 configuration=configuration_type, namespace=namespace,
@@ -1322,10 +1322,7 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
         raise
 
     # Create role binding in the project so the users service account
-    # can create resources in it. Need to give it 'admin' role and not
-    # just 'edit' so that can grant roles to service accounts in the
-    # project. This means it could though delete the project itself, and
-    # if do that can't create a new one as has no rights to do that.
+    # can create resources in it.
 
     try:
         text = role_binding_template.safe_substitute(
@@ -1491,7 +1488,7 @@ if os.path.exists('/opt/app-root/resources/extra_resources.json'):
         extra_resources_loader = json.loads
 
 @gen.coroutine
-def create_extra_resources(spawner, pod, project_name, project_uid,
+def create_extra_resources(spawner, pod, project_name, owner_uid,
         user_account_name, short_name):
 
     if not extra_resources:
@@ -1520,7 +1517,7 @@ def create_extra_resources(spawner, pod, project_name, project_uid,
                     'clusterrolebinding', 'namespace'):
                 body['metadata']['ownerReferences'] = [dict(
                     apiVersion='v1', kind='Namespace', blockOwnerDeletion=False,
-                    controller=True, name=project_name, uid=project_uid)]
+                    controller=True, name=project_name, uid=owner_uid)]
 
             if kind.lower() == 'namespace':
                 service_account_name = 'system:serviceaccount:%s:%s-%s-hub' % (

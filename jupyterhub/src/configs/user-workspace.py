@@ -2,12 +2,7 @@
 # deployment mode. In this mode authentication for JupyterHub is done
 # against a KeyCloak authentication server.
 
-import string
-import yaml
-
-from tornado import web, gen
-
-from kubernetes.client.rest import ApiException
+from tornado import web
 
 # Configure standalone KeyCloak as the authentication provider for
 # users. Environments variables have already been set from the
@@ -188,14 +183,12 @@ except Exception as e:
 
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
-    # Create the service account. We know the user name is a UUID, but
-    # it is too long to use as is in project name, so we want to shorten.
-
     hub = '%s-%s' % (application_name, namespace)
     short_name = spawner.user.name
-    project_name = '%s-%s' % (hub, short_name)
     user_account_name = '%s-%s' % (hub, short_name)
     hub_account_name = '%s-hub' % hub
+
+    project_name = '%s-%s' % (hub, short_name)
 
     pod.spec.automount_service_account_token = True
     pod.spec.service_account_name = user_account_name

@@ -2,21 +2,7 @@
 # deployment mode. In this mode authentication for JupyterHub is done
 # against the OpenShift cluster using OAuth.
 
-# Work out the public server address for the OpenShift OAuth endpoint.
-# Make sure the request is done in a session so the connection is closed
-# and later calls against the REST API don't attempt to reuse it. This
-# is just to avoid potential for any problems with connection reuse.
-
-from fnmatch import fnmatch
-
-from tornado import web, gen
-
-oauth_metadata_url = '%s/.well-known/oauth-authorization-server' % kubernetes_server_url
-
-with requests.Session() as session:
-    response = session.get(oauth_metadata_url, verify=False)
-    data = json.loads(response.content.decode('UTF-8'))
-    oauth_issuer_address = data['issuer']
+from tornado import web
 
 # Enable the OpenShift authenticator. Environments variables have
 # already been set from the terminal-server.sh script file.
@@ -70,12 +56,6 @@ c.KubeSpawner.volume_mounts = [
 # don't loose their work. This is mounted on /opt/app-root, so we need
 # to copy the contents from the image into the persistent volume the
 # first time using an init container.
-#
-# Note that if a profiles list is used, there must still be a default
-# terminal image setup we can use to run the init container. The image
-# is what contains the script which copies the file into the persistent
-# volume. Perhaps should use the JupyterHub image for the init container
-# and add the script which performs the copy to this image.
 
 volume_size = os.environ.get('VOLUME_SIZE')
 
@@ -140,18 +120,44 @@ c.Spawner.environment['WORKSHOP_FILE'] = os.environ.get('WORKSHOP_FILE', '')
 
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
-    # Set the session access token from the OpenShift login in
-    # both the terminal and console containers. We still mount
-    # the service account token still as well because the console
-    # needs the SSL certificate contained in it when accessing
-    # the cluster REST API.
+    hub = '%s-%s' % (application_name, namespace)
+    short_name = spawner.user.name
+    user_account_name = '%s-%s' % (hub, short_name)
+    hub_account_name = '%s-hub' % hub
+
+    pod.spec.service_account_name = user_account_name
+    pod.spec.automount_service_account_token = True
+
+    # Grab the OpenShift user access token from the login state.
 
     auth_state = yield spawner.user.get_auth_state()
+    access_token = auth_state['access_token']
+
+    # Ensure that a service account exists corresponding to the user.
+    # Need to do this as it may have been cleaned up if the session had
+    # expired and user wasn't logged out in the browser.
+
+    owner_uid = yield create_service_account(spawner, pod)
+
+    # If there are any exposed ports defined for the session, create
+    # a service object mapping to the pod for the ports, and create
+    # routes for each port.
+
+    yield expose_service_ports(spawner, pod, owner_uid)
+
+    # Before can continue, need to poll looking to see if the secret for
+    # the api token has been added to the service account. If don't do
+    # this then pod creation will fail immediately. To do this, must get
+    # the secrets from the service account and make sure they in turn
+    # exist.
+
+    yield wait_on_service_account(user_account_name)
+
+    # Set the session access token from the OpenShift login in
+    # both the terminal and console containers.
 
     pod.spec.containers[0].env.append(
-            dict(name='OPENSHIFT_TOKEN', value=auth_state['access_token']))
-
-    pod.spec.service_account_name = '%s-%s-user' % (application_name, namespace)
+            dict(name='OPENSHIFT_TOKEN', value=access_token))
 
     # See if a template for the project name has been specified.
     # Try expanding the name, substituting the username. If the

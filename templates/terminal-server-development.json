@@ -152,19 +152,6 @@
             }
         },
         {
-            "kind": "ServiceAccount",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-user",
-                "namespace": "${PROJECT_NAME}",
-                "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "spawner": "terminal-server",
-                    "class": "spawner"
-                }
-            }
-        },
-        {
             "kind": "OAuthClient",
             "apiVersion": "oauth.openshift.io/v1",
             "metadata": {
