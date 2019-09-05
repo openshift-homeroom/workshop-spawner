@@ -118,6 +118,11 @@
             "required": false
         },
         {
+            "name": "JUPYTERHUB_ENVVARS",
+            "value": "",
+            "required": false
+        },
+        {
             "name": "JUPYTERHUB_HOST",
             "value": ""
         },
@@ -224,7 +229,8 @@
                 }
             },
             "data": {
-                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
+                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}",
+                "jupyterhub_config.sh": "${JUPYTERHUB_ENVVARS}"
             }
         },
         {

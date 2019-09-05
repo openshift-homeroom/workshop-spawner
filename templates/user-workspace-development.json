@@ -119,6 +119,11 @@
             "required": false
         },
         {
+            "name": "JUPYTERHUB_ENVVARS",
+            "value": "",
+            "required": false
+        },
+        {
             "name": "KEYCLOAK_USER",
             "generate": "expression",
             "from": "[a-zA-Z0-9]{8}",
@@ -526,7 +531,8 @@
                 }
             },
             "data": {
-                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}"
+                "jupyterhub_config.py": "${JUPYTERHUB_CONFIG}",
+                "jupyterhub_config.sh": "${JUPYTERHUB_ENVVARS}"
             }
         },
         {
