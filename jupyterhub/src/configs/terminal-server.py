@@ -125,15 +125,39 @@ def modify_pod_hook(spawner, pod):
     user_account_name = '%s-%s' % (hub, short_name)
     hub_account_name = '%s-hub' % hub
 
-    pod.spec.service_account_name = '%s-user' % hub
+    pod.spec.service_account_name = user_account_name
+    pod.spec.automount_service_account_token = True
+
+    # Grab the OpenShift user access token from the login state.
+
+    auth_state = yield spawner.user.get_auth_state()
+    access_token = auth_state['access_token']
+
+    # Ensure that a service account exists corresponding to the user.
+    # Need to do this as it may have been cleaned up if the session had
+    # expired and user wasn't logged out in the browser.
+
+    owner_uid = yield create_service_account(spawner, pod)
+
+    # If there are any exposed ports defined for the session, create
+    # a service object mapping to the pod for the ports, and create
+    # routes for each port.
+
+    yield expose_service_ports(spawner, pod, owner_uid)
+
+    # Before can continue, need to poll looking to see if the secret for
+    # the api token has been added to the service account. If don't do
+    # this then pod creation will fail immediately. To do this, must get
+    # the secrets from the service account and make sure they in turn
+    # exist.
+
+    yield wait_on_service_account(user_account_name)
 
     # Set the session access token from the OpenShift login in
     # both the terminal and console containers.
 
-    auth_state = yield spawner.user.get_auth_state()
-
     pod.spec.containers[0].env.append(
-            dict(name='OPENSHIFT_TOKEN', value=auth_state['access_token']))
+            dict(name='OPENSHIFT_TOKEN', value=access_token))
 
     # See if a template for the project name has been specified.
     # Try expanding the name, substituting the username. If the
