@@ -824,9 +824,9 @@
                 },
                 "annotations": {
                     "kubernetes.io/tls-acme": "${LETS_ENCRYPT}",
-                    "homeroom/group": "${HOMEROOM_GROUP}",
-                    "homeroom/title": "${HOMEROOM_TITLE}",
-                    "homeroom/description": "${HOMEROOM_DESCRIPTION}"
+                    "homeroom/group": "${WORKSHOP_GROUP}",
+                    "homeroom/title": "${WORKSHOP_TITLE}",
+                    "homeroom/description": "${WORKSHOP_DESCRIPTION}"
                 }
             },
             "spec": {
