@@ -96,7 +96,6 @@ route_resource = api_client.resources.get(
 def watch_for_homeroom():
     while True:
         try:
-            print('CHECK ROUTES')
             route = route_resource.get(namespace=namespace, name=homeroom_name)
 
             scheme = 'http'
