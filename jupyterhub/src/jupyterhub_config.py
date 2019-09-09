@@ -34,7 +34,7 @@ configuration_type = os.environ.get('CONFIGURATION_TYPE', 'hosted-workshop')
 
 homeroom_link = os.environ.get('HOMEROOM_LINK')
 
-homeroom_group = os.environ.get('HOMEROOM_GROUP')
+homeroom_name = os.environ.get('HOMEROOM_NAME')
 
 # Work out the service account name and name of the namespace that the
 # deployment is in.
@@ -96,12 +96,13 @@ route_resource = api_client.resources.get(
 def watch_for_homeroom():
     while True:
         try:
-            route = route_resource.get(namespace=namespace, name=homeroom_group)
+            print('CHECK ROUTES')
+            route = route_resource.get(namespace=namespace, name=homeroom_name)
 
             scheme = 'http'
 
             if route.metadata.annotations:
-                if route.metadata.annotations['homeroom/index'] == homeroom_group:
+                if route.metadata.annotations['homeroom/index'] == homeroom_name:
                     if route.tls and route.tls.termination:
                         scheme = 'https'
 
@@ -122,7 +123,7 @@ def watch_for_homeroom():
 
         time.sleep(15)
 
-if not homeroom_link and homeroom_group:
+if not homeroom_link and homeroom_name:
     thread = threading.Thread(target=watch_for_homeroom)
     thread.daemon = True
     thread.start()

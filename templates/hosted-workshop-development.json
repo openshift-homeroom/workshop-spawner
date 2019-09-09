@@ -24,7 +24,7 @@
             "required": true
         },
         {
-            "name": "WORKSHOP_GROUP",
+            "name": "HOMEROOM_NAME",
             "value": ""
         },
         {
@@ -396,6 +396,10 @@
                                         "value": "${APPLICATION_NAME}"
                                     },
                                     {
+                                        "name": "HOMEROOM_NAME",
+                                        "value": "${HOMEROOM_NAME}"
+                                    },
+                                    {
                                         "name": "TERMINAL_IMAGE",
                                         "value": "${TERMINAL_IMAGE}"
                                     },
@@ -556,7 +560,7 @@
                 },
                 "annotations": {
                     "kubernetes.io/tls-acme": "${LETS_ENCRYPT}",
-                    "homeroom/group": "${WORKSHOP_GROUP}",
+                    "homeroom/group": "${HOMEROOM_NAME}",
                     "homeroom/title": "${WORKSHOP_TITLE}",
                     "homeroom/description": "${WORKSHOP_DESCRIPTION}"
                 }
