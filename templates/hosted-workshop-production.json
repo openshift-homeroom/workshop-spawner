@@ -24,6 +24,18 @@
             "required": true
         },
         {
+            "name": "HOMEROOM_NAME",
+            "value": ""
+        },
+        {
+            "name": "WORKSHOP_TITLE",
+            "value": ""
+        },
+        {
+            "name": "WORKSHOP_DESCRIPTION",
+            "value": ""
+        },
+        {
             "name": "SPAWNER_MEMORY",
             "value": "768Mi"
         },
@@ -72,7 +84,7 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshifthomeroom/workshop-spawner:6.1.0",
+            "value": "quay.io/openshifthomeroom/workshop-spawner:6.2.0",
             "required": true
         },
         {
@@ -344,6 +356,10 @@
                                         "value": "${APPLICATION_NAME}"
                                     },
                                     {
+                                        "name": "HOMEROOM_NAME",
+                                        "value": "${HOMEROOM_NAME}"
+                                    },
+                                    {
                                         "name": "TERMINAL_IMAGE",
                                         "value": "${TERMINAL_IMAGE}"
                                     },
@@ -503,7 +519,10 @@
                     "class": "spawner"
                 },
                 "annotations": {
-                    "kubernetes.io/tls-acme": "${LETS_ENCRYPT}"
+                    "kubernetes.io/tls-acme": "${LETS_ENCRYPT}",
+                    "homeroom/group": "${HOMEROOM_NAME}",
+                    "homeroom/title": "${WORKSHOP_TITLE}",
+                    "homeroom/description": "${WORKSHOP_DESCRIPTION}"
                 }
             },
             "spec": {

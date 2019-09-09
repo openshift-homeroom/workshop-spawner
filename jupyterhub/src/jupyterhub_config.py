@@ -7,6 +7,8 @@ import os
 import json
 import string
 import yaml
+import threading
+import time
 
 import requests
 import wrapt
@@ -31,6 +33,8 @@ application_name = os.environ.get('APPLICATION_NAME', 'homeroom')
 configuration_type = os.environ.get('CONFIGURATION_TYPE', 'hosted-workshop')
 
 homeroom_link = os.environ.get('HOMEROOM_LINK')
+
+homeroom_name = os.environ.get('HOMEROOM_NAME')
 
 # Work out the service account name and name of the namespace that the
 # deployment is in.
@@ -85,6 +89,43 @@ image_stream_resource = api_client.resources.get(
 
 route_resource = api_client.resources.get(
      api_version='route.openshift.io/v1', kind='Route')
+
+# Create a background thread to dynamically calculate back link to the
+# Homeroom workshop picker if not explicit link is provided, but group is.
+
+def watch_for_homeroom():
+    while True:
+        try:
+            route = route_resource.get(namespace=namespace, name=homeroom_name)
+
+            scheme = 'http'
+
+            if route.metadata.annotations:
+                if route.metadata.annotations['homeroom/index'] == homeroom_name:
+                    if route.tls and route.tls.termination:
+                        scheme = 'https'
+
+                    link = '%s://%s' % (scheme, route.spec.host)
+
+                    global homeroom_link
+
+                    if link != homeroom_link:
+                        print('INFO: Homeroom link set to %s.' % link)
+                        homeroom_link = link
+
+        except ApiException as e:
+            if e.status != 404:
+                print('ERROR: Error looking up homeroom route. %s' % e)
+
+        except Exception as e:
+            print('ERROR: Error looking up homeroom route. %s' % e)
+
+        time.sleep(15)
+
+if not homeroom_link and homeroom_name:
+    thread = threading.Thread(target=watch_for_homeroom)
+    thread.daemon = True
+    thread.start()
 
 # Workaround bug in minishift where a service cannot be contacted from a
 # pod which backs the service. For further details see the minishift issue

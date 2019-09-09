@@ -19,6 +19,18 @@
             "required": true
         },
         {
+            "name": "HOMEROOM_NAME",
+            "value": ""
+        },
+        {
+            "name": "WORKSHOP_TITLE",
+            "value": ""
+        },
+        {
+            "name": "WORKSHOP_DESCRIPTION",
+            "value": ""
+        },
+        {
             "name": "GIT_REPOSITORY_URL",
             "value": "https://github.com/openshift-homeroom/workshop-spawner.git",
             "required": true
@@ -668,6 +680,10 @@
                                         "value": "${APPLICATION_NAME}"
                                     },
                                     {
+                                        "name": "HOMEROOM_NAME",
+                                        "value": "${HOMEROOM_NAME}"
+                                    },
+                                    {
                                         "name": "TERMINAL_IMAGE",
                                         "value": "${TERMINAL_IMAGE}"
                                     },
@@ -846,7 +862,10 @@
                     "class": "spawner"
                 },
                 "annotations": {
-                    "kubernetes.io/tls-acme": "${LETS_ENCRYPT}"
+                    "kubernetes.io/tls-acme": "${LETS_ENCRYPT}",
+                    "homeroom/group": "${HOMEROOM_NAME}",
+                    "homeroom/title": "${WORKSHOP_TITLE}",
+                    "homeroom/description": "${WORKSHOP_DESCRIPTION}"
                 }
             },
             "spec": {
