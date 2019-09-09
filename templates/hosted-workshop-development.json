@@ -28,6 +28,10 @@
             "value": ""
         },
         {
+            "name": "HOMEROOM_LINK",
+            "value": ""
+        },
+        {
             "name": "WORKSHOP_TITLE",
             "value": ""
         },
@@ -398,6 +402,10 @@
                                     {
                                         "name": "HOMEROOM_NAME",
                                         "value": "${HOMEROOM_NAME}"
+                                    },
+                                    {
+                                        "name": "HOMEROOM_LINK",
+                                        "value": "${HOMEROOM_LINK}"
                                     },
                                     {
                                         "name": "TERMINAL_IMAGE",
