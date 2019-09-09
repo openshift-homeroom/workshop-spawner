@@ -100,16 +100,18 @@ def watch_for_homeroom():
 
             scheme = 'http'
 
-            if route.tls and route.tls.termination:
-                scheme = 'https'
+            if route.metadata.annotations:
+                if route.metadata.annotations['homeroom/index'] == homeroom_group:
+                    if route.tls and route.tls.termination:
+                        scheme = 'https'
 
-            link = '%s://%s' % (scheme, route.spec.host)
+                    link = '%s://%s' % (scheme, route.spec.host)
 
-            global homeroom_link
+                    global homeroom_link
 
-            if link != homeroom_link:
-                print('INFO: Homeroom link set to %s.' % link)
-                homeroom_link = link
+                    if link != homeroom_link:
+                        print('INFO: Homeroom link set to %s.' % link)
+                        homeroom_link = link
 
         except ApiException as e:
             if e.status != 404:
