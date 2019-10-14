@@ -152,15 +152,15 @@ def purge_project(name):
 
                     print('WARNING: deleting finalizers on resource: %s' % body)
 
-                try:
-                    resource_type.patch(namespace=name, body=body,
-                            content_type='application/merge-patch+json')
+                    try:
+                        resource_type.patch(namespace=name, body=body,
+                                content_type='application/merge-patch+json')
 
-                except ApiException as e:
-                    print('ERROR: failed to delete finalizers: %s' % body, e)
+                    except ApiException as e:
+                        print('ERROR: failed to delete finalizers: %s' % body, e)
 
-                except Exception as e:
-                    print('ERROR: failed to delete finalizers: %s' % body, e)
+                    except Exception as e:
+                        print('ERROR: failed to delete finalizers: %s' % body, e)
 
         except ApiException as e:
             if e.status not in (403, 404, 405):
