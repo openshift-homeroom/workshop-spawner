@@ -570,7 +570,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshifthomeroom/workshop-dashboard:4.1.0"
+                            "name": "quay.io/openshifthomeroom/workshop-dashboard:4.2.0"
                         }
                     }
                 ]
