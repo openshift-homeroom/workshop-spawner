@@ -21,6 +21,7 @@ from kubernetes.client.configuration import Configuration
 from kubernetes.config.incluster_config import load_incluster_config
 from kubernetes.client.api_client import ApiClient
 from openshift.dynamic import DynamicClient
+from openshift.dynamic.exceptions import ResourceNotFoundError
 
 # The application name and configuration type are passed in through the
 # template. The application name should be the value used for the
@@ -84,41 +85,48 @@ Configuration.set_default(instance)
 
 api_client = DynamicClient(ApiClient())
 
-image_stream_resource = api_client.resources.get(
-     api_version='image.openshift.io/v1', kind='ImageStream')
+try:
+    image_stream_resource = api_client.resources.get(
+         api_version='image.openshift.io/v1', kind='ImageStream')
+except ResourceNotFoundError:
+    image_stream_resource = None
 
-route_resource = api_client.resources.get(
-     api_version='route.openshift.io/v1', kind='Route')
+try:
+    route_resource = api_client.resources.get(
+         api_version='route.openshift.io/v1', kind='Route')
+except ResourceNotFoundError:
+    route_resource = None
 
 # Create a background thread to dynamically calculate back link to the
 # Homeroom workshop picker if not explicit link is provided, but group is.
 
 def watch_for_homeroom():
     while True:
-        try:
-            route = route_resource.get(namespace=namespace, name=homeroom_name)
+        if route_resource is not None:
+            try:
+                route = route_resource.get(namespace=namespace, name=homeroom_name)
 
-            scheme = 'http'
+                scheme = 'http'
 
-            if route.metadata.annotations:
-                if route.metadata.annotations['homeroom/index'] == homeroom_name:
-                    if route.tls and route.tls.termination:
-                        scheme = 'https'
+                if route.metadata.annotations:
+                    if route.metadata.annotations['homeroom/index'] == homeroom_name:
+                        if route.tls and route.tls.termination:
+                            scheme = 'https'
 
-                    link = '%s://%s' % (scheme, route.spec.host)
+                        link = '%s://%s' % (scheme, route.spec.host)
 
-                    global homeroom_link
+                        global homeroom_link
 
-                    if link != homeroom_link:
-                        print('INFO: Homeroom link set to %s.' % link)
-                        homeroom_link = link
+                        if link != homeroom_link:
+                            print('INFO: Homeroom link set to %s.' % link)
+                            homeroom_link = link
 
-        except ApiException as e:
-            if e.status != 404:
+            except ApiException as e:
+                if e.status != 404:
+                    print('ERROR: Error looking up homeroom route. %s' % e)
+
+            except Exception as e:
                 print('ERROR: Error looking up homeroom route. %s' % e)
-
-        except Exception as e:
-            print('ERROR: Error looking up homeroom route. %s' % e)
 
         time.sleep(15)
 
@@ -285,6 +293,11 @@ if not terminal_image:
     terminal_image = '%s:latest' % application_name
 
 def resolve_image_name(name):
+    # If no image stream resource we are on plain Kubernetes.
+
+    if image_stream_resource is None:
+        return Name
+
     # If the image name contains a slash, we assume it is already
     # referring to an image on some image registry. Even if it does
     # not contain a slash, it may still be hosted on docker.io.
@@ -337,19 +350,23 @@ c.KubeSpawner.image = resolve_image_name(terminal_image)
 # is tricky as we need to use the REST API to query it. We assume that
 # a secure route is always used. This is used when needing to do OAuth.
 
-routes = route_resource.get(namespace=namespace)
+if route_resource is not None:
+    routes = route_resource.get(namespace=namespace)
 
-def extract_hostname(routes, name):
-    for route in routes.items:
-        if route.metadata.name == name:
-            return route.spec.host
+    def extract_hostname(routes, name):
+        for route in routes.items:
+            if route.metadata.name == name:
+                return route.spec.host
 
-public_hostname = extract_hostname(routes, application_name)
+    public_hostname = extract_hostname(routes, application_name)
 
-if not public_hostname:
-    raise RuntimeError('Cannot calculate external host name for JupyterHub.')
+    if not public_hostname:
+        raise RuntimeError('Cannot calculate external host name for JupyterHub.')
 
-c.Spawner.environment['JUPYTERHUB_ROUTE'] = 'https://%s' % public_hostname
+    c.Spawner.environment['JUPYTERHUB_ROUTE'] = 'https://%s' % public_hostname
+
+else:
+    c.Spawner.environment['JUPYTERHUB_ROUTE'] = 'https://jupyterhub'
 
 # Work out the subdomain under which applications hosted in the cluster
 # are hosted. Calculate this from the route for the JupyterHub route if
@@ -402,9 +419,6 @@ resource_quota_resource = api_client.resources.get(
 
 service_resource = api_client.resources.get(
      api_version='v1', kind='Service')
-
-route_resource = api_client.resources.get(
-     api_version='route.openshift.io/v1', kind='Route')
 
 namespace_template = string.Template("""
 {
