@@ -97,6 +97,9 @@ try:
 except ResourceNotFoundError:
     route_resource = None
 
+ingress_resource = api_client.resources.get(
+     api_version='extensions/v1beta1', kind='Ingress')
+
 # Create a background thread to dynamically calculate back link to the
 # Homeroom workshop picker if not explicit link is provided, but group is.
 
@@ -350,23 +353,36 @@ c.KubeSpawner.image = resolve_image_name(terminal_image)
 # is tricky as we need to use the REST API to query it. We assume that
 # a secure route is always used. This is used when needing to do OAuth.
 
-if route_resource is not None:
-    routes = route_resource.get(namespace=namespace)
+public_hostname = os.environ.get('PUBLIC_HOSTNAME')
 
-    def extract_hostname(routes, name):
-        for route in routes.items:
-            if route.metadata.name == name:
-                return route.spec.host
+if not public_hostname:
+    if route_resource is not None:
+        routes = route_resource.get(namespace=namespace)
 
-    public_hostname = extract_hostname(routes, application_name)
+        def extract_hostname(routes, name):
+            for route in routes.items:
+                if route.metadata.name == name:
+                    return route.spec.host
 
-    if not public_hostname:
-        raise RuntimeError('Cannot calculate external host name for JupyterHub.')
+        public_hostname = extract_hostname(routes, application_name)
 
-    c.Spawner.environment['JUPYTERHUB_ROUTE'] = 'https://%s' % public_hostname
+        if not public_hostname:
+            raise RuntimeError('Cannot calculate external host name for JupyterHub.')
 
-else:
-    c.Spawner.environment['JUPYTERHUB_ROUTE'] = 'https://jupyterhub'
+    else:
+        ingresses = ingress_resource.get(namespace=namespace)
+
+        def extract_hostname(ingresses, name):
+            for ingresses in ingresses.items:
+                if ingresses.metadata.name == name:
+                    return ingresses.spec.rules[0].host
+
+        public_hostname = extract_hostname(ingresses, application_name)
+
+        if not public_hostname:
+            raise RuntimeError('Cannot calculate external host name for JupyterHub.')
+
+c.Spawner.environment['JUPYTERHUB_ROUTE'] = 'https://%s' % public_hostname
 
 # Work out the subdomain under which applications hosted in the cluster
 # are hosted. Calculate this from the route for the JupyterHub route if
