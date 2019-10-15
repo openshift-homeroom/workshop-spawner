@@ -38,8 +38,8 @@ pod_resource = api_client.resources.get(
 service_account_resource = api_client.resources.get(
      api_version='v1', kind='ServiceAccount')
 
-project_resource = api_client.resources.get(
-     api_version='project.openshift.io/v1', kind='Project')
+namespace_resource = api_client.resources.get(
+     api_version='v1', kind='Namespace')
 
 role_binding_resource = api_client.resources.get(
      api_version='rbac.authorization.k8s.io/v1', kind='RoleBinding')
@@ -57,7 +57,7 @@ def get_projects():
             service_account_name)
 
     try:
-        projects = project_resource.get(namespace=namespace)
+        projects = namespace_resource.get(namespace=namespace)
 
         for project in projects.items:
             annotations = project.metadata.annotations
@@ -173,7 +173,7 @@ def purge_project(name):
 
 def delete_project(name):
     try:
-        project_resource.delete(name=name)
+        namespace_resource.delete(name=name)
 
         print('INFO: deleted project %s' % name)
 

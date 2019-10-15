@@ -393,9 +393,6 @@ if os.environ.get('KUBECTL_VERSION'):
 
 # Common functions for creating projects, injecting resources etc.
 
-project_resource = api_client.resources.get(
-     api_version='project.openshift.io/v1', kind='Project')
-
 namespace_resource = api_client.resources.get(
      api_version='v1', kind='Namespace')
 
@@ -1332,7 +1329,7 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
 
     for _ in range(30):
         try:
-            project = project_resource.get(name=project_name)
+            project = namespace_resource.get(name=project_name)
 
         except ApiException as e:
             if e.status == 404:
