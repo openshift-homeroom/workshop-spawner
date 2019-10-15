@@ -296,7 +296,7 @@ def resolve_image_name(name):
     # If no image stream resource we are on plain Kubernetes.
 
     if image_stream_resource is None:
-        return Name
+        return name
 
     # If the image name contains a slash, we assume it is already
     # referring to an image on some image registry. Even if it does
