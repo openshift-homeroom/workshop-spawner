@@ -1330,7 +1330,7 @@ def create_service_account(spawner, pod):
             print('ERROR: Error getting service account. %s' % e)
             raise
 
-    print('INFO: Service account id is %s.' % owner_id)
+    print('INFO: Service account id is %s.' % owner_uid)
 
     return owner_uid
 
