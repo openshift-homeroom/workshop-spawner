@@ -48,7 +48,7 @@ project_cache = {}
 account_cache = {}
 orphan_cache = {}
 
-Project = namedtuple('Project', ['name', 'account', 'pod'])
+Namespace = namedtuple('Namespace', ['name', 'account', 'pod'])
 
 def get_projects():
     project_details = []
@@ -65,7 +65,7 @@ def get_projects():
                 if (annotations['spawner/requestor'] == full_account_name and 
                         annotations['spawner/namespace'] == namespace and
                         annotations['spawner/deployment'] == application_name):
-                    project_details.append(Project(project.metadata.name,
+                    project_details.append(Namespace(project.metadata.name,
                             annotations['spawner/account'],
                             annotations['spawner/session']))
 
