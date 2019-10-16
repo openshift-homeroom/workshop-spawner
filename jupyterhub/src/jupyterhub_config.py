@@ -1286,6 +1286,8 @@ def create_service_account(spawner, pod):
 
     owner_uid = None
 
+    print('INFO: Create service account %s.' % user_account_name)
+
     while True:
         try:
             text = service_account_template.safe_substitute(
@@ -1304,6 +1306,7 @@ def create_service_account(spawner, pod):
                 raise
 
             else:
+                print('WARNING: Service account %s exists.' % user_account_name)
                 break
 
         except Exception as e:
@@ -1326,6 +1329,8 @@ def create_service_account(spawner, pod):
         except Exception as e:
             print('ERROR: Error getting service account. %s' % e)
             raise
+
+    print('INFO: Service account id is %s.' % owner_id)
 
     return owner_uid
 
