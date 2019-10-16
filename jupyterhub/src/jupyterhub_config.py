@@ -131,6 +131,32 @@ def watch_for_homeroom():
             except Exception as e:
                 print('ERROR: Error looking up homeroom route. %s' % e)
 
+        else:
+            try:
+                ingress = ingress_resource.get(namespace=namespace, name=homeroom_name)
+
+                scheme = 'http'
+
+                if ingress.metadata.annotations:
+                    if ingress.metadata.annotations['homeroom/index'] == homeroom_name:
+                        if ingress.tls:
+                            scheme = 'https'
+
+                        link = '%s://%s' % (scheme, ingress.spec.rules[0].host)
+
+                        global homeroom_link
+
+                        if link != homeroom_link:
+                            print('INFO: Homeroom link set to %s.' % link)
+                            homeroom_link = link
+
+            except ApiException as e:
+                if e.status != 404:
+                    print('ERROR: Error looking up homeroom ingress. %s' % e)
+
+            except Exception as e:
+                print('ERROR: Error looking up homeroom ingress. %s' % e)
+
         time.sleep(15)
 
 if not homeroom_link and homeroom_name:
