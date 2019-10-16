@@ -354,6 +354,7 @@ c.KubeSpawner.image = resolve_image_name(terminal_image)
 # a secure route is always used. This is used when needing to do OAuth.
 
 public_hostname = os.environ.get('PUBLIC_HOSTNAME')
+public_protocol = os.environ.get('PUBLIC_PROTOCOL', 'https')
 
 if not public_hostname:
     if route_resource is not None:
@@ -375,6 +376,9 @@ if not public_hostname:
         def extract_hostname(ingresses, name):
             for ingresses in ingresses.items:
                 if ingresses.metadata.name == name:
+                    if not ingresses.spec.tls:
+                        global public_protocol
+                        public_protocol = 'http'
                     return ingresses.spec.rules[0].host
 
         public_hostname = extract_hostname(ingresses, application_name)
@@ -382,7 +386,7 @@ if not public_hostname:
         if not public_hostname:
             raise RuntimeError('Cannot calculate external host name for JupyterHub.')
 
-c.Spawner.environment['JUPYTERHUB_ROUTE'] = 'https://%s' % public_hostname
+c.Spawner.environment['JUPYTERHUB_ROUTE'] = '%s://%s' % (public_protocol, public_hostname)
 
 # Work out the subdomain under which applications hosted in the cluster
 # are hosted. Calculate this from the route for the JupyterHub route if
