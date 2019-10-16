@@ -1736,24 +1736,3 @@ environ_config_file = '/opt/app-root/configs/jupyterhub_config.py'
 if os.path.exists(environ_config_file):
     with open(environ_config_file) as fp:
         exec(compile(fp.read(), environ_config_file, 'exec'), globals())
-
-# XXX Patches for Kubernetes 1.16 compatibility issues.
-
-from datetime import datetime
-from kubespawner.reflector import NamespacedResourceReflector
-
-import jupyterhub.spawner
-
-class EventReflector(NamespacedResourceReflector):
-    kind = 'events'
-
-    list_method_name = 'list_namespaced_event'
-
-    @property
-    def events(self):
-        return sorted(
-            self.resources.values(),
-            key=lambda x: x.last_timestamp if x.last_timestamp is not None else datetime.fromtimestamp(0),
-        )
-
-jupyterhub.spawner.EventReflector = EventReflector
