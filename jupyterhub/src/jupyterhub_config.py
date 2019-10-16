@@ -104,6 +104,8 @@ ingress_resource = api_client.resources.get(
 # Homeroom workshop picker if not explicit link is provided, but group is.
 
 def watch_for_homeroom():
+    global homeroom_link
+
     while True:
         if route_resource is not None:
             try:
@@ -117,8 +119,6 @@ def watch_for_homeroom():
                             scheme = 'https'
 
                         link = '%s://%s' % (scheme, route.spec.host)
-
-                        global homeroom_link
 
                         if link != homeroom_link:
                             print('INFO: Homeroom link set to %s.' % link)
@@ -143,8 +143,6 @@ def watch_for_homeroom():
                             scheme = 'https'
 
                         link = '%s://%s' % (scheme, ingress.spec.rules[0].host)
-
-                        global homeroom_link
 
                         if link != homeroom_link:
                             print('INFO: Homeroom link set to %s.' % link)
