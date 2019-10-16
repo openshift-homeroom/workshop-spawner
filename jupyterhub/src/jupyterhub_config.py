@@ -354,18 +354,18 @@ c.KubeSpawner.image = resolve_image_name(terminal_image)
 # a secure route is always used. This is used when needing to do OAuth.
 
 public_hostname = os.environ.get('PUBLIC_HOSTNAME')
-public_protocol = os.environ.get('PUBLIC_PROTOCOL', 'https')
+public_protocol = os.environ.get('PUBLIC_PROTOCOL')
 
 if not public_hostname:
     if route_resource is not None:
         routes = route_resource.get(namespace=namespace)
 
-        def extract_hostname(routes, name):
-            for route in routes.items:
-                if route.metadata.name == name:
-                    return route.spec.host
-
-        public_hostname = extract_hostname(routes, application_name)
+        for route in routes.items:
+            if route.metadata.name == application_name:
+                if not public_protocol:
+                    public_protocol = route.spec.tls and 'https' or 'http'
+                public_hostname = route.spec.host
+                break
 
         if not public_hostname:
             raise RuntimeError('Cannot calculate external host name for JupyterHub.')
@@ -373,15 +373,12 @@ if not public_hostname:
     else:
         ingresses = ingress_resource.get(namespace=namespace)
 
-        def extract_hostname(ingresses, name):
-            for ingresses in ingresses.items:
-                if ingresses.metadata.name == name:
-                    if not ingresses.spec.tls:
-                        global public_protocol
-                        public_protocol = 'http'
-                    return ingresses.spec.rules[0].host
-
-        public_hostname = extract_hostname(ingresses, application_name)
+        for ingresses in ingresses.items:
+            if ingresses.metadata.name == application_name:
+                if not public_protocol:
+                    public_protocol = ingresses.spec.tls and 'https' or 'http'
+                public_hostname = ingresses.spec.rules[0].host
+                break
 
         if not public_hostname:
             raise RuntimeError('Cannot calculate external host name for JupyterHub.')
