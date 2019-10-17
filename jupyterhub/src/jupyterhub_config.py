@@ -31,7 +31,11 @@ from openshift.dynamic.exceptions import ResourceNotFoundError
 
 application_name = os.environ.get('APPLICATION_NAME', 'homeroom')
 
+print('INFO: Application name is %s.' % application_name)
+
 configuration_type = os.environ.get('CONFIGURATION_TYPE', 'hosted-workshop')
+
+print('INFO: Configuration type is %s.' % configuration_type)
 
 homeroom_link = os.environ.get('HOMEROOM_LINK')
 
