@@ -172,7 +172,7 @@ c.Spawner.environment['CONSOLE_URL'] = 'http://localhost:10083'
 c.Spawner.environment['DOWNLOAD_URL'] = os.environ.get('DOWNLOAD_URL', '')
 c.Spawner.environment['WORKSHOP_FILE'] = os.environ.get('WORKSHOP_FILE', '')
 
-project_owner_name = '%s-spawner' % application_name
+project_owner_name = '%s-spawner-extra' % application_name
 
 try:
     project_owner = cluster_role_resource.get(project_owner_name)
