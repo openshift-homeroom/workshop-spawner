@@ -255,7 +255,7 @@ c.KubeSpawner.extra_annotations = {
 
 c.KubeSpawner.cmd = ['start-singleuser.sh']
 
-c.KubeSpawner.pod_name_template = '%s-{username}' % application_name
+c.KubeSpawner.pod_name_template = '%s-user-{username}' % application_name
 
 c.JupyterHub.admin_access = False
 

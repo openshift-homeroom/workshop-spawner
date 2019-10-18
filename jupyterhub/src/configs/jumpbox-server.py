@@ -59,7 +59,7 @@ c.KubeSpawner.volume_mounts = [
 volume_size = os.environ.get('VOLUME_SIZE')
 
 if volume_size:
-    c.KubeSpawner.pvc_name_template = '%s-user' % c.KubeSpawner.pod_name_template
+    c.KubeSpawner.pvc_name_template = c.KubeSpawner.pod_name_template
 
     c.KubeSpawner.storage_pvc_ensure = True
 
