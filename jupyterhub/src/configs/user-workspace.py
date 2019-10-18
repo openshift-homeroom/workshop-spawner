@@ -34,7 +34,7 @@ c.KubeSpawner.volumes = [
     {
         'name': 'envvars',
         'configMap': {
-            'name': '%s-env' % application_name,
+            'name': '%s-session-envvars' % application_name,
             'defaultMode': 420
         }
     }
@@ -172,7 +172,7 @@ c.Spawner.environment['CONSOLE_URL'] = 'http://localhost:10083'
 c.Spawner.environment['DOWNLOAD_URL'] = os.environ.get('DOWNLOAD_URL', '')
 c.Spawner.environment['WORKSHOP_FILE'] = os.environ.get('WORKSHOP_FILE', '')
 
-project_owner_name = '%s-%s-spawner' % (application_name, namespace)
+project_owner_name = '%s-spawner' % application_name
 
 try:
     project_owner = cluster_role_resource.get(project_owner_name)
@@ -183,10 +183,8 @@ except Exception as e:
 
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
-    hub = '%s-%s' % (application_name, namespace)
     short_name = spawner.user.name
-    user_account_name = '%s-%s' % (hub, short_name)
-    hub_account_name = '%s-hub' % hub
+    user_account_name = '%s-%s' % (application_name, short_name)
 
     project_name = '%s-%s' % (hub, short_name)
 
@@ -237,18 +235,12 @@ def modify_pod_hook(spawner, pod):
             dict(name='PROJECT_NAMESPACE', value=project_name))
 
     # Add environment variables for the namespace JupyterHub is running
-    # in and its name. Those with JUPYTERHUB prefix are for backwards
-    # compatibility and should not be used.
+    # in and its name.
 
     pod.spec.containers[0].env.append(
             dict(name='SPAWNER_NAMESPACE', value=namespace))
     pod.spec.containers[0].env.append(
             dict(name='SPAWNER_APPLICATION', value=application_name))
-
-    pod.spec.containers[0].env.append(
-            dict(name='JUPYTERHUB_NAMESPACE', value=namespace))
-    pod.spec.containers[0].env.append(
-            dict(name='JUPYTERHUB_APPLICATION', value=application_name))
 
     if homeroom_link:
         pod.spec.containers[0].env.append(
