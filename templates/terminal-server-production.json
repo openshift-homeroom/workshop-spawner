@@ -20,8 +20,13 @@
         },
         {
             "name": "APPLICATION_NAME",
-            "value": "terminal",
+            "value": "terminal-server",
             "required": true
+        },
+        {
+            "name": "NAME_PREFIX",
+            "value": "",
+            "required": false
         },
         {
             "name": "HOMEROOM_NAME",
@@ -54,11 +59,6 @@
         {
             "name": "CONSOLE_BRANDING",
             "value": "openshift"
-        },
-        {
-            "name": "CONSOLE_VERSION",
-            "value": "",
-            "description": "OBSOLETE: Use CONSOLE_IMAGE instead."
         },
         {
             "name": "CONSOLE_IMAGE",
@@ -134,10 +134,6 @@
             "required": false
         },
         {
-            "name": "JUPYTERHUB_HOST",
-            "value": ""
-        },
-        {
             "name": "LETS_ENCRYPT",
             "value": "false",
             "required": true
@@ -153,10 +149,9 @@
             "kind": "ServiceAccount",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "terminal-server",
                     "class": "spawner"
                 }
@@ -166,9 +161,9 @@
             "kind": "OAuthClient",
             "apiVersion": "oauth.openshift.io/v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-console",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-console",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "terminal-server",
                     "class": "spawner"
                 }
@@ -183,10 +178,9 @@
             "kind": "RoleBinding",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-edit",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-basic",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "terminal-server",
                     "class": "spawner"
                 }
@@ -194,7 +188,7 @@
             "subjects": [
                 {
                     "kind": "ServiceAccount",
-                    "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub"
+                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner"
                 }
             ],
             "roleRef": {
@@ -205,10 +199,9 @@
             "kind": "ImageStream",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-hub",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "terminal-server",
                     "class": "spawner"
                 }
@@ -229,10 +222,9 @@
             "kind": "ConfigMap",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-cfg",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-configs",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "terminal-server",
                     "class": "spawner"
                 }
@@ -246,10 +238,9 @@
             "kind": "ConfigMap",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-env",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-session-envvars",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "terminal-server",
                     "class": "spawner"
                 }
@@ -264,10 +255,9 @@
             "kind": "DeploymentConfig",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "terminal-server",
                     "class": "spawner"
                 }
@@ -289,31 +279,30 @@
                             ],
                             "from": {
                                 "kind": "ImageStreamTag",
-                                "name": "${APPLICATION_NAME}-hub:latest"
+                                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner:latest"
                             }
                         }
                     }
                 ],
                 "replicas": 1,
                 "selector": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "deploymentconfig": "${APPLICATION_NAME}"
+                    "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}-spawner"
                 },
                 "template": {
                     "metadata": {
                         "labels": {
-                            "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                            "deploymentconfig": "${APPLICATION_NAME}",
+                            "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                            "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                             "spawner": "terminal-server",
                             "class": "spawner"
                         }
                     },
                     "spec": {
-                        "serviceAccountName": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
+                        "serviceAccountName": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
                         "containers": [
                             {
                                 "name": "spawner",
-                                "image": "${APPLICATION_NAME}-hub:latest",
+                                "image": "${NAME_PREFIX}${APPLICATION_NAME}-spawner:latest",
                                 "ports": [
                                     {
                                         "containerPort": 8080,
@@ -357,7 +346,7 @@
                                     },
                                     {
                                         "name": "APPLICATION_NAME",
-                                        "value": "${APPLICATION_NAME}"
+                                        "value": "${NAME_PREFIX}${APPLICATION_NAME}"
                                     },
                                     {
                                         "name": "HOMEROOM_NAME",
@@ -434,7 +423,7 @@
                                         "name": "data"
                                     },
                                     {
-                                        "name": "config",
+                                        "name": "configs",
                                         "mountPath": "/opt/app-root/configs"
                                     }
                                 ]
@@ -444,13 +433,13 @@
                             {
                                 "name": "data",
                                 "persistentVolumeClaim": {
-                                    "claimName": "${APPLICATION_NAME}-hub-data"
+                                    "claimName": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-data"
                                 }
                             },
                             {
-                                "name": "config",
+                                "name": "configs",
                                 "configMap": {
-                                    "name": "${APPLICATION_NAME}-cfg",
+                                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-configs",
                                     "defaultMode": 420
                                 }
                             }
@@ -463,10 +452,9 @@
             "apiVersion": "v1",
             "kind": "PersistentVolumeClaim",
             "metadata": {
-                "name": "${APPLICATION_NAME}-hub-data",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-data",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "terminal-server",
                     "class": "spawner"
                 }
@@ -486,10 +474,9 @@
             "kind": "Service",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "terminal-server",
                     "class": "spawner"
                 }
@@ -510,8 +497,7 @@
                     }
                 ],
                 "selector": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "deploymentconfig": "${APPLICATION_NAME}"
+                    "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}-spawner"
                 }
             }
         },
@@ -519,10 +505,9 @@
             "kind": "Route",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "terminal-server",
                     "class": "spawner"
                 },
@@ -534,10 +519,10 @@
                 }
             },
             "spec": {
-                "host": "${JUPYTERHUB_HOST}",
+                "host": "${APPLICATION_NAME}-${PROJECT_NAME}.${CLUSTER_SUBDOMAIN}",
                 "to": {
                     "kind": "Service",
-                    "name": "${APPLICATION_NAME}",
+                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
                     "weight": 100
                 },
                 "port": {
@@ -553,10 +538,9 @@
             "kind": "ImageStream",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "terminal-server",
                     "class": "spawner"
                 }
