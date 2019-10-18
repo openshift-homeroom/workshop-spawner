@@ -502,7 +502,7 @@
             "kind": "DeploymentConfig",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
                 "labels": {
                     "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "learning-portal",
@@ -534,13 +534,13 @@
                 "replicas": 1,
                 "selector": {
                     "app": "${NAME_PREFIX}${APPLICATION_NAME}",
-                    "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}"
+                    "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}-spawner"
                 },
                 "template": {
                     "metadata": {
                         "labels": {
                             "app": "${NAME_PREFIX}${APPLICATION_NAME}",
-                            "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}",
+                            "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
                             "spawner": "learning-portal",
                             "class": "spawner"
                         }
@@ -704,7 +704,7 @@
             "kind": "Service",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
                 "labels": {
                     "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "learning-portal",
@@ -728,7 +728,7 @@
                 ],
                 "selector": {
                     "app": "${NAME_PREFIX}${APPLICATION_NAME}",
-                    "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}"
+                    "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}-spawner"
                 }
             }
         },
@@ -736,7 +736,7 @@
             "kind": "Route",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
                 "labels": {
                     "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "learning-portal",
@@ -753,7 +753,7 @@
                 "host": "${APPLICATION_NAME}-${PROJECT_NAME}.${CLUSTER_SUBDOMAIN}",
                 "to": {
                     "kind": "Service",
-                    "name": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
                     "weight": 100
                 },
                 "port": {

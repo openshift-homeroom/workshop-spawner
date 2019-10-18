@@ -227,7 +227,7 @@ c.JupyterHub.port = 8080
 c.JupyterHub.hub_ip = '0.0.0.0'
 c.JupyterHub.hub_port = 8081
 
-c.JupyterHub.hub_connect_ip = application_name
+c.JupyterHub.hub_connect_ip = '%s-spawner' % application_name
 
 c.ConfigurableHTTPProxy.api_url = 'http://127.0.0.1:8082'
 
@@ -394,12 +394,14 @@ c.KubeSpawner.image = resolve_image_name(terminal_image)
 public_hostname = os.environ.get('PUBLIC_HOSTNAME')
 public_protocol = os.environ.get('PUBLIC_PROTOCOL')
 
+route_name = '%s-spawner' % application_name
+
 if not public_hostname:
     if route_resource is not None:
         routes = route_resource.get(namespace=namespace)
 
         for route in routes.items:
-            if route.metadata.name == application_name:
+            if route.metadata.name == route_name:
                 if not public_protocol:
                     public_protocol = route.spec.tls and 'https' or 'http'
                 public_hostname = route.spec.host
@@ -412,7 +414,7 @@ if not public_hostname:
         ingresses = ingress_resource.get(namespace=namespace)
 
         for ingresses in ingresses.items:
-            if ingresses.metadata.name == application_name:
+            if ingresses.metadata.name == route_name:
                 if not public_protocol:
                     public_protocol = ingresses.spec.tls and 'https' or 'http'
                 public_hostname = ingresses.spec.rules[0].host
