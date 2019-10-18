@@ -152,7 +152,7 @@ c.KubeSpawner.volumes = [
     {
         'name': 'envvars',
         'configMap': {
-            'name': '%s-envvars' % application_name,
+            'name': '%s-session-envvars' % application_name,
             'defaultMode': 420
         }
     }

@@ -454,7 +454,7 @@
             "kind": "ConfigMap",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-configs",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-configs",
                 "labels": {
                     "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "learning-portal",
@@ -470,7 +470,7 @@
             "kind": "ConfigMap",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-resources",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-session-resources",
                 "labels": {
                     "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "learning-portal",
@@ -485,7 +485,7 @@
             "kind": "ConfigMap",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-envvars",
+                "name": "${NAME_PREFIX}${APPLICATION_NAME}-session-envvars",
                 "labels": {
                     "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "spawner": "learning-portal",
@@ -684,14 +684,14 @@
                             {
                                 "name": "configs",
                                 "configMap": {
-                                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-configs",
+                                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-configs",
                                     "defaultMode": 420
                                 }
                             },
                             {
                                 "name": "resources",
                                 "configMap": {
-                                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-resources",
+                                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-session-resources",
                                     "defaultMode": 420
                                 }
                             }
