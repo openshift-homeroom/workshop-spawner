@@ -238,18 +238,12 @@ def modify_pod_hook(spawner, pod):
                     dict(name='OPENSHIFT_PROJECT', value=name))
 
     # Add environment variables for the namespace JupyterHub is running
-    # in and its name. Those with JUPYTERHUB prefix are for backwards
-    # compatibility and should not be used.
+    # in and its name.
 
     pod.spec.containers[0].env.append(
             dict(name='SPAWNER_NAMESPACE', value=namespace))
     pod.spec.containers[0].env.append(
             dict(name='SPAWNER_APPLICATION', value=application_name))
-
-    pod.spec.containers[0].env.append(
-            dict(name='JUPYTERHUB_NAMESPACE', value=namespace))
-    pod.spec.containers[0].env.append(
-            dict(name='JUPYTERHUB_APPLICATION', value=application_name))
 
     if homeroom_link:
         pod.spec.containers[0].env.append(
