@@ -16,40 +16,51 @@ import wrapt
 from tornado import gen
 
 from kubernetes.client.rest import ApiException
-
 from kubernetes.client.configuration import Configuration
 from kubernetes.config.incluster_config import load_incluster_config
 from kubernetes.client.api_client import ApiClient
+
 from openshift.dynamic import DynamicClient
 from openshift.dynamic.exceptions import ResourceNotFoundError
 
 # The application name and configuration type are passed in through the
-# template. The application name should be the value used for the
+# environment. The application name should be the value used for the
 # deployment, and more specifically, must match the name of the route.
-# The configuration type will vary based on the template, as the setup
-# required for each will be different.
 
 application_name = os.environ.get('APPLICATION_NAME', 'homeroom')
 
-print('INFO: Application name is %s.' % application_name)
+print('INFO: Application name is "%s".' % application_name)
 
 configuration_type = os.environ.get('CONFIGURATION_TYPE', 'hosted-workshop')
 
-print('INFO: Configuration type is %s.' % configuration_type)
+print('INFO: Configuration type is "%s".' % configuration_type)
 
 homeroom_link = os.environ.get('HOMEROOM_LINK')
 
+print('INFO: Homeroom link is "%s".' % homeroom_link)
+
 homeroom_name = os.environ.get('HOMEROOM_NAME')
+
+print('INFO: Homeroom name is "%s".' % homeroom_name)
 
 # Work out the service account name and name of the namespace that the
 # deployment is in.
 
-service_account_name = '%s-hub' % application_name
-
 service_account_path = '/var/run/secrets/kubernetes.io/serviceaccount'
+
+service_account_name = '%s-spawner' % application_name
+
+print('INFO: Service account name is "%s".' % service_account_name)
 
 with open(os.path.join(service_account_path, 'namespace')) as fp:
     namespace = fp.read().strip()
+
+print('INFO: Namespace is "%s".' % namespace)
+
+full_service_account_name = 'system:serviceaccount:%s:%s' % (
+        namespace, service_account_name) 
+
+print('INFO: Full service account name is "%s".' % full_service_account_name)
 
 # Determine the Kubernetes REST API endpoint and cluster information,
 # including working out the address of the internal image regstry.
@@ -105,7 +116,7 @@ ingress_resource = api_client.resources.get(
      api_version='extensions/v1beta1', kind='Ingress')
 
 # Create a background thread to dynamically calculate back link to the
-# Homeroom workshop picker if not explicit link is provided, but group is.
+# Homeroom workshop picker if no explicit link is provided, but group is.
 
 def watch_for_homeroom():
     global homeroom_link
@@ -209,7 +220,7 @@ def _wrapper_get_env(wrapped, instance, args, kwargs):
 
     return env
 
-# Define all the defaults for for JupyterHub instance for our setup.
+# Define all the defaults for the JupyterHub instance for our setup.
 
 c.JupyterHub.port = 8080
 
@@ -226,7 +237,7 @@ c.Spawner.http_timeout = 60
 c.KubeSpawner.port = 10080
 
 c.KubeSpawner.common_labels = {
-    'app': '%s-%s' % (application_name, namespace)
+    'app': '%s' % application_name
 }
 
 c.KubeSpawner.extra_labels = {
@@ -244,8 +255,7 @@ c.KubeSpawner.extra_annotations = {
 
 c.KubeSpawner.cmd = ['start-singleuser.sh']
 
-c.KubeSpawner.pod_name_template = '%s-%s-{username}' % (
-        application_name, namespace)
+c.KubeSpawner.pod_name_template = '%s-{username}' % application_name
 
 c.JupyterHub.admin_access = False
 
@@ -378,8 +388,8 @@ def resolve_image_name(name):
 c.KubeSpawner.image = resolve_image_name(terminal_image)
 
 # Work out hostname for the exposed route of the JupyterHub server. This
-# is tricky as we need to use the REST API to query it. We assume that
-# a secure route is always used. This is used when needing to do OAuth.
+# is tricky as we need to use the REST API to query it. This is used
+# when needing to do OAuth.
 
 public_hostname = os.environ.get('PUBLIC_HOSTNAME')
 public_protocol = os.environ.get('PUBLIC_PROTOCOL')
@@ -396,7 +406,7 @@ if not public_hostname:
                 break
 
         if not public_hostname:
-            raise RuntimeError('Cannot calculate external host name for JupyterHub.')
+            raise RuntimeError('Cannot calculate external host name for the spawner.')
 
     else:
         ingresses = ingress_resource.get(namespace=namespace)
@@ -409,12 +419,12 @@ if not public_hostname:
                 break
 
         if not public_hostname:
-            raise RuntimeError('Cannot calculate external host name for JupyterHub.')
+            raise RuntimeError('Cannot calculate external host name for the spawner.')
 
 c.Spawner.environment['JUPYTERHUB_ROUTE'] = '%s://%s' % (public_protocol, public_hostname)
 
 # Work out the subdomain under which applications hosted in the cluster
-# are hosted. Calculate this from the route for the JupyterHub route if
+# are hosted. Calculate this from the route for the spawner route if
 # not supplied explicitly.
 
 cluster_subdomain = os.environ.get('CLUSTER_SUBDOMAIN')
@@ -469,7 +479,7 @@ namespace_template = string.Template("""
     "metadata": {
         "name": "${name}",
         "labels": {
-            "app": "${hub}",
+            "app": "${application_name}",
             "spawner": "${configuration}",
             "class": "session",
             "user": "${username}"
@@ -502,7 +512,7 @@ service_account_template = string.Template("""
     "metadata": {
         "name": "${name}",
         "labels": {
-            "app": "${hub}",
+            "app": "${application_name}",
             "spawner": "${configuration}",
             "class": "session",
             "user": "${username}"
@@ -518,7 +528,7 @@ role_binding_template = string.Template("""
     "metadata": {
         "name": "${name}-${tag}",
         "labels": {
-            "app": "${hub}",
+            "app": "${application_name}",
             "spawner": "${configuration}",
             "class": "session",
             "user": "${username}"
@@ -1215,7 +1225,7 @@ service_template = string.Template("""
     "metadata": {
         "name": "${name}",
         "labels": {
-            "app": "${hub}",
+            "app": "${application_name}",
             "spawner": "${configuration}",
             "class": "session",
             "user": "${username}"
@@ -1234,7 +1244,7 @@ service_template = string.Template("""
     "spec": {
         "type": "ClusterIP",
         "selector": {
-            "app": "${hub}",
+            "app": "${application_name}",
             "spawner": "${configuration}",
             "user": "${username}"
         },
@@ -1250,7 +1260,7 @@ route_template = string.Template("""
     "metadata": {
         "name": "${name}-${port}",
         "labels": {
-            "app": "${hub}",
+            "app": "${application_name}",
             "spawner": "${configuration}",
             "class": "session",
             "user": "${username}",
@@ -1283,20 +1293,19 @@ route_template = string.Template("""
 
 @gen.coroutine
 def create_service_account(spawner, pod):
-    hub = '%s-%s' % (application_name, namespace)
     short_name = spawner.user.name
-    user_account_name = '%s-%s' % (hub, short_name)
-    hub_account_name = '%s-hub' % hub
+    user_account_name = '%s-%s' % (application_name, short_name)
 
     owner_uid = None
 
-    print('INFO: Create service account %s.' % user_account_name)
+    print('INFO: Create service account "%s".' % user_account_name)
 
     while True:
         try:
             text = service_account_template.safe_substitute(
                     configuration=configuration_type, namespace=namespace,
-                    name=user_account_name, hub=hub, username=short_name)
+                    name=user_account_name, application_name=application_name,
+                    username=short_name)
             body = json.loads(text)
 
             service_account_object = service_account_resource.create(
@@ -1340,18 +1349,14 @@ def create_service_account(spawner, pod):
 
 @gen.coroutine
 def create_project_namespace(spawner, pod, project_name):
-    hub = '%s-%s' % (application_name, namespace)
     short_name = spawner.user.name
-    user_account_name = '%s-%s' % (hub, short_name)
-    hub_account_name = '%s-hub' % hub
+    user_account_name = '%s-%s' % (application_name, short_name)
 
     try:
-        service_account_name = 'system:serviceaccount:%s:%s-%s-hub' % (
-                namespace, application_name, namespace)
-
         text = namespace_template.safe_substitute(
                 configuration=configuration_type, name=project_name,
-                hub=hub, requestor=service_account_name, namespace=namespace,
+                application_name=application_name,
+                requestor=full_service_account_name, namespace=namespace,
                 deployment=application_name, account=user_account_name,
                 session=pod.metadata.name, owner=project_owner.metadata.name,
                 uid=project_owner.metadata.uid, username=short_name)
@@ -1370,12 +1375,10 @@ def create_project_namespace(spawner, pod, project_name):
 
 @gen.coroutine
 def setup_project_namespace(spawner, pod, project_name, role, budget):
-    hub = '%s-%s' % (application_name, namespace)
     short_name = spawner.user.name
-    user_account_name = '%s-%s' % (hub, short_name)
-    hub_account_name = '%s-hub' % hub
+    user_account_name = '%s-%s' % (application_name, short_name)
 
-    # Wait for project to exist before continuing.
+    # Wait for project namespace to exist before continuing.
 
     for _ in range(30):
         try:
@@ -1401,26 +1404,26 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
 
     project_uid = project.metadata.uid
 
-    # Create role binding in the project so the hub service account can
+    # Create role binding in the project so the spawner service account can
     # delete project when done. Will fail if the project hasn't actually
     # been created yet.
 
     try:
         text = role_binding_template.safe_substitute(
                 configuration=configuration_type, namespace=namespace,
-                name=hub_account_name, tag='admin', role='admin', hub=hub,
-                username=short_name)
+                name=service_account_name, tag='admin', role='admin',
+                application_name=application_name, username=short_name)
         body = json.loads(text)
 
         role_binding_resource.create(namespace=project_name, body=body)
 
     except ApiException as e:
         if e.status != 409:
-            print('ERROR: Error creating role binding for hub. %s' % e)
+            print('ERROR: Error creating role binding for spawner. %s' % e)
             raise
 
     except Exception as e:
-        print('ERROR: Error creating rolebinding for hub. %s' % e)
+        print('ERROR: Error creating rolebinding for spawner. %s' % e)
         raise
 
     # Create role binding in the project so the users service account
@@ -1429,8 +1432,8 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
     try:
         text = role_binding_template.safe_substitute(
                 configuration=configuration_type, namespace=namespace,
-                name=user_account_name, tag=role, role=role, hub=hub,
-                username=short_name)
+                name=user_account_name, tag=role, role=role,
+                application_name=application_name, username=short_name)
         body = json.loads(text)
 
         role_binding_resource.create(namespace=project_name, body=body)
@@ -1452,7 +1455,8 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
         text = role_binding_template.safe_substitute(
                 configuration=configuration_type, namespace=namespace,
                 name=user_account_name, tag='session-rules',
-                role=hub+'-session-rules', hub=hub, username=short_name)
+                role=application_name+'-session-rules',
+                application_name=application_name, username=short_name)
         body = json.loads(text)
 
         role_binding_resource.create(namespace=project_name, body=body)
@@ -1466,7 +1470,7 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
         print('ERROR: Error creating rolebinding for extras. %s' % e)
         raise
 
-    # Determine what project resources need to be used.
+    # Determine what project namespace resources need to be used.
 
     if budget != 'unlimited':
         if budget not in resource_budget_mapping:
@@ -1504,8 +1508,8 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
                 print('ERROR: Error deleting limit range. %s' % e)
                 raise
 
-    # Create limit ranges for the project so any deployments will have
-    # default memory/cpu min and max values.
+    # Create limit ranges for the project namespace so any deployments
+    # will have default memory/cpu min and max values.
 
     if budget not in ('default', 'unlimited'):
         try:
@@ -1518,8 +1522,8 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
                 print('ERROR: Error creating limit range. %s' % e)
                 raise
 
-    # Delete any resource quotas applied to the project that may conflict
-    # with the resource quotas being applied.
+    # Delete any resource quotas applied to the project namespace that
+    # may conflict with the resource quotas being applied.
 
     if budget != 'default':
         try:
@@ -1596,14 +1600,11 @@ def create_extra_resources(spawner, pod, project_name, owner_uid,
     if not extra_resources:
         return
 
-    # Only passing 'jupyterhub_namespace' for backward compatibility.
-    # Should use 'spawner_namespace' going forward.
-
     template = string.Template(extra_resources)
-    text = template.safe_substitute(jupyterhub_namespace=namespace,
-            spawner_namespace=namespace, project_namespace=project_name,
-            image_registry=image_registry, service_account=user_account_name,
-            username=short_name, application_name=application_name)
+    text = template.safe_substitute(spawner_namespace=namespace,
+            project_namespace=project_name, image_registry=image_registry,
+            service_account=user_account_name, username=short_name,
+            application_name=application_name)
 
     data = extra_resources_loader(text)
 
@@ -1622,12 +1623,9 @@ def create_extra_resources(spawner, pod, project_name, owner_uid,
                     controller=True, name=project_name, uid=owner_uid)]
 
             if kind.lower() == 'namespace':
-                service_account_name = 'system:serviceaccount:%s:%s-%s-hub' % (
-                        namespace, application_name, namespace)
-
                 annotations = body['metadata'].setdefault('annotations', {})
 
-                annotations['spawner/requestor'] = service_account_name
+                annotations['spawner/requestor'] = full_service_account_name
                 annotations['spawner/namespace'] = namespace
                 annotations['spawner/deployment'] = application_name
                 annotations['spawner/account'] = user_account_name
@@ -1663,10 +1661,13 @@ def create_extra_resources(spawner, pod, project_name, owner_uid,
 
 @gen.coroutine
 def expose_service_ports(spawner, pod, owner_uid):
-    hub = '%s-%s' % (application_name, namespace)
     short_name = spawner.user.name
-    user_account_name = '%s-%s' % (hub, short_name)
-    hub_account_name = '%s-hub' % hub
+    user_account_name = '%s-%s' % (application_name, short_name)
+
+    # Can't do this for now if deployed to plain Kubernetes.
+
+    if route_resource is None:
+        return
 
     exposed_ports = os.environ.get('EXPOSED_PORTS', '')
 
@@ -1676,7 +1677,8 @@ def expose_service_ports(spawner, pod, owner_uid):
         try:
             text = service_template.safe_substitute(
                     configuration=configuration_type, name=user_account_name,
-                    hub=hub, username=short_name, uid=owner_uid)
+                    application_name=application_name, username=short_name,
+                    uid=owner_uid)
             body = json.loads(text)
 
             for port in exposed_ports:
@@ -1697,10 +1699,9 @@ def expose_service_ports(spawner, pod, owner_uid):
         for port in exposed_ports:
             try:
                 host = '%s-%s.%s' % (user_account_name, port, cluster_subdomain)
-                text = route_template.safe_substitute(
-                        configuration=configuration_type,
-                        name=user_account_name, hub=hub, port='%s' % port,
-                        username=short_name, uid=owner_uid, host=host)
+                text = route_template.safe_substitute(configuration=configuration_type,
+                        name=user_account_name, application_name=application_name,
+                        port='%s' % port, username=short_name, uid=owner_uid, host=host)
                 body = json.loads(text)
 
                 route_resource.create(namespace=namespace, body=body)
@@ -1751,7 +1752,7 @@ def wait_on_service_account(user_account_name):
 
         print('WARNING: Could not verify account. %s' % user_account_name)
 
-# Load configuration corresponding to the deployment mode.
+# Load configuration corresponding to the configuration type.
 
 c.Spawner.environment['DEPLOYMENT_TYPE'] = 'spawner'
 c.Spawner.environment['CONFIGURATION_TYPE'] = configuration_type

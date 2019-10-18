@@ -20,7 +20,11 @@ with open('/var/run/secrets/kubernetes.io/serviceaccount/namespace') as fp:
     namespace = fp.read().strip()
 
 application_name = os.environ.get('APPLICATION_NAME')
-service_account_name = '%s-%s-hub' %  (application_name, namespace)
+
+service_account_name = '%s-spawner' %  application_name
+
+full_service_account_name = 'system:serviceaccount:%s:%s' % (namespace,
+        service_account_name)
 
 load_incluster_config()
 
@@ -53,16 +57,13 @@ Namespace = namedtuple('Namespace', ['name', 'account', 'pod'])
 def get_projects():
     project_details = []
 
-    full_account_name = 'system:serviceaccount:%s:%s' % (namespace,
-            service_account_name)
-
     try:
         projects = namespace_resource.get(namespace=namespace)
 
         for project in projects.items:
             annotations = project.metadata.annotations
             if annotations:
-                if (annotations['spawner/requestor'] == full_account_name and 
+                if (annotations['spawner/requestor'] == full_service_account_name and 
                         annotations['spawner/namespace'] == namespace and
                         annotations['spawner/deployment'] == application_name):
                     project_details.append(Namespace(project.metadata.name,
@@ -77,15 +78,13 @@ def get_projects():
 def get_accounts():
     account_details = []
 
-    hub_name = '%s-%s' % (application_name, namespace)
-
     try:
         accounts = service_account_resource.get(namespace=namespace)
 
         for account in accounts.items:
             labels = account.metadata.labels
-            hub_label = labels and labels['app']
-            if hub_label == hub_name and labels['user']:
+            application_label = labels and labels['app']
+            if application_label == application_name and labels['user']:
                 account_details.append(account)
 
     except Exception as e:
