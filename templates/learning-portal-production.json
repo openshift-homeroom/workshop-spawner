@@ -494,14 +494,13 @@
                 ],
                 "replicas": 1,
                 "selector": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}-spawner"
                 },
                 "template": {
                     "metadata": {
                         "labels": {
-                            "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                             "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                            "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                             "spawner": "learning-portal",
                             "class": "spawner"
                         }
@@ -688,7 +687,6 @@
                     }
                 ],
                 "selector": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
                     "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}-spawner"
                 }
             }
