@@ -186,7 +186,7 @@ def modify_pod_hook(spawner, pod):
     short_name = spawner.user.name
     user_account_name = '%s-%s' % (application_name, short_name)
 
-    project_name = '%s-%s' % (hub, short_name)
+    project_name = '%s-%s' % (application_name, short_name)
 
     pod.spec.automount_service_account_token = True
     pod.spec.service_account_name = user_account_name
