@@ -12,7 +12,7 @@ c.JupyterHub.authenticator_class = "openshift"
 from oauthenticator.openshift import OpenShiftOAuthenticator
 OpenShiftOAuthenticator.scope = ['user:full']
 
-client_id = '%s-%s-console' % (application_name, namespace)
+client_id = '%s-console' % application_name
 client_secret = os.environ['OAUTH_CLIENT_SECRET']
 
 c.OpenShiftOAuthenticator.client_id = client_id
