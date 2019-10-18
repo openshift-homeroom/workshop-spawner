@@ -61,17 +61,17 @@
     {
       "id": "3c776167-01b1-46b9-b074-933224557e3d",
       "clientId": "homeroom",
-      "rootUrl": "https://{{ JUPYTERHUB_HOSTNAME }}",
-      "adminUrl": "https://{{ JUPYTERHUB_HOSTNAME }}",
+      "rootUrl": "https://{{ SPAWNER_HOSTNAME }}",
+      "adminUrl": "https://{{ SPAWNER_HOSTNAME }}",
       "surrogateAuthRequired": false,
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
       "secret": "{{ OAUTH_CLIENT_SECRET }}",
       "redirectUris": [
-        "https://{{ JUPYTERHUB_HOSTNAME }}/*"
+        "https://{{ SPAWNER_HOSTNAME }}/*"
       ],
       "webOrigins": [
-        "https://{{ JUPYTERHUB_HOSTNAME }}"
+        "https://{{ SPAWNER_HOSTNAME }}"
       ],
       "notBefore": 0,
       "bearerOnly": false,

@@ -2,13 +2,14 @@
 
 set -x
 
-SERVER="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT"
+SERVER_URL="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT"
 TOKEN=`cat /var/run/secrets/kubernetes.io/serviceaccount/token`
 NAMESPACE=`cat /var/run/secrets/kubernetes.io/serviceaccount/namespace`
 
-URL="$SERVER/apis/route.openshift.io/v1/namespaces/$NAMESPACE/routes/$JUPYTERHUB_SERVICE_NAME-spawner"
+NAMESPACE_URL="$SERVER_URL/apis/route.openshift.io/v1/namespaces/$NAMESPACE"
+ROUTES_URL="$NAMESPACE_URL/routes/$SPAWNER_APPLICATION"
 
-JUPYTERHUB_HOSTNAME=`curl -s -k -H "Authorization: Bearer $TOKEN" $URL | \
+SPAWNER_HOSTNAME=`curl -s -k -H "Authorization: Bearer $TOKEN" $SERVER_URL | \
     python -c "import json, sys; \
                data = json.loads(sys.stdin.read()); \
                print(data['spec']['host'])"`
@@ -17,7 +18,7 @@ KEYCLOAK_ARGS=
 
 if [ -f realm.json ]; then
     cat realm.json | sed \
-        -e "s/{{ *JUPYTERHUB_HOSTNAME *}}/$JUPYTERHUB_HOSTNAME/g" \
+        -e "s/{{ *SPAWNER_HOSTNAME *}}/$SPAWNER_HOSTNAME/g" \
         -e "s/{{ *OAUTH_CLIENT_SECRET *}}/$OAUTH_CLIENT_SECRET/g" > /tmp/realm.json
 
     KEYCLOAK_ARGS="$KEYCLOAK_ARGS -Dkeycloak.import=/tmp/realm.json"
