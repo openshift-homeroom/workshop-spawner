@@ -29,19 +29,19 @@ from openshift.dynamic.exceptions import ResourceNotFoundError
 
 application_name = os.environ.get('APPLICATION_NAME', 'homeroom')
 
-print('INFO: Application name is "%s".' % application_name)
+print('INFO: Application name is %r.' % application_name)
 
 configuration_type = os.environ.get('CONFIGURATION_TYPE', 'hosted-workshop')
 
-print('INFO: Configuration type is "%s".' % configuration_type)
+print('INFO: Configuration type is %r.' % configuration_type)
 
 homeroom_link = os.environ.get('HOMEROOM_LINK')
 
-print('INFO: Homeroom link is "%s".' % homeroom_link)
+print('INFO: Homeroom link is %r.' % homeroom_link)
 
 homeroom_name = os.environ.get('HOMEROOM_NAME')
 
-print('INFO: Homeroom name is "%s".' % homeroom_name)
+print('INFO: Homeroom name is %r.' % homeroom_name)
 
 # Work out the service account name and name of the namespace that the
 # deployment is in.
@@ -50,17 +50,17 @@ service_account_path = '/var/run/secrets/kubernetes.io/serviceaccount'
 
 service_account_name = '%s-spawner' % application_name
 
-print('INFO: Service account name is "%s".' % service_account_name)
+print('INFO: Service account name is %r.' % service_account_name)
 
 with open(os.path.join(service_account_path, 'namespace')) as fp:
     namespace = fp.read().strip()
 
-print('INFO: Namespace is "%s".' % namespace)
+print('INFO: Namespace is %r.' % namespace)
 
 full_service_account_name = 'system:serviceaccount:%s:%s' % (
         namespace, service_account_name) 
 
-print('INFO: Full service account name is "%s".' % full_service_account_name)
+print('INFO: Full service account name is %r.' % full_service_account_name)
 
 # Determine the Kubernetes REST API endpoint and cluster information,
 # including working out the address of the internal image regstry.
