@@ -4,7 +4,7 @@ metadata:
   name: spawner
 spec:
   rules:
-  - host: $(APPLICATION_NAME).$(CLUSTER_SUBDOMAIN) 
+  - host: workshop.$(CLUSTER_SUBDOMAIN) 
     http:
       paths:
       - path: "/"
