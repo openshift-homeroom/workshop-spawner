@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spawner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      deployment: spawner
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        deployment: spawner
+    spec:
+      serviceAccountName: spawner
+      containers:
+      - name: spawner
+        image: workshop-spawner
+        envFrom:
+        - configMapRef:
+            name: spawner-environ
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources:
+          limits:
+            memory: 768Mi
+          requests:
+            memory: 768Mi
+        volumeMounts:
+        - mountPath: /opt/app-root/configs
+          name: configs
+        - mountPath: /opt/app-root/resources
+          name: resources
+      volumes:
+      - name: configs
+        configMap:
+          defaultMode: 420
+          name: spawner-configs
+      - name: resources
+        configMap:
+          defaultMode: 420
+          name: session-resources

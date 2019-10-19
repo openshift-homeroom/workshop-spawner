@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: session-envvars
+data:
+  gateway.sh: ""
+  terminal.sh: ""
+  workshop.sh: ""
