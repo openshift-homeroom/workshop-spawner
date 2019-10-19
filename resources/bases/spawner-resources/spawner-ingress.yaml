@@ -4,8 +4,7 @@ metadata:
   name: spawner
 spec:
   rules:
-  - host: spawner.apps.example.com
-    http:
+  - http:
       paths:
       - path: "/"
         backend:
