@@ -6,8 +6,7 @@ metadata:
     homeroom/group: homeroom
 spec:
   rules:
-  - host: workshop.$(CLUSTER_SUBDOMAIN) 
-    http:
+  - http:
       paths:
       - path: "/"
         backend:
