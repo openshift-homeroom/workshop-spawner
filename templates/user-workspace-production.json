@@ -84,7 +84,7 @@
             "required": true
         },
         {
-            "name": "TERMINAL_IMAGE",
+            "name": "WORKSHOP_IMAGE",
             "value": "",
             "required": false
         },
@@ -590,8 +590,8 @@
                                         "value": "${HOMEROOM_NAME}"
                                     },
                                     {
-                                        "name": "TERMINAL_IMAGE",
-                                        "value": "${TERMINAL_IMAGE}"
+                                        "name": "WORKSHOP_IMAGE",
+                                        "value": "${WORKSHOP_IMAGE}"
                                     },
                                     {
                                         "name": "WORKSHOP_MEMORY",

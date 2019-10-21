@@ -98,7 +98,7 @@
             "required": true
         },
         {
-            "name": "TERMINAL_IMAGE",
+            "name": "WORKSHOP_IMAGE",
             "value": "",
             "required": false
         },
@@ -603,8 +603,8 @@
                                         "value": "${SPAWNER_PASSWORD}"
                                     },
                                     {
-                                        "name": "TERMINAL_IMAGE",
-                                        "value": "${TERMINAL_IMAGE}"
+                                        "name": "WORKSHOP_IMAGE",
+                                        "value": "${WORKSHOP_IMAGE}"
                                     },
                                     {
                                         "name": "SERVER_LIMIT",

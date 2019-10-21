@@ -12,7 +12,7 @@ c.JupyterHub.authenticator_class = "openshift"
 from oauthenticator.openshift import OpenShiftOAuthenticator
 OpenShiftOAuthenticator.scope = ['user:full']
 
-client_id = '%s-console' % application_name
+client_id = '%s-console' % workshop_name
 client_secret = os.environ['OAUTH_CLIENT_SECRET']
 
 c.OpenShiftOAuthenticator.client_id = client_id
@@ -39,7 +39,7 @@ c.KubeSpawner.volumes = [
     {
         'name': 'envvars',
         'configMap': {
-            'name': '%s-session-envvars' % application_name,
+            'name': '%s-session-envvars' % workshop_name,
             'defaultMode': 420
         }
     }
@@ -180,7 +180,7 @@ c.Spawner.environment['WORKSHOP_FILE'] = os.environ.get('WORKSHOP_FILE', '')
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
     short_name = spawner.user.name
-    user_account_name = '%s-%s' % (application_name, short_name)
+    user_account_name = '%s-%s' % (workshop_name, short_name)
 
     pod.spec.service_account_name = user_account_name
     pod.spec.automount_service_account_token = True
@@ -243,7 +243,7 @@ def modify_pod_hook(spawner, pod):
     pod.spec.containers[0].env.append(
             dict(name='SPAWNER_NAMESPACE', value=namespace))
     pod.spec.containers[0].env.append(
-            dict(name='SPAWNER_APPLICATION', value=application_name))
+            dict(name='SPAWNER_APPLICATION', value=workshop_name))
 
     if homeroom_link:
         pod.spec.containers[0].env.append(

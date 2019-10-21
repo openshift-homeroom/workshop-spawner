@@ -92,7 +92,7 @@
             "value": "7200"
         },
         {
-            "name": "TERMINAL_IMAGE",
+            "name": "WORKSHOP_IMAGE",
             "value": "",
             "required": false
         },
@@ -396,8 +396,8 @@
                                         "value": "${HOMEROOM_LINK}"
                                     },
                                     {
-                                        "name": "TERMINAL_IMAGE",
-                                        "value": "${TERMINAL_IMAGE}"
+                                        "name": "WORKSHOP_IMAGE",
+                                        "value": "${WORKSHOP_IMAGE}"
                                     },
                                     {
                                         "name": "WORKSHOP_MEMORY",

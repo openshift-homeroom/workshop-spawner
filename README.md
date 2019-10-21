@@ -18,7 +18,7 @@ The base image if needing only an interactive terminal is:
 
 A workshop image would extend these to add their own content.
 
-For all the configurations described below, to override the default image used, pass the `TERMINAL_IMAGE` template parameter with value referencing the custom image for a specific workshop.
+For all the configurations described below, to override the default image used, pass the `WORKSHOP_IMAGE` template parameter with value referencing the custom image for a specific workshop.
 
 Spawner configurations
 ----------------------
@@ -72,10 +72,10 @@ Customizing configuration
 
 Each template provides a range of template parameters that can be supplied to customize the deployment.
 
-For example, to override the default image for the user environment and supply a reference to a custom image for a specific workshop, use the `TERMINAL_IMAGE` template parameter. You can use the `APPLICATION_NAME` template parameter to override the name used for the deployment.
+For example, to override the default image for the user environment and supply a reference to a custom image for a specific workshop, use the `WORKSHOP_IMAGE` template parameter. You can use the `APPLICATION_NAME` template parameter to override the name used for the deployment.
 
 ```
-oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/learning-portal-production.json --param PROJECT_NAME=`oc project --short` --param APPLICATION_NAME=lab-workshop-content --param TERMINAL_IMAGE=quay.io/openshifthomeroom/lab-workshop-content:master
+oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/learning-portal-production.json --param PROJECT_NAME=`oc project --short` --param APPLICATION_NAME=lab-workshop-content --param WORKSHOP_IMAGE=quay.io/openshifthomeroom/lab-workshop-content:master
 ```
 
 Look at the individual template files in the templates directory for the list of parameters they accept.

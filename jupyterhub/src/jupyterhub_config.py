@@ -23,13 +23,22 @@ from kubernetes.client.api_client import ApiClient
 from openshift.dynamic import DynamicClient
 from openshift.dynamic.exceptions import ResourceNotFoundError
 
-# The application name and configuration type are passed in through the
-# environment. The application name should be the value used for the
+# The workshop name and configuration type are passed in through the
+# environment. The workshop name should be the value used for the
 # deployment, and more specifically, must match the name of the route.
+#
+# The APPLICATION_NAME variable is checked for backward compatibility,
+# should use WORKSHOP_NAME from now on.
 
-application_name = os.environ.get('APPLICATION_NAME', 'homeroom')
+workshop_name = os.environ.get('WORKSHOP_NAME')
 
-print('INFO: Application name is %r.' % application_name)
+if not workshop_name:
+    workshop_name = os.environ.get('APPLICATION_NAME')
+    
+if not workshop_name:
+    workshop_name = 'homeroom'
+
+print('INFO: Application name is %r.' % workshop_name)
 
 configuration_type = os.environ.get('CONFIGURATION_TYPE', 'hosted-workshop')
 
@@ -48,7 +57,7 @@ print('INFO: Homeroom name is %r.' % homeroom_name)
 
 service_account_path = '/var/run/secrets/kubernetes.io/serviceaccount'
 
-service_account_name = '%s-spawner' % application_name
+service_account_name = '%s-spawner' % workshop_name
 
 print('INFO: Service account name is %r.' % service_account_name)
 
@@ -227,7 +236,7 @@ c.JupyterHub.port = 8080
 c.JupyterHub.hub_ip = '0.0.0.0'
 c.JupyterHub.hub_port = 8081
 
-c.JupyterHub.hub_connect_ip = '%s-spawner' % application_name
+c.JupyterHub.hub_connect_ip = '%s-spawner' % workshop_name
 
 c.ConfigurableHTTPProxy.api_url = 'http://127.0.0.1:8082'
 
@@ -237,7 +246,7 @@ c.Spawner.http_timeout = 60
 c.KubeSpawner.port = 10080
 
 c.KubeSpawner.common_labels = {
-    'app': '%s' % application_name
+    'app': '%s' % workshop_name
 }
 
 c.KubeSpawner.extra_labels = {
@@ -255,7 +264,7 @@ c.KubeSpawner.extra_annotations = {
 
 c.KubeSpawner.cmd = ['start-singleuser.sh']
 
-c.KubeSpawner.pod_name_template = '%s-user-{username}' % application_name
+c.KubeSpawner.pod_name_template = '%s-user-{username}' % workshop_name
 
 c.JupyterHub.admin_access = False
 
@@ -326,12 +335,18 @@ c.Spawner.mem_limit = convert_size_to_bytes(
 # so that during development, changes to the terminal image will always
 # be picked up. Someone developing a new image need only update the
 # 'latest' tag on the image using 'oc tag'. 
+#
+# Check for TERMINAL_IMAGE is for backward compatibility. Should use
+# WORKSHOP_IMAGE now.
 
-terminal_image = os.environ.get('TERMINAL_IMAGE')
+workshop_image = os.environ.get('WORKSHOP_IMAGE')
 
-if not terminal_image:
+if not workshop_image:
+    workshop_image = os.environ.get('TERMINAL_IMAGE')
+
+if not workshop_image:
     c.KubeSpawner.image_pull_policy = 'Always'
-    terminal_image = '%s:latest' % application_name
+    workshop_image = '%s:latest' % workshop_name
 
 def resolve_image_name(name):
     # If no image stream resource we are on plain Kubernetes.
@@ -385,7 +400,7 @@ def resolve_image_name(name):
 
     return name
 
-c.KubeSpawner.image = resolve_image_name(terminal_image)
+c.KubeSpawner.image = resolve_image_name(workshop_image)
 
 # Work out hostname for the exposed route of the JupyterHub server. This
 # is tricky as we need to use the REST API to query it. This is used
@@ -394,7 +409,7 @@ c.KubeSpawner.image = resolve_image_name(terminal_image)
 public_hostname = os.environ.get('PUBLIC_HOSTNAME')
 public_protocol = os.environ.get('PUBLIC_PROTOCOL')
 
-route_name = '%s-spawner' % application_name
+route_name = '%s-spawner' % workshop_name
 
 if not public_hostname:
     if route_resource is not None:
@@ -481,7 +496,7 @@ namespace_template = string.Template("""
     "metadata": {
         "name": "${name}",
         "labels": {
-            "app": "${application_name}",
+            "app": "${workshop_name}",
             "spawner": "${configuration}",
             "class": "session",
             "user": "${username}"
@@ -514,7 +529,7 @@ service_account_template = string.Template("""
     "metadata": {
         "name": "${name}",
         "labels": {
-            "app": "${application_name}",
+            "app": "${workshop_name}",
             "spawner": "${configuration}",
             "class": "session",
             "user": "${username}"
@@ -530,7 +545,7 @@ role_binding_template = string.Template("""
     "metadata": {
         "name": "${name}-${tag}",
         "labels": {
-            "app": "${application_name}",
+            "app": "${workshop_name}",
             "spawner": "${configuration}",
             "class": "session",
             "user": "${username}"
@@ -1227,7 +1242,7 @@ service_template = string.Template("""
     "metadata": {
         "name": "${name}",
         "labels": {
-            "app": "${application_name}",
+            "app": "${workshop_name}",
             "spawner": "${configuration}",
             "class": "session",
             "user": "${username}"
@@ -1246,7 +1261,7 @@ service_template = string.Template("""
     "spec": {
         "type": "ClusterIP",
         "selector": {
-            "app": "${application_name}",
+            "app": "${workshop_name}",
             "spawner": "${configuration}",
             "user": "${username}"
         },
@@ -1262,7 +1277,7 @@ route_template = string.Template("""
     "metadata": {
         "name": "${name}-${port}",
         "labels": {
-            "app": "${application_name}",
+            "app": "${workshop_name}",
             "spawner": "${configuration}",
             "class": "session",
             "user": "${username}",
@@ -1296,7 +1311,7 @@ route_template = string.Template("""
 @gen.coroutine
 def create_service_account(spawner, pod):
     short_name = spawner.user.name
-    user_account_name = '%s-%s' % (application_name, short_name)
+    user_account_name = '%s-%s' % (workshop_name, short_name)
 
     owner_uid = None
 
@@ -1306,7 +1321,7 @@ def create_service_account(spawner, pod):
         try:
             text = service_account_template.safe_substitute(
                     configuration=configuration_type, namespace=namespace,
-                    name=user_account_name, application_name=application_name,
+                    name=user_account_name, workshop_name=workshop_name,
                     username=short_name)
             body = json.loads(text)
 
@@ -1352,14 +1367,14 @@ def create_service_account(spawner, pod):
 @gen.coroutine
 def create_project_namespace(spawner, pod, project_name):
     short_name = spawner.user.name
-    user_account_name = '%s-%s' % (application_name, short_name)
+    user_account_name = '%s-%s' % (workshop_name, short_name)
 
     try:
         text = namespace_template.safe_substitute(
                 configuration=configuration_type, name=project_name,
-                application_name=application_name,
+                workshop_name=workshop_name,
                 requestor=full_service_account_name, namespace=namespace,
-                deployment=application_name, account=user_account_name,
+                deployment=workshop_name, account=user_account_name,
                 session=pod.metadata.name, owner=project_owner.metadata.name,
                 uid=project_owner.metadata.uid, username=short_name)
         body = json.loads(text)
@@ -1378,7 +1393,7 @@ def create_project_namespace(spawner, pod, project_name):
 @gen.coroutine
 def setup_project_namespace(spawner, pod, project_name, role, budget):
     short_name = spawner.user.name
-    user_account_name = '%s-%s' % (application_name, short_name)
+    user_account_name = '%s-%s' % (workshop_name, short_name)
 
     # Wait for project namespace to exist before continuing.
 
@@ -1414,7 +1429,7 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
         text = role_binding_template.safe_substitute(
                 configuration=configuration_type, namespace=namespace,
                 name=service_account_name, tag='admin', role='admin',
-                application_name=application_name, username=short_name)
+                workshop_name=workshop_name, username=short_name)
         body = json.loads(text)
 
         role_binding_resource.create(namespace=project_name, body=body)
@@ -1435,7 +1450,7 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
         text = role_binding_template.safe_substitute(
                 configuration=configuration_type, namespace=namespace,
                 name=user_account_name, tag=role, role=role,
-                application_name=application_name, username=short_name)
+                workshop_name=workshop_name, username=short_name)
         body = json.loads(text)
 
         role_binding_resource.create(namespace=project_name, body=body)
@@ -1457,8 +1472,8 @@ def setup_project_namespace(spawner, pod, project_name, role, budget):
         text = role_binding_template.safe_substitute(
                 configuration=configuration_type, namespace=namespace,
                 name=user_account_name, tag='session-rules',
-                role=application_name+'-session-rules',
-                application_name=application_name, username=short_name)
+                role=workshop_name+'-session-rules',
+                workshop_name=workshop_name, username=short_name)
         body = json.loads(text)
 
         role_binding_resource.create(namespace=project_name, body=body)
@@ -1606,7 +1621,7 @@ def create_extra_resources(spawner, pod, project_name, owner_uid,
     text = template.safe_substitute(spawner_namespace=namespace,
             project_namespace=project_name, image_registry=image_registry,
             service_account=user_account_name, username=short_name,
-            application_name=application_name)
+            workshop_name=workshop_name)
 
     data = extra_resources_loader(text)
 
@@ -1629,7 +1644,7 @@ def create_extra_resources(spawner, pod, project_name, owner_uid,
 
                 annotations['spawner/requestor'] = full_service_account_name
                 annotations['spawner/namespace'] = namespace
-                annotations['spawner/deployment'] = application_name
+                annotations['spawner/deployment'] = workshop_name
                 annotations['spawner/account'] = user_account_name
                 annotations['spawner/session'] = pod.metadata.name
 
@@ -1664,7 +1679,7 @@ def create_extra_resources(spawner, pod, project_name, owner_uid,
 @gen.coroutine
 def expose_service_ports(spawner, pod, owner_uid):
     short_name = spawner.user.name
-    user_account_name = '%s-%s' % (application_name, short_name)
+    user_account_name = '%s-%s' % (workshop_name, short_name)
 
     # Can't do this for now if deployed to plain Kubernetes.
 
@@ -1679,7 +1694,7 @@ def expose_service_ports(spawner, pod, owner_uid):
         try:
             text = service_template.safe_substitute(
                     configuration=configuration_type, name=user_account_name,
-                    application_name=application_name, username=short_name,
+                    workshop_name=workshop_name, username=short_name,
                     uid=owner_uid)
             body = json.loads(text)
 
@@ -1702,7 +1717,7 @@ def expose_service_ports(spawner, pod, owner_uid):
             try:
                 host = '%s-%s.%s' % (user_account_name, port, cluster_subdomain)
                 text = route_template.safe_substitute(configuration=configuration_type,
-                        name=user_account_name, application_name=application_name,
+                        name=user_account_name, workshop_name=workshop_name,
                         port='%s' % port, username=short_name, uid=owner_uid, host=host)
                 body = json.loads(text)
 

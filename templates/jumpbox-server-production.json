@@ -49,7 +49,7 @@
             "value": "7200"
         },
         {
-            "name": "TERMINAL_IMAGE",
+            "name": "WORKSHOP_IMAGE",
             "value": "",
             "required": false
         },
@@ -339,8 +339,8 @@
                                         "value": "${NAME_PREFIX}${APPLICATION_NAME}"
                                     },
                                     {
-                                        "name": "TERMINAL_IMAGE",
-                                        "value": "${TERMINAL_IMAGE}"
+                                        "name": "WORKSHOP_IMAGE",
+                                        "value": "${WORKSHOP_IMAGE}"
                                     },
                                     {
                                         "name": "WORKSHOP_MEMORY",

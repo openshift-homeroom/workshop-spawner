@@ -152,7 +152,7 @@ c.KubeSpawner.volumes = [
     {
         'name': 'envvars',
         'configMap': {
-            'name': '%s-session-envvars' % application_name,
+            'name': '%s-session-envvars' % workshop_name,
             'defaultMode': 420
         }
     }
@@ -232,7 +232,7 @@ c.Spawner.environment['RESTART_URL'] = '/restart'
 
 # Intercept creation of pod and used it to trigger our customisations.
 
-project_owner_name = '%s-spawner-extra' % application_name
+project_owner_name = '%s-spawner-extra' % workshop_name
 
 try:
     project_owner = cluster_role_resource.get(project_owner_name)
@@ -244,9 +244,9 @@ except Exception as e:
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
     short_name = spawner.user.name
-    user_account_name = '%s-%s' % (application_name, short_name)
+    user_account_name = '%s-%s' % (workshop_name, short_name)
 
-    project_name = '%s-%s' % (application_name, short_name)
+    project_name = '%s-%s' % (workshop_name, short_name)
 
     pod.spec.automount_service_account_token = True
     pod.spec.service_account_name = user_account_name
@@ -300,7 +300,7 @@ def modify_pod_hook(spawner, pod):
     pod.spec.containers[0].env.append(
             dict(name='SPAWNER_NAMESPACE', value=namespace))
     pod.spec.containers[0].env.append(
-            dict(name='SPAWNER_APPLICATION', value=application_name))
+            dict(name='SPAWNER_APPLICATION', value=workshop_name))
 
     if homeroom_link:
         pod.spec.containers[0].env.append(
@@ -356,7 +356,7 @@ if idle_timeout and int(idle_timeout):
                 ENV="/opt/app-root/etc/profile",
                 BASH_ENV="/opt/app-root/etc/profile",
                 PROMPT_COMMAND=". /opt/app-root/etc/profile",
-                APPLICATION_NAME=application_name,
+                APPLICATION_NAME=workshop_name,
                 KUBERNETES_SERVICE_HOST=kubernetes_service_host,
                 KUBERNETES_SERVICE_PORT=kubernetes_service_port
             ),

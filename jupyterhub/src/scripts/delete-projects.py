@@ -19,9 +19,15 @@ with open(os.path.join(service_account_path, 'namespace')) as fp:
 with open('/var/run/secrets/kubernetes.io/serviceaccount/namespace') as fp:
     namespace = fp.read().strip()
 
-application_name = os.environ.get('APPLICATION_NAME')
+workshop_name = os.environ.get('WORKSHOP_NAME')
 
-service_account_name = '%s-spawner' %  application_name
+if not workshop_name:
+    workshop_name = os.environ.get('APPLICATION_NAME')
+
+if not workshop_name:
+    workshop_name = 'homeroom'
+
+service_account_name = '%s-spawner' %  workshop_name
 
 full_service_account_name = 'system:serviceaccount:%s:%s' % (namespace,
         service_account_name)
@@ -65,7 +71,7 @@ def get_projects():
             if annotations:
                 if (annotations['spawner/requestor'] == full_service_account_name and 
                         annotations['spawner/namespace'] == namespace and
-                        annotations['spawner/deployment'] == application_name):
+                        annotations['spawner/deployment'] == workshop_name):
                     project_details.append(Namespace(project.metadata.name,
                             annotations['spawner/account'],
                             annotations['spawner/session']))
@@ -84,7 +90,7 @@ def get_accounts():
         for account in accounts.items:
             labels = account.metadata.labels
             application_label = labels and labels['app']
-            if application_label == application_name and labels['user']:
+            if application_label == workshop_name and labels['user']:
                 account_details.append(account)
 
     except Exception as e:

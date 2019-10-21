@@ -34,7 +34,7 @@ c.KubeSpawner.volumes = [
     {
         'name': 'envvars',
         'configMap': {
-            'name': '%s-session-envvars' % application_name,
+            'name': '%s-session-envvars' % workshop_name,
             'defaultMode': 420
         }
     }
@@ -172,7 +172,7 @@ c.Spawner.environment['CONSOLE_URL'] = 'http://localhost:10083'
 c.Spawner.environment['DOWNLOAD_URL'] = os.environ.get('DOWNLOAD_URL', '')
 c.Spawner.environment['WORKSHOP_FILE'] = os.environ.get('WORKSHOP_FILE', '')
 
-project_owner_name = '%s-spawner-extra' % application_name
+project_owner_name = '%s-spawner-extra' % workshop_name
 
 try:
     project_owner = cluster_role_resource.get(project_owner_name)
@@ -184,9 +184,9 @@ except Exception as e:
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
     short_name = spawner.user.name
-    user_account_name = '%s-%s' % (application_name, short_name)
+    user_account_name = '%s-%s' % (workshop_name, short_name)
 
-    project_name = '%s-%s' % (application_name, short_name)
+    project_name = '%s-%s' % (workshop_name, short_name)
 
     pod.spec.automount_service_account_token = True
     pod.spec.service_account_name = user_account_name
@@ -240,7 +240,7 @@ def modify_pod_hook(spawner, pod):
     pod.spec.containers[0].env.append(
             dict(name='SPAWNER_NAMESPACE', value=namespace))
     pod.spec.containers[0].env.append(
-            dict(name='SPAWNER_APPLICATION', value=application_name))
+            dict(name='SPAWNER_APPLICATION', value=workshop_name))
 
     if homeroom_link:
         pod.spec.containers[0].env.append(
