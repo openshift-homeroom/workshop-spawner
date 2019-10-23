@@ -155,29 +155,28 @@ def watch_for_homeroom():
             except Exception as e:
                 print('ERROR: Error looking up homeroom route. %s' % e)
 
-        else:
-            try:
-                ingress = ingress_resource.get(namespace=namespace, name=homeroom_name)
+        try:
+            ingress = ingress_resource.get(namespace=namespace, name=homeroom_name)
 
-                scheme = 'http'
+            scheme = 'http'
 
-                if ingress.metadata.annotations:
-                    if ingress.metadata.annotations['homeroom/index'] == homeroom_name:
-                        if ingress.tls:
-                            scheme = 'https'
+            if ingress.metadata.annotations:
+                if ingress.metadata.annotations['homeroom/index'] == homeroom_name:
+                    if ingress.tls:
+                        scheme = 'https'
 
-                        link = '%s://%s' % (scheme, ingress.spec.rules[0].host)
+                    link = '%s://%s' % (scheme, ingress.spec.rules[0].host)
 
-                        if link != homeroom_link:
-                            print('INFO: Homeroom link set to %s.' % link)
-                            homeroom_link = link
+                    if link != homeroom_link:
+                        print('INFO: Homeroom link set to %s.' % link)
+                        homeroom_link = link
 
-            except ApiException as e:
-                if e.status != 404:
-                    print('ERROR: Error looking up homeroom ingress. %s' % e)
-
-            except Exception as e:
+        except ApiException as e:
+            if e.status != 404:
                 print('ERROR: Error looking up homeroom ingress. %s' % e)
+
+        except Exception as e:
+            print('ERROR: Error looking up homeroom ingress. %s' % e)
 
         time.sleep(15)
 
@@ -422,10 +421,7 @@ if not public_hostname:
                 public_hostname = route.spec.host
                 break
 
-        if not public_hostname:
-            raise RuntimeError('Cannot calculate external host name for the spawner.')
-
-    else:
+    if not public_hostname:
         ingresses = ingress_resource.get(namespace=namespace)
 
         for ingresses in ingresses.items:
