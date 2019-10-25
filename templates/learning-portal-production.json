@@ -9,7 +9,7 @@
     },
     "parameters": [
         {
-            "name": "PROJECT_NAME",
+            "name": "SPAWNER_NAMESPACE",
             "value": "",
             "required": true
         },
@@ -195,7 +195,7 @@
                 {
                     "kind": "ServiceAccount",
                     "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
-                    "namespace": "${PROJECT_NAME}"
+                    "namespace": "${SPAWNER_NAMESPACE}"
                 }
             ],
             "roleRef": {
@@ -311,7 +311,7 @@
                 {
                     "kind": "ServiceAccount",
                     "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
-                    "namespace": "${PROJECT_NAME}"
+                    "namespace": "${SPAWNER_NAMESPACE}"
                 }
             ],
             "roleRef": {
@@ -346,7 +346,7 @@
                 {
                     "kind": "ServiceAccount",
                     "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
-                    "namespace": "${PROJECT_NAME}"
+                    "namespace": "${SPAWNER_NAMESPACE}"
                 }
             ],
             "roleRef": {
@@ -381,7 +381,7 @@
                 {
                     "kind": "ServiceAccount",
                     "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
-                    "namespace": "${PROJECT_NAME}"
+                    "namespace": "${SPAWNER_NAMESPACE}"
                 }
             ],
             "roleRef": {
@@ -709,7 +709,7 @@
                 }
             },
             "spec": {
-                "host": "${WORKSHOP_NAME}-${PROJECT_NAME}.${CLUSTER_SUBDOMAIN}",
+                "host": "${WORKSHOP_NAME}-${SPAWNER_NAMESPACE}.${CLUSTER_SUBDOMAIN}",
                 "to": {
                     "kind": "Service",
                     "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",

@@ -9,7 +9,7 @@
     },
     "parameters": [
         {
-            "name": "PROJECT_NAME",
+            "name": "SPAWNER_NAMESPACE",
             "value": "",
             "required": true
         },
@@ -171,7 +171,7 @@
             "secret": "${OAUTH_CLIENT_SECRET}",
             "grantMethod": "auto",
             "redirectURIs": [
-                "https://${WORKSHOP_NAME}-${PROJECT_NAME}.${CLUSTER_SUBDOMAIN}/hub/oauth_callback"
+                "https://${WORKSHOP_NAME}-${SPAWNER_NAMESPACE}.${CLUSTER_SUBDOMAIN}/hub/oauth_callback"
             ]
         },
         {
@@ -519,7 +519,7 @@
                 }
             },
             "spec": {
-                "host": "${WORKSHOP_NAME}-${PROJECT_NAME}.${CLUSTER_SUBDOMAIN}",
+                "host": "${WORKSHOP_NAME}-${SPAWNER_NAMESPACE}.${CLUSTER_SUBDOMAIN}",
                 "to": {
                     "kind": "Service",
                     "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",

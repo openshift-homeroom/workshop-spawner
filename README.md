@@ -43,12 +43,12 @@ For each spawner configuration there is a separate template. The templates come 
 The format of the command for deploying the spawner using any of the templates is:
 
 ```
-oc process -f https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/learning-portal-production.json --param PROJECT_NAME=`oc project --short` --param CLUSTER_SUBDOMAIN=apps.openshiftcluster.com | oc apply -f -
+oc process -f https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/learning-portal-production.json --param SPAWNER_NAMESPACE=`oc project --short` --param CLUSTER_SUBDOMAIN=apps.openshiftcluster.com | oc apply -f -
 ```
 
 In this case we have used the `learning-portal` template. Replace the name with that for the configuration you want to use.
 
-The `PROJECT_NAME` template parameter is to pass in the name of the project the spawner is being deployed into. It should match the current project, or the project name passed in using the `-n` or `--namespace` option if supplied.
+The `SPAWNER_NAMESPACE` template parameter is to pass in the name of the project the spawner is being deployed into. It should match the current project, or the project name passed in using the `-n` or `--namespace` option if supplied.
 
 The `CLUSTER_SUBDOMAIN` template parameter needs to provide the name of the cluster subdomain under which hostnames created for generated routes reside. You can also supply your own custom subdomain so long as DNS is setup to direct requests under that subdomain to the cluster.
 
@@ -75,7 +75,7 @@ Each template provides a range of template parameters that can be supplied to cu
 For example, to override the default image for the user environment and supply a reference to a custom image for a specific workshop, use the `WORKSHOP_IMAGE` template parameter. You can use the `APPLICATION_NAME` template parameter to override the name used for the deployment.
 
 ```
-oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/learning-portal-production.json --param PROJECT_NAME=`oc project --short` --param APPLICATION_NAME=lab-workshop-content --param WORKSHOP_IMAGE=quay.io/openshifthomeroom/lab-workshop-content:master
+oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/learning-portal-production.json --param SPAWNER_NAMESPACE=`oc project --short` --param APPLICATION_NAME=lab-workshop-content --param WORKSHOP_IMAGE=quay.io/openshifthomeroom/lab-workshop-content:master
 ```
 
 Look at the individual template files in the templates directory for the list of parameters they accept.

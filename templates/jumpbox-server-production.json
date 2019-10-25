@@ -9,7 +9,7 @@
     },
     "parameters": [
         {
-            "name": "PROJECT_NAME",
+            "name": "SPAWNER_NAMESPACE",
             "value": "",
             "required": true
         },
@@ -482,7 +482,7 @@
                 }
             },
             "spec": {
-                "host": "${WORKSHOP_NAME}-${PROJECT_NAME}.${CLUSTER_SUBDOMAIN}",
+                "host": "${WORKSHOP_NAME}-${SPAWNER_NAMESPACE}.${CLUSTER_SUBDOMAIN}",
                 "to": {
                     "kind": "Service",
                     "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
@@ -711,7 +711,7 @@
                 }
             },
             "spec": {
-                "host": "${WORKSHOP_NAME}-keycloak-${PROJECT_NAME}.${CLUSTER_SUBDOMAIN}",
+                "host": "${WORKSHOP_NAME}-keycloak-${SPAWNER_NAMESPACE}.${CLUSTER_SUBDOMAIN}",
                 "to": {
                     "kind": "Service",
                     "name": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak",
