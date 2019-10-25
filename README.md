@@ -52,7 +52,7 @@ The `SPAWNER_NAMESPACE` template parameter is to pass in the name of the project
 
 The `CLUSTER_SUBDOMAIN` template parameter needs to provide the name of the cluster subdomain under which hostnames created for generated routes reside. You can also supply your own custom subdomain so long as DNS is setup to direct requests under that subdomain to the cluster.
 
-The default name used by the deployment will be the same as the configuration. If you need to override this, use the `APPLICATION_NAME` template parameter.
+The default name used by the deployment will be the same as the configuration. If you need to override this, use the `WORKSHOP_NAME` template parameter.
 
 If you intend deploying multiple instances of the spawner using the same configuration type, and with the same deployed name, in different projects, you must provide the `NAME_PREFIX` template parameter and pass in a value which when combined with the name of the deployment is unique for the cluster. This is necessary as the deployment will create resources which are global and not contained within the project namespace. If you don't supply `NAME_PREFIX`, the global resource names will clash for the two deployments.
 
@@ -65,17 +65,17 @@ To delete the deployment run the command:
 oc delete all,serviceaccount,configmap,secret,persistentvolumeclaim,rolebinding,clusterrole,clusterrolebinding -l app=learning-portal
 ```
 
-Replace the value of the `app` label with that which was actually used for the deployment. This will be a conbination of `NAME_PREFIX` and `APPLICATION_NAME`.
+Replace the value of the `app` label with that which was actually used for the deployment. This will be a combination of `NAME_PREFIX` and `WORKSHOP_NAME`.
 
 Customizing configuration
 -------------------------
 
 Each template provides a range of template parameters that can be supplied to customize the deployment.
 
-For example, to override the default image for the user environment and supply a reference to a custom image for a specific workshop, use the `WORKSHOP_IMAGE` template parameter. You can use the `APPLICATION_NAME` template parameter to override the name used for the deployment.
+For example, to override the default image for the user environment and supply a reference to a custom image for a specific workshop, use the `WORKSHOP_IMAGE` template parameter. You can use the `WORKSHOP_NAME` template parameter to override the name used for the deployment.
 
 ```
-oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/learning-portal-production.json --param SPAWNER_NAMESPACE=`oc project --short` --param APPLICATION_NAME=lab-workshop-content --param WORKSHOP_IMAGE=quay.io/openshifthomeroom/lab-workshop-content:master
+oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/learning-portal-production.json --param SPAWNER_NAMESPACE=`oc project --short` --param WORKSHOP_NAME=lab-workshop-content --param WORKSHOP_IMAGE=quay.io/openshifthomeroom/lab-workshop-content:master
 ```
 
 Look at the individual template files in the templates directory for the list of parameters they accept.

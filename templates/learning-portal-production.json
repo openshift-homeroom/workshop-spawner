@@ -552,8 +552,12 @@
                                         "value": "learning-portal"
                                     },
                                     {
-                                        "name": "WORKSHOP_NAME",
+                                        "name": "APPLICATION_NAME",
                                         "value": "${NAME_PREFIX}${WORKSHOP_NAME}"
+                                    },
+                                    {
+                                        "name": "WORKSHOP_NAME",
+                                        "value": "${WORKSHOP_NAME}"
                                     },
                                     {
                                         "name": "HOMEROOM_NAME",

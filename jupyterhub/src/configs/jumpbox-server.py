@@ -32,7 +32,7 @@ c.KubeSpawner.volumes = [
     {
         'name': 'envvars',
         'configMap': {
-            'name': '%s-session-envvars' % workshop_name,
+            'name': '%s-session-envvars' % application_name,
             'defaultMode': 420
         }
     }
@@ -117,7 +117,7 @@ c.Spawner.environment['WORKSHOP_FILE'] = os.environ.get('WORKSHOP_FILE', '')
 
 # Run as our own service account which doesn't have any access rights.
 
-c.KubeSpawner.service_account = '%s-session' % workshop_name
+c.KubeSpawner.service_account = '%s-session' % application_name
 
 # Setup culling of terminal instances if timeout parameter is supplied.
 
