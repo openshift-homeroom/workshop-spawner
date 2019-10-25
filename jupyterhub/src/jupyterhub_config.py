@@ -345,7 +345,7 @@ if not workshop_image:
 
 if not workshop_image:
     c.KubeSpawner.image_pull_policy = 'Always'
-    workshop_image = '%s:latest' % workshop_name
+    workshop_image = '%s-session:latest' % workshop_name
 
 def resolve_image_name(name):
     # If no image stream resource we are on plain Kubernetes.

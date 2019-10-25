@@ -535,7 +535,7 @@
             "kind": "ImageStream",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${WORKSHOP_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-session",
                 "labels": {
                     "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
