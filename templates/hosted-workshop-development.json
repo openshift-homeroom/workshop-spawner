@@ -19,7 +19,7 @@
             "required": true
         },
         {
-            "name": "APPLICATION_NAME",
+            "name": "WORKSHOP_NAME",
             "value": "hosted-workshop",
             "required": true
         },
@@ -154,9 +154,9 @@
             "kind": "ServiceAccount",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "hosted-workshop",
                     "class": "spawner"
                 }
@@ -166,9 +166,9 @@
             "kind": "OAuthClient",
             "apiVersion": "oauth.openshift.io/v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-console",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-console",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "hosted-workshop",
                     "class": "spawner"
                 }
@@ -176,16 +176,16 @@
             "secret": "${OAUTH_CLIENT_SECRET}",
             "grantMethod": "auto",
             "redirectURIs": [
-                "https://${APPLICATION_NAME}-${PROJECT_NAME}.${CLUSTER_SUBDOMAIN}/hub/oauth_callback"
+                "https://${WORKSHOP_NAME}-${PROJECT_NAME}.${CLUSTER_SUBDOMAIN}/hub/oauth_callback"
             ]
         },
         {
             "kind": "RoleBinding",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-basic",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-basic",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "hosted-workshop",
                     "class": "spawner"
                 }
@@ -193,7 +193,7 @@
             "subjects": [
                 {
                     "kind": "ServiceAccount",
-                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner"
+                    "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner"
                 }
             ],
             "roleRef": {
@@ -204,9 +204,9 @@
             "kind": "ImageStream",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "hosted-workshop",
                     "class": "spawner"
                 }
@@ -216,9 +216,9 @@
             "kind": "ConfigMap",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-configs",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-configs",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "hosted-workshop",
                     "class": "spawner"
                 }
@@ -232,9 +232,9 @@
             "kind": "ConfigMap",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-session-envvars",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-session-envvars",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "hosted-workshop",
                     "class": "spawner"
                 }
@@ -249,9 +249,9 @@
             "kind": "BuildConfig",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "hosted-workshop",
                     "class": "spawner"
                 }
@@ -285,7 +285,7 @@
                 "output": {
                     "to": {
                         "kind": "ImageStreamTag",
-                        "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner:latest"
+                        "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner:latest"
                     }
                 }
             }
@@ -294,9 +294,9 @@
             "kind": "DeploymentConfig",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "hosted-workshop",
                     "class": "spawner"
                 }
@@ -318,30 +318,30 @@
                             ],
                             "from": {
                                 "kind": "ImageStreamTag",
-                                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner:latest"
+                                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner:latest"
                             }
                         }
                     }
                 ],
                 "replicas": 1,
                 "selector": {
-                    "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}-spawner"
+                    "deploymentconfig": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner"
                 },
                 "template": {
                     "metadata": {
                         "labels": {
-                            "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
-                            "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                            "deploymentconfig": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
+                            "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                             "spawner": "hosted-workshop",
                             "class": "spawner"
                         }
                     },
                     "spec": {
-                        "serviceAccountName": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                        "serviceAccountName": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                         "containers": [
                             {
                                 "name": "spawner",
-                                "image": "${NAME_PREFIX}${APPLICATION_NAME}-spawner:latest",
+                                "image": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner:latest",
                                 "ports": [
                                     {
                                         "containerPort": 8080,
@@ -384,8 +384,8 @@
                                         "value": "hosted-workshop"
                                     },
                                     {
-                                        "name": "APPLICATION_NAME",
-                                        "value": "${NAME_PREFIX}${APPLICATION_NAME}"
+                                        "name": "WORKSHOP_NAME",
+                                        "value": "${NAME_PREFIX}${WORKSHOP_NAME}"
                                     },
                                     {
                                         "name": "HOMEROOM_NAME",
@@ -472,13 +472,13 @@
                             {
                                 "name": "data",
                                 "persistentVolumeClaim": {
-                                    "claimName": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-data"
+                                    "claimName": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-data"
                                 }
                             },
                             {
                                 "name": "configs",
                                 "configMap": {
-                                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-configs",
+                                    "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-configs",
                                     "defaultMode": 420
                                 }
                             }
@@ -491,9 +491,9 @@
             "apiVersion": "v1",
             "kind": "PersistentVolumeClaim",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-data",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-data",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "hosted-workshop",
                     "class": "spawner"
                 }
@@ -513,9 +513,9 @@
             "kind": "Service",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "hosted-workshop",
                     "class": "spawner"
                 }
@@ -536,7 +536,7 @@
                     }
                 ],
                 "selector": {
-                    "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}-spawner"
+                    "deploymentconfig": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner"
                 }
             }
         },
@@ -544,9 +544,9 @@
             "kind": "Route",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "hosted-workshop",
                     "class": "spawner"
                 },
@@ -558,10 +558,10 @@
                 }
             },
             "spec": {
-                "host": "${APPLICATION_NAME}-${PROJECT_NAME}.${CLUSTER_SUBDOMAIN}",
+                "host": "${WORKSHOP_NAME}-${PROJECT_NAME}.${CLUSTER_SUBDOMAIN}",
                 "to": {
                     "kind": "Service",
-                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                    "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                     "weight": 100
                 },
                 "port": {
@@ -577,9 +577,9 @@
             "kind": "ImageStream",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "hosted-workshop",
                     "class": "spawner"
                 }

@@ -19,7 +19,7 @@
             "required": true
         },
         {
-            "name": "APPLICATION_NAME",
+            "name": "WORKSHOP_NAME",
             "value": "learning-portal",
             "required": true
         },
@@ -177,9 +177,9 @@
             "kind": "ServiceAccount",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
@@ -189,9 +189,9 @@
             "kind": "ClusterRoleBinding",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-basic",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-basic",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
@@ -199,7 +199,7 @@
             "subjects": [
                 {
                     "kind": "ServiceAccount",
-                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                    "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                     "namespace": "${PROJECT_NAME}"
                 }
             ],
@@ -213,9 +213,9 @@
             "kind": "ClusterRole",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-extra",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-extra",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
@@ -305,9 +305,9 @@
             "kind": "ClusterRoleBinding",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-extra",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-extra",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
@@ -315,21 +315,21 @@
             "subjects": [
                 {
                     "kind": "ServiceAccount",
-                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                    "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                     "namespace": "${PROJECT_NAME}"
                 }
             ],
             "roleRef": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-extra"
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-extra"
             }
         },
         {
             "kind": "ClusterRole",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-rules",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-rules",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
@@ -340,9 +340,9 @@
             "kind": "ClusterRoleBinding",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-rules",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-rules",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
@@ -350,21 +350,21 @@
             "subjects": [
                 {
                     "kind": "ServiceAccount",
-                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                    "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                     "namespace": "${PROJECT_NAME}"
                 }
             ],
             "roleRef": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-rules"
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-rules"
             }
         },
         {
             "kind": "ClusterRole",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-session-rules",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-session-rules",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
@@ -375,9 +375,9 @@
             "kind": "ClusterRoleBinding",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-session-rules",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-session-rules",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
@@ -385,21 +385,21 @@
             "subjects": [
                 {
                     "kind": "ServiceAccount",
-                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                    "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                     "namespace": "${PROJECT_NAME}"
                 }
             ],
             "roleRef": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-session-rules"
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-session-rules"
             }
         },
         {
             "kind": "ImageStream",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
@@ -409,9 +409,9 @@
             "kind": "BuildConfig",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
@@ -445,7 +445,7 @@
                 "output": {
                     "to": {
                         "kind": "ImageStreamTag",
-                        "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner:latest"
+                        "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner:latest"
                     }
                 }
             }
@@ -454,9 +454,9 @@
             "kind": "ConfigMap",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-configs",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-configs",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
@@ -470,9 +470,9 @@
             "kind": "ConfigMap",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-session-resources",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-session-resources",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
@@ -485,9 +485,9 @@
             "kind": "ConfigMap",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-session-envvars",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-session-envvars",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
@@ -502,9 +502,9 @@
             "kind": "DeploymentConfig",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
@@ -526,26 +526,26 @@
                             ],
                             "from": {
                                 "kind": "ImageStreamTag",
-                                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner:latest"
+                                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner:latest"
                             }
                         }
                     }
                 ],
                 "replicas": 1,
                 "selector": {
-                    "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}-spawner"
+                    "deploymentconfig": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner"
                 },
                 "template": {
                     "metadata": {
                         "labels": {
-                            "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
-                            "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                            "deploymentconfig": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
+                            "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                             "spawner": "learning-portal",
                             "class": "spawner"
                         }
                     },
                     "spec": {
-                        "serviceAccountName": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                        "serviceAccountName": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                         "containers": [
                             {
                                 "name": "spawner",
@@ -591,8 +591,8 @@
                                         "value": "learning-portal"
                                     },
                                     {
-                                        "name": "APPLICATION_NAME",
-                                        "value": "${NAME_PREFIX}${APPLICATION_NAME}"
+                                        "name": "WORKSHOP_NAME",
+                                        "value": "${NAME_PREFIX}${WORKSHOP_NAME}"
                                     },
                                     {
                                         "name": "HOMEROOM_NAME",
@@ -683,14 +683,14 @@
                             {
                                 "name": "configs",
                                 "configMap": {
-                                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner-configs",
+                                    "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-configs",
                                     "defaultMode": 420
                                 }
                             },
                             {
                                 "name": "resources",
                                 "configMap": {
-                                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-session-resources",
+                                    "name": "${NAME_PREFIX}${WORKSHOP_NAME}-session-resources",
                                     "defaultMode": 420
                                 }
                             }
@@ -703,9 +703,9 @@
             "kind": "Service",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
@@ -726,7 +726,7 @@
                     }
                 ],
                 "selector": {
-                    "deploymentconfig": "${NAME_PREFIX}${APPLICATION_NAME}-spawner"
+                    "deploymentconfig": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner"
                 }
             }
         },
@@ -734,9 +734,9 @@
             "kind": "Route",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 },
@@ -748,10 +748,10 @@
                 }
             },
             "spec": {
-                "host": "${APPLICATION_NAME}-${PROJECT_NAME}.${CLUSTER_SUBDOMAIN}",
+                "host": "${WORKSHOP_NAME}-${PROJECT_NAME}.${CLUSTER_SUBDOMAIN}",
                 "to": {
                     "kind": "Service",
-                    "name": "${NAME_PREFIX}${APPLICATION_NAME}-spawner",
+                    "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                     "weight": 100
                 },
                 "port": {
@@ -767,9 +767,9 @@
             "kind": "ImageStream",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${NAME_PREFIX}${APPLICATION_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}",
                 "labels": {
-                    "app": "${NAME_PREFIX}${APPLICATION_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "learning-portal",
                     "class": "spawner"
                 }
