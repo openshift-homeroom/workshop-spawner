@@ -1607,6 +1607,24 @@ if os.path.exists('/opt/app-root/resources/extra_resources.json'):
         extra_resources = fp.read().strip()
         extra_resources_loader = json.loads
 
+def _namespaced_resources():
+    api_groups = api_client.resources.parse_api_groups()
+
+    for api in api_groups.values():
+        for domain, items in api.items():
+            for version, group in items.items():
+                try:
+                    for kind in group.resources:
+                        if domain:
+                            version = '%s/%s' % (domain, version)
+                        resource = api_client.resources.get(api_version=version, kind=kind)
+                        if type(resource) == Resource and resource.namespaced:
+                            yield (version, resource.kind)
+                except Exception:
+                    pass
+
+namespaced_resources = set(_namespaced_resources())
+
 @gen.coroutine
 def create_extra_resources(spawner, pod, project_name, owner_uid,
         user_account_name, short_name):
@@ -1630,8 +1648,7 @@ def create_extra_resources(spawner, pod, project_name, owner_uid,
             kind = body['kind']
             api_version = body['apiVersion']
 
-            if kind.lower() in ('securitycontextconstraints',
-                    'clusterrolebinding', 'namespace'):
+            if not (api_version, kind) in namespaced_resources:
                 body['metadata']['ownerReferences'] = [dict(
                     apiVersion='v1', kind='Namespace', blockOwnerDeletion=False,
                     controller=True, name=project_name, uid=owner_uid)]
