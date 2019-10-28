@@ -20,7 +20,7 @@ from kubernetes.client.configuration import Configuration
 from kubernetes.config.incluster_config import load_incluster_config
 from kubernetes.client.api_client import ApiClient
 
-from openshift.dynamic import DynamicClient
+from openshift.dynamic import DynamicClient, Resource
 from openshift.dynamic.exceptions import ResourceNotFoundError
 
 # The workshop name and configuration type are passed in through the
