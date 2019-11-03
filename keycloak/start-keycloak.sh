@@ -14,13 +14,11 @@ SPAWNER_HOSTNAME=`curl -s -k -H "Authorization: Bearer $TOKEN" $ROUTES_URL | \
 
 KEYCLOAK_ARGS=
 
-if [ -f /tmp/src/realm.json ]; then
-    cat /tmp/src/realm.json | sed \
-        -e "s/{{ *SPAWNER_HOSTNAME *}}/$SPAWNER_HOSTNAME/g" \
-        -e "s/{{ *OAUTH_CLIENT_SECRET *}}/$OAUTH_CLIENT_SECRET/g" > /tmp/realm.json
+cat /realm.json | sed \
+    -e "s/{{ *SPAWNER_HOSTNAME *}}/$SPAWNER_HOSTNAME/g" \
+    -e "s/{{ *OAUTH_CLIENT_SECRET *}}/$OAUTH_CLIENT_SECRET/g" > /tmp/realm.json
 
-    KEYCLOAK_ARGS="$KEYCLOAK_ARGS -Dkeycloak.import=/tmp/realm.json"
-    KEYCLOAK_ARGS="$KEYCLOAK_ARGS -Dkeycloak.migration.strategy=IGNORE_EXISTING"
-fi
+KEYCLOAK_ARGS="$KEYCLOAK_ARGS -Dkeycloak.import=/tmp/realm.json"
+KEYCLOAK_ARGS="$KEYCLOAK_ARGS -Dkeycloak.migration.strategy=IGNORE_EXISTING"
 
-exec /opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 $KEYCLOAK_ARGS
+exec /opt/jboss/tools/docker-entrypoint.sh $KEYCLOAK_ARGS "$@"

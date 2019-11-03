@@ -606,7 +606,7 @@
                     "dockerStrategy": {
                         "from": {
                             "kind": "DockerImage",
-                            "name": "jboss/keycloak-openshift:4.8.3.Final"
+                            "name": "jboss/keycloak:7.0.1"
                         }
                     }
                 },
