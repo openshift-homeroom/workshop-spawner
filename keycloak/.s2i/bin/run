@@ -10,9 +10,7 @@ NAMESPACE_URL="$SERVER_URL/apis/route.openshift.io/v1/namespaces/$NAMESPACE"
 ROUTES_URL="$NAMESPACE_URL/routes/$SPAWNER_APPLICATION"
 
 SPAWNER_HOSTNAME=`curl -s -k -H "Authorization: Bearer $TOKEN" $ROUTES_URL | \
-    python -c "import json, sys; \
-               data = json.loads(sys.stdin.read()); \
-               print(data['spec']['host'])"`
+    grep '"host"' | head -1 | sed -e 's/^.*host": "//' -e 's/".*//'`
 
 KEYCLOAK_ARGS=
 
