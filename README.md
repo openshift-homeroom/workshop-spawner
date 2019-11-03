@@ -62,7 +62,7 @@ Deleting the deployment
 To delete the deployment run the command:
 
 ```
-oc delete all,serviceaccount,configmap,secret,persistentvolumeclaim,rolebinding,clusterrole,clusterrolebinding -l app=learning-portal
+oc delete all,serviceaccount,configmap,secret,persistentvolumeclaim,rolebinding,clusterrole,clusterrolebinding,oauthclient -l app=learning-portal
 ```
 
 Replace the value of the `app` label with that which was actually used for the deployment. This will be a combination of `NAME_PREFIX` and `WORKSHOP_NAME`.
