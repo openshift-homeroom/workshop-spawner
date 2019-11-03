@@ -25,4 +25,4 @@ if [ -f /tmp/src/realm.json ]; then
     KEYCLOAK_ARGS="$KEYCLOAK_ARGS -Dkeycloak.migration.strategy=IGNORE_EXISTING"
 fi
 
-exec start-keycloak.sh -b 0.0.0.0 $KEYCLOAK_ARGS
+exec /opt/jboss/tools/docker-entrypoint.sh -b 0.0.0.0 $KEYCLOAK_ARGS
