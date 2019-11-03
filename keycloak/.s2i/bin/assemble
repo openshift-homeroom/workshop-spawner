@@ -1,7 +1,3 @@
 #!/bin/bash
 
 set -x
-
-if [ -f /tmp/src/realm.json ]; then
-    mv /tmp/src/realm.json .
-fi

@@ -16,8 +16,8 @@ SPAWNER_HOSTNAME=`curl -s -k -H "Authorization: Bearer $TOKEN" $ROUTES_URL | \
 
 KEYCLOAK_ARGS=
 
-if [ -f realm.json ]; then
-    cat realm.json | sed \
+if [ -f /tmp/src/realm.json ]; then
+    cat /tmp/src/realm.json | sed \
         -e "s/{{ *SPAWNER_HOSTNAME *}}/$SPAWNER_HOSTNAME/g" \
         -e "s/{{ *OAUTH_CLIENT_SECRET *}}/$OAUTH_CLIENT_SECRET/g" > /tmp/realm.json
 
