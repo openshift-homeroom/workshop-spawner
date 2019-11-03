@@ -15,4 +15,6 @@ USER 1000
 
 RUN /tmp/scripts/assemble
 
+ENTRYPOINT [ "/usr/bin/env" ]
+
 CMD [ "/tmp/scripts/run" ]
