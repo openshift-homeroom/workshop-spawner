@@ -19,8 +19,20 @@ with open(os.path.join(service_account_path, 'namespace')) as fp:
 with open('/var/run/secrets/kubernetes.io/serviceaccount/namespace') as fp:
     namespace = fp.read().strip()
 
+workshop_name = os.environ.get('WORKSHOP_NAME')
+
 application_name = os.environ.get('APPLICATION_NAME')
-service_account_name = '%s-%s-hub' %  (application_name, namespace)
+
+if not application_name:
+    workshop_name = application_name
+
+if not workshop_name:
+    workshop_name = 'homeroom'
+
+service_account_name = '%s-spawner' %  application_name
+
+full_service_account_name = 'system:serviceaccount:%s:%s' % (namespace,
+        service_account_name)
 
 load_incluster_config()
 
@@ -38,8 +50,8 @@ pod_resource = api_client.resources.get(
 service_account_resource = api_client.resources.get(
      api_version='v1', kind='ServiceAccount')
 
-project_resource = api_client.resources.get(
-     api_version='project.openshift.io/v1', kind='Project')
+namespace_resource = api_client.resources.get(
+     api_version='v1', kind='Namespace')
 
 role_binding_resource = api_client.resources.get(
      api_version='rbac.authorization.k8s.io/v1', kind='RoleBinding')
@@ -48,24 +60,21 @@ project_cache = {}
 account_cache = {}
 orphan_cache = {}
 
-Project = namedtuple('Project', ['name', 'account', 'pod'])
+Namespace = namedtuple('Namespace', ['name', 'account', 'pod'])
 
 def get_projects():
     project_details = []
 
-    full_account_name = 'system:serviceaccount:%s:%s' % (namespace,
-            service_account_name)
-
     try:
-        projects = project_resource.get(namespace=namespace)
+        projects = namespace_resource.get(namespace=namespace)
 
         for project in projects.items:
             annotations = project.metadata.annotations
             if annotations:
-                if (annotations['spawner/requestor'] == full_account_name and 
+                if (annotations['spawner/requestor'] == full_service_account_name and 
                         annotations['spawner/namespace'] == namespace and
                         annotations['spawner/deployment'] == application_name):
-                    project_details.append(Project(project.metadata.name,
+                    project_details.append(Namespace(project.metadata.name,
                             annotations['spawner/account'],
                             annotations['spawner/session']))
 
@@ -77,15 +86,13 @@ def get_projects():
 def get_accounts():
     account_details = []
 
-    hub_name = '%s-%s' % (application_name, namespace)
-
     try:
         accounts = service_account_resource.get(namespace=namespace)
 
         for account in accounts.items:
             labels = account.metadata.labels
-            hub_label = labels and labels['app']
-            if hub_label == hub_name and labels['user']:
+            application_label = labels and labels['app']
+            if application_label == application_name and labels['user']:
                 account_details.append(account)
 
     except Exception as e:
@@ -173,7 +180,7 @@ def purge_project(name):
 
 def delete_project(name):
     try:
-        project_resource.delete(name=name)
+        namespace_resource.delete(name=name)
 
         print('INFO: deleted project %s' % name)
 

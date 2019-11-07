@@ -4,12 +4,14 @@
 # in. The project and service account will be deleted when the session
 # goes idle or the time limit for the session has expired.
 
-# Use an anonymous authenticator. Users will be automatically assigned a
-# user name and don't need to provide a password. During the process of
-# doing the psuedo authentication, create a service account for them,
-# where the name of service account is their user name. The special
-# '/restart' URL handler will cause any session to be restarted and they
-# will be given a new instance.
+# Uses an anonymous authenticator. Users will be automatically assigned a
+# user name. If a spawner password is provided, should log in with an
+# email for user name and the spawner password. The email is not used as
+# part of the user name and a user name is still automatically assigned.
+# During the process of doing the psuedo authentication, create a
+# service account for them, where the name of service account is their
+# user name. The special '/restart' URL handler will cause any session
+# to be restarted and they will be given a new instance.
 
 import functools
 import random
@@ -150,7 +152,7 @@ c.KubeSpawner.volumes = [
     {
         'name': 'envvars',
         'configMap': {
-            'name': '%s-env' % application_name,
+            'name': '%s-session-envvars' % application_name,
             'defaultMode': 420
         }
     }
@@ -164,8 +166,8 @@ c.KubeSpawner.volume_mounts = [
 ]
 
 # Deploy embedded web console as a separate container within the same
-# pod as the terminal instance. Currently use latest, but need to tie
-# this to the specific OpenShift version once OpenShift 4.0 is released.
+# pod as the terminal instance. Need to update this to calculate the the
+# specific OpenShift version.
 
 console_branding = os.environ.get('CONSOLE_BRANDING', 'openshift')
 console_image = os.environ.get('CONSOLE_IMAGE', 'quay.io/openshift/origin-console:4.1')
@@ -230,7 +232,7 @@ c.Spawner.environment['RESTART_URL'] = '/restart'
 
 # Intercept creation of pod and used it to trigger our customisations.
 
-project_owner_name = '%s-%s-spawner' % (application_name, namespace)
+project_owner_name = '%s-spawner-extra' % application_name
 
 try:
     project_owner = cluster_role_resource.get(project_owner_name)
@@ -241,12 +243,10 @@ except Exception as e:
 
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
-    hub = '%s-%s' % (application_name, namespace)
     short_name = spawner.user.name
-    user_account_name = '%s-%s' % (hub, short_name)
-    hub_account_name = '%s-hub' % hub
+    user_account_name = '%s-%s' % (application_name, short_name)
 
-    project_name = '%s-%s' % (hub, short_name)
+    project_name = '%s-%s' % (application_name, short_name)
 
     pod.spec.automount_service_account_token = True
     pod.spec.service_account_name = user_account_name
@@ -295,18 +295,12 @@ def modify_pod_hook(spawner, pod):
             dict(name='PROJECT_NAMESPACE', value=project_name))
 
     # Add environment variables for the namespace JupyterHub is running
-    # in and its name. Those with JUPYTERHUB prefix are for backwards
-    # compatibility and should not be used.
+    # in and its name.
 
     pod.spec.containers[0].env.append(
             dict(name='SPAWNER_NAMESPACE', value=namespace))
     pod.spec.containers[0].env.append(
             dict(name='SPAWNER_APPLICATION', value=application_name))
-
-    pod.spec.containers[0].env.append(
-            dict(name='JUPYTERHUB_NAMESPACE', value=namespace))
-    pod.spec.containers[0].env.append(
-            dict(name='JUPYTERHUB_APPLICATION', value=application_name))
 
     if homeroom_link:
         pod.spec.containers[0].env.append(

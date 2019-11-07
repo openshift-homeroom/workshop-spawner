@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+bases:
+- ../../bases/spawner-resources
+
+commonLabels:
+  app: learning-portal
+  spawner: learning-portal
+
+configMapGenerator:
+- name: spawner-environ
+  behavior: merge
+  literals:
+  - CONFIGURATION_TYPE="learning-portal"
+  - SERVER_LIMIT="8"
+  - RESOURCE_BUDGET="default"

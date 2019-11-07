@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: spawner
+  annotations:
+    homeroom/group: homeroom
+spec:
+  rules:
+  - http:
+      paths:
+      - path: "/"
+        backend:
+          serviceName: spawner
+          servicePort: 8080

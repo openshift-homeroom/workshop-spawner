@@ -9,14 +9,24 @@
     },
     "parameters": [
         {
-            "name": "PROJECT_NAME",
+            "name": "SPAWNER_NAMESPACE",
             "value": "",
             "required": true
         },
         {
-            "name": "APPLICATION_NAME",
-            "value": "jumpbox",
+            "name": "CLUSTER_SUBDOMAIN",
+            "value": "",
             "required": true
+        },
+        {
+            "name": "WORKSHOP_NAME",
+            "value": "jumpbox-server",
+            "required": true
+        },
+        {
+            "name": "NAME_PREFIX",
+            "value": "",
+            "required": false
         },
         {
             "name": "GIT_REPOSITORY_URL",
@@ -49,7 +59,7 @@
             "value": "7200"
         },
         {
-            "name": "TERMINAL_IMAGE",
+            "name": "WORKSHOP_IMAGE",
             "value": "",
             "required": false
         },
@@ -125,14 +135,6 @@
             "required": true
         },
         {
-            "name": "JUPYTERHUB_HOST",
-            "value": ""
-        },
-        {
-            "name": "KEYCLOAK_HOST",
-            "value": ""
-        },
-        {
             "name": "LETS_ENCRYPT",
             "value": "false",
             "required": true
@@ -143,10 +145,9 @@
             "kind": "ServiceAccount",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -156,10 +157,9 @@
             "kind": "ServiceAccount",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-${PROJECT_NAME}-user",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-session",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -169,10 +169,9 @@
             "kind": "RoleBinding",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-edit",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-basic",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -180,7 +179,7 @@
             "subjects": [
                 {
                     "kind": "ServiceAccount",
-                    "name": "${APPLICATION_NAME}-${PROJECT_NAME}-hub"
+                    "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner"
                 }
             ],
             "roleRef": {
@@ -191,10 +190,9 @@
             "kind": "ImageStream",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-hub",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -204,10 +202,9 @@
             "kind": "BuildConfig",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-hub",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -241,7 +238,7 @@
                 "output": {
                     "to": {
                         "kind": "ImageStreamTag",
-                        "name": "${APPLICATION_NAME}-hub:latest"
+                        "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner:latest"
                     }
                 }
             }
@@ -250,10 +247,9 @@
             "kind": "ConfigMap",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-cfg",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-configs",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -267,10 +263,9 @@
             "kind": "ConfigMap",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-env",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-session-envvars",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -285,10 +280,9 @@
             "kind": "DeploymentConfig",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -310,25 +304,26 @@
                             ],
                             "from": {
                                 "kind": "ImageStreamTag",
-                                "name": "${APPLICATION_NAME}-hub:latest"
+                                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner:latest"
                             }
                         }
                     }
                 ],
                 "replicas": 1,
                 "selector": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "deploymentconfig": "${APPLICATION_NAME}"
+                    "deploymentconfig": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner"
                 },
                 "template": {
                     "metadata": {
                         "labels": {
-                            "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                            "deploymentconfig": "${APPLICATION_NAME}"
+                            "deploymentconfig": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
+                            "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
+                            "spawner": "jumpbox-server",
+                            "class": "spawner"
                         }
                     },
                     "spec": {
-                        "serviceAccountName": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
+                        "serviceAccountName": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                         "containers": [
                             {
                                 "name": "spawner",
@@ -375,11 +370,15 @@
                                     },
                                     {
                                         "name": "APPLICATION_NAME",
-                                        "value": "${APPLICATION_NAME}"
+                                        "value": "${NAME_PREFIX}${WORKSHOP_NAME}"
                                     },
                                     {
-                                        "name": "TERMINAL_IMAGE",
-                                        "value": "${TERMINAL_IMAGE}"
+                                        "name": "WORKSHOP_NAME",
+                                        "value": "${WORKSHOP_NAME}"
+                                    },
+                                    {
+                                        "name": "WORKSHOP_IMAGE",
+                                        "value": "${WORKSHOP_IMAGE}"
                                     },
                                     {
                                         "name": "WORKSHOP_MEMORY",
@@ -428,7 +427,7 @@
                                         "name": "data"
                                     },
                                     {
-                                        "name": "config",
+                                        "name": "configs",
                                         "mountPath": "/opt/app-root/configs"
                                     }
                                 ]
@@ -438,13 +437,13 @@
                             {
                                 "name": "data",
                                 "persistentVolumeClaim": {
-                                    "claimName": "${APPLICATION_NAME}-hub-data"
+                                    "claimName": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-data"
                                 }
                             },
                             {
-                                "name": "config",
+                                "name": "configs",
                                 "configMap": {
-                                    "name": "${APPLICATION_NAME}-cfg",
+                                    "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-configs",
                                     "defaultMode": 420
                                 }
                             }
@@ -457,10 +456,9 @@
             "apiVersion": "v1",
             "kind": "PersistentVolumeClaim",
             "metadata": {
-                "name": "${APPLICATION_NAME}-hub-data",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner-data",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -480,10 +478,9 @@
             "kind": "Service",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -504,8 +501,7 @@
                     }
                 ],
                 "selector": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "deploymentconfig": "${APPLICATION_NAME}"
+                    "deploymentconfig": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner"
                 }
             }
         },
@@ -513,10 +509,9 @@
             "kind": "Route",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 },
@@ -525,10 +520,10 @@
                 }
             },
             "spec": {
-                "host": "${JUPYTERHUB_HOST}",
+                "host": "${WORKSHOP_NAME}-${SPAWNER_NAMESPACE}.${CLUSTER_SUBDOMAIN}",
                 "to": {
                     "kind": "Service",
-                    "name": "${APPLICATION_NAME}",
+                    "name": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                     "weight": 100
                 },
                 "port": {
@@ -544,10 +539,9 @@
             "kind": "ImageStream",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-session",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -561,7 +555,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "quay.io/openshifthomeroom/workshop-terminal:3.1.0"
+                            "name": "quay.io/openshifthomeroom/workshop-terminal:3.4.2"
                         }
                     }
                 ]
@@ -571,10 +565,9 @@
             "kind": "ImageStream",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-keycloak",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -584,10 +577,9 @@
             "kind": "BuildConfig",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-keycloak",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -614,14 +606,14 @@
                     "dockerStrategy": {
                         "from": {
                             "kind": "DockerImage",
-                            "name": "jboss/keycloak-openshift:4.8.3.Final"
+                            "name": "jboss/keycloak:7.0.1"
                         }
                     }
                 },
                 "output": {
                     "to": {
                         "kind": "ImageStreamTag",
-                        "name": "${APPLICATION_NAME}-keycloak:latest"
+                        "name": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak:latest"
                     }
                 }
             }
@@ -630,10 +622,9 @@
             "kind": "DeploymentConfig",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-keycloak",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -651,7 +642,7 @@
                             ],
                             "from": {
                                 "kind": "ImageStreamTag",
-                                "name": "${APPLICATION_NAME}-keycloak:latest"
+                                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak:latest"
                             }
                         },
                         "type": "ImageChange"
@@ -662,19 +653,20 @@
                 ],
                 "replicas": 1,
                 "selector": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "deploymentconfig": "${APPLICATION_NAME}-keycloak"
+                    "deploymentconfig": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak"
                 },
                 "template": {
                     "metadata": {
-                        "name": "${APPLICATION_NAME}-keycloak",
+                        "name": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak",
                         "labels": {
-                            "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                            "deploymentconfig": "${APPLICATION_NAME}-keycloak"
+                            "deploymentconfig": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak",
+                            "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
+                            "spawner": "jumpbox-server",
+                            "class": "spawner"
                         }
                     },
                     "spec": {
-                        "serviceAccountName": "${APPLICATION_NAME}-${PROJECT_NAME}-hub",
+                        "serviceAccountName": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner",
                         "containers": [
                             {
                                 "name": "keycloak",
@@ -695,8 +687,8 @@
                                 },
                                 "env": [
                                     {
-                                        "name": "JUPYTERHUB_SERVICE_NAME",
-                                        "value": "${APPLICATION_NAME}"
+                                        "name": "SPAWNER_APPLICATION",
+                                        "value": "${NAME_PREFIX}${WORKSHOP_NAME}-spawner"
                                     },
                                     {
                                         "name": "OAUTH_CLIENT_SECRET",
@@ -716,7 +708,7 @@
                                     },
                                     {
                                         "name": "DB_ADDR",
-                                        "value": "${APPLICATION_NAME}-keycloak-db"
+                                        "value": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak-db"
                                     },
                                     {
                                         "name": "DB_PORT",
@@ -749,10 +741,9 @@
             "kind": "Service",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-keycloak",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -773,8 +764,7 @@
                     }
                 ],
                 "selector": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "deploymentconfig": "${APPLICATION_NAME}-keycloak"
+                    "deploymentconfig": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak"
                 }
             }
         },
@@ -782,10 +772,9 @@
             "kind": "Route",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-keycloak",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 },
@@ -794,10 +783,10 @@
                 }
             },
             "spec": {
-                "host": "${KEYCLOAK_HOST}",
+                "host": "${WORKSHOP_NAME}-keycloak-${SPAWNER_NAMESPACE}.${CLUSTER_SUBDOMAIN}",
                 "to": {
                     "kind": "Service",
-                    "name": "${APPLICATION_NAME}-keycloak",
+                    "name": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak",
                     "weight": 100
                 },
                 "port": {
@@ -812,10 +801,9 @@
             "kind": "PersistentVolumeClaim",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-keycloak-data",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak-data",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -835,10 +823,9 @@
             "apiVersion": "v1",
             "kind": "DeploymentConfig",
             "metadata": {
-                "name": "${APPLICATION_NAME}-keycloak-db",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak-db",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -846,8 +833,7 @@
             "spec": {
                 "replicas": 1,
                 "selector": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "deploymentconfig": "${APPLICATION_NAME}-keycloak-db"
+                    "deploymentconfig": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak-db"
                 },
                 "strategy": {
                     "type": "Recreate"
@@ -855,8 +841,10 @@
                 "template": {
                     "metadata": {
                         "labels": {
-                            "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                            "deploymentconfig": "${APPLICATION_NAME}-keycloak-db"
+                            "deploymentconfig": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak-db",
+                            "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
+                            "spawner": "jumpbox-server",
+                            "class": "spawner"
                         }
                     },
                     "spec": {
@@ -910,7 +898,7 @@
                             {
                                 "name": "data",
                                 "persistentVolumeClaim": {
-                                    "claimName": "${APPLICATION_NAME}-keycloak-data"
+                                    "claimName": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak-data"
                                 }
                             }
                         ]
@@ -941,10 +929,9 @@
             "kind": "Service",
             "apiVersion": "v1",
             "metadata": {
-                "name": "${APPLICATION_NAME}-keycloak-db",
-                "namespace": "${PROJECT_NAME}",
+                "name": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak-db",
                 "labels": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
+                    "app": "${NAME_PREFIX}${WORKSHOP_NAME}",
                     "spawner": "jumpbox-server",
                     "class": "spawner"
                 }
@@ -959,8 +946,7 @@
                     }
                 ],
                 "selector": {
-                    "app": "${APPLICATION_NAME}-${PROJECT_NAME}",
-                    "deploymentconfig": "${APPLICATION_NAME}-keycloak-db"
+                    "deploymentconfig": "${NAME_PREFIX}${WORKSHOP_NAME}-keycloak-db"
                 }
             }
         }

@@ -12,7 +12,7 @@ c.JupyterHub.authenticator_class = "openshift"
 from oauthenticator.openshift import OpenShiftOAuthenticator
 OpenShiftOAuthenticator.scope = ['user:full']
 
-client_id = '%s-%s-console' % (application_name, namespace)
+client_id = '%s-console' % application_name
 client_secret = os.environ['OAUTH_CLIENT_SECRET']
 
 c.OpenShiftOAuthenticator.client_id = client_id
@@ -39,7 +39,7 @@ c.KubeSpawner.volumes = [
     {
         'name': 'envvars',
         'configMap': {
-            'name': '%s-env' % application_name,
+            'name': '%s-session-envvars' % application_name,
             'defaultMode': 420
         }
     }
@@ -60,7 +60,7 @@ c.KubeSpawner.volume_mounts = [
 volume_size = os.environ.get('VOLUME_SIZE')
 
 if volume_size:
-    c.KubeSpawner.pvc_name_template = '%s-user' % c.KubeSpawner.pod_name_template
+    c.KubeSpawner.pvc_name_template = c.KubeSpawner.pod_name_template
 
     c.KubeSpawner.storage_pvc_ensure = True
 
@@ -120,10 +120,8 @@ c.Spawner.environment['WORKSHOP_FILE'] = os.environ.get('WORKSHOP_FILE', '')
 
 @gen.coroutine
 def modify_pod_hook(spawner, pod):
-    hub = '%s-%s' % (application_name, namespace)
     short_name = spawner.user.name
-    user_account_name = '%s-%s' % (hub, short_name)
-    hub_account_name = '%s-hub' % hub
+    user_account_name = '%s-%s' % (application_name, short_name)
 
     pod.spec.service_account_name = user_account_name
     pod.spec.automount_service_account_token = True
@@ -178,18 +176,12 @@ def modify_pod_hook(spawner, pod):
                     dict(name='OPENSHIFT_PROJECT', value=name))
 
     # Add environment variables for the namespace JupyterHub is running
-    # in and its name. Those with JUPYTERHUB prefix are for backwards
-    # compatibility and should not be used.
+    # in and its name.
 
     pod.spec.containers[0].env.append(
             dict(name='SPAWNER_NAMESPACE', value=namespace))
     pod.spec.containers[0].env.append(
             dict(name='SPAWNER_APPLICATION', value=application_name))
-
-    pod.spec.containers[0].env.append(
-            dict(name='JUPYTERHUB_NAMESPACE', value=namespace))
-    pod.spec.containers[0].env.append(
-            dict(name='JUPYTERHUB_APPLICATION', value=application_name))
 
     if homeroom_link:
         pod.spec.containers[0].env.append(

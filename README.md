@@ -18,7 +18,7 @@ The base image if needing only an interactive terminal is:
 
 A workshop image would extend these to add their own content.
 
-For all the configurations described below, to override the default image used, pass the `TERMINAL_IMAGE` template parameter with value referencing the custom image for a specific workshop.
+For all the configurations described below, to override the default image used, pass the `WORKSHOP_IMAGE` template parameter with value referencing the custom image for a specific workshop.
 
 Spawner configurations
 ----------------------
@@ -35,110 +35,56 @@ The spawner supports a number of different configurations, or modes, in which it
 
 * `jumpbox-server` - Users login through Keycloak. It defaults to only supplying an interactive terminal in the browser using the workshop terminal base image. The user has no access to the cluster itself to do anything. The terminal would be used to access a separate system.
 
-Learning portal deployment
---------------------------
+Deploying the spawner
+---------------------
 
-To use the learning portal configuration you must be a cluster admin. Run:
+For each spawner configuration there is a separate template. The templates come in `production` and `development` variants. Unless you are working on the spawner, you can ignore the `development` variant of the template.
 
-```
-oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/learning-portal-production.json --param PROJECT_NAME=`oc project --short`
-```
-
-This will create a deployment called `portal`. Check the output from `oc new-app` for the public URL the application can be accessed with, or run `oc get route`.
-
-To delete the deployment, run:
+The format of the command for deploying the spawner using any of the templates is:
 
 ```
-oc delete all,serviceaccount,configmap,secret,rolebinding,clusterrole,clusterrolebinding -l app=portal-`oc project --short`
+oc process -f https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/learning-portal-production.json --param SPAWNER_NAMESPACE=`oc project --short` --param CLUSTER_SUBDOMAIN=apps.openshiftcluster.com | oc apply -f -
 ```
 
-Hosted workshop deployment
---------------------------
+In this case we have used the `learning-portal` template. Replace the name with that for the configuration you want to use.
 
-To use the hosted workshop configuration you must be a cluster admin. Run:
+The `SPAWNER_NAMESPACE` template parameter is to pass in the name of the project the spawner is being deployed into. It should match the current project, or the project name passed in using the `-n` or `--namespace` option if supplied.
 
-```
-oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/hosted-workshop-production.json --param PROJECT_NAME=`oc project --short` --param CLUSTER_SUBDOMAIN=apps.openshiftcluster.com
-```
+The `CLUSTER_SUBDOMAIN` template parameter needs to provide the name of the cluster subdomain under which hostnames created for generated routes reside. You can also supply your own custom subdomain so long as DNS is setup to direct requests under that subdomain to the cluster.
 
-Replace `apps.openshiftcluster.com` with the actual sub domain that routes for
-applications deployed to the cluster would use.
+The default name used by the deployment will be the same as the configuration. If you need to override this, use the `WORKSHOP_NAME` template parameter.
 
-This will create a deployment called `workshop`. Check the output from `oc new-app` for the public URL the application can be accessed with, or run `oc get route`.
+If you intend deploying multiple instances of the spawner using the same configuration type, and with the same deployed name, in different projects, you must provide the `NAME_PREFIX` template parameter and pass in a value which when combined with the name of the deployment is unique for the cluster. This is necessary as the deployment will create resources which are global and not contained within the project namespace. If you don't supply `NAME_PREFIX`, the global resource names will clash for the two deployments.
 
-When a user visits the URL for the application, they will be redirected to the login page for the OpenShift cluster.
+Deleting the deployment
+-----------------------
 
-To delete the deployment, run:
+To delete the deployment run the command:
 
 ```
-oc delete all,serviceaccount,configmap,secret,persistentvolumeclaim,rolebinding,oauthclient -l app=workshop-`oc project --short`
+oc delete all,serviceaccount,configmap,secret,persistentvolumeclaim,rolebinding,clusterrole,clusterrolebinding,oauthclient -l app=learning-portal
 ```
 
-Terminal server deployment
---------------------------
-
-To use the terminal server configuration, you must be a cluster admin. Run:
-
-```
-oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/terminal-server-production.json --param PROJECT_NAME=`oc project --short` --param CLUSTER_SUBDOMAIN=apps.openshiftcluster.com
-```
-
-Replace `apps.openshiftcluster.com` with the actual sub domain that routes for
-applications deployed to the cluster would use.
-
-This will create a deployment called `terminal`. Check the output from `oc new-app` for the public URL the application can be accessed with, or run `oc get route`.
-
-When a user visits the URL for the application, they will be redirected to the login page for the OpenShift cluster.
-
-To delete the deployment, run:
-
-```
-oc delete all,serviceaccount,configmap,secret,persistentvolumeclaim,rolebinding,oauthclient -l app=terminal-`oc project --short`
-```
-
-User workspace deployment
--------------------------
-
-To use the user workspace configuration you must be a cluster admin. Run:
-
-```
-oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/user-workspace-production.json --param PROJECT_NAME=`oc project --short`
-```
-
-This will create a deployment called `workspace`. Check the output from `oc new-app` for the public URL the application can be accessed with, or run `oc get route`.
-
-To delete the deployment, run:
-
-```
-oc delete all,serviceaccount,configmap,secret,persistentvolumeclaim,rolebinding,clusterrole,clusterrolebinding -l app=workspace-`oc project --short`
-```
-
-Jumpbox server deployment
--------------------------
-
-To use the jumpbox server configuration you be any user with access to the project the deployment is being made to. Run:
-
-```
-oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/jumpbox-server-production.json --param PROJECT_NAME=`oc project --short`
-```
-
-This will create a deployment called `jumpbox`. Check the output from `oc new-app` for the public URL the application can be accessed with, or run `oc get route`.
-
-To delete the deployment, run:
-
-```
-oc delete all,serviceaccount,configmap,secret,persistentvolumeclaim,rolebinding -l app=jumpbox-`oc project --short`
-```
+Replace the value of the `app` label with that which was actually used for the deployment. This will be a combination of `NAME_PREFIX` and `WORKSHOP_NAME`.
 
 Customizing configuration
 -------------------------
 
 Each template provides a range of template parameters that can be supplied to customize the deployment.
 
-For example, to override the default image for the user environment and supply a reference to a custom image for a specific workshop, use the `TERMINAL_IMAGE` template parameter. You can use the `APPLICATION_NAME` template parameter to override the name used for the deployment.
+For example, to override the default image for the user environment and supply a reference to a custom image for a specific workshop, use the `WORKSHOP_IMAGE` template parameter. You can use the `WORKSHOP_NAME` template parameter to override the name used for the deployment.
 
 ```
-oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/learning-portal-production.json --param PROJECT_NAME=`oc project --short` --param APPLICATION_NAME=lab-workshop-content --param TERMINAL_IMAGE=quay.io/openshifthomeroom/lab-workshop-content:master
+oc new-app https://raw.githubusercontent.com/openshift-homeroom/workshop-spawner/master/templates/learning-portal-production.json --param SPAWNER_NAMESPACE=`oc project --short` --param WORKSHOP_NAME=lab-workshop-content --param WORKSHOP_IMAGE=quay.io/openshifthomeroom/lab-workshop-content:master
 ```
 
 Look at the individual template files in the templates directory for the list of parameters they accept.
+
+Deployment scripts
+------------------
+
+For an easier way of deploying a workshop for multiple users, check out the repository:
+
+* https://github.com/openshift-homeroom/workshop-scripts
+
+This can be used in combination with the repository for a workshop, to embed deployment scripts into the workshop for deploying it, without needing any knowledge of the specific steps.
