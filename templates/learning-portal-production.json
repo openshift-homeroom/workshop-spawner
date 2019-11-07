@@ -94,7 +94,7 @@
         },
         {
             "name": "SPAWNER_IMAGE",
-            "value": "quay.io/openshifthomeroom/workshop-spawner:6.2.2",
+            "value": "quay.io/openshifthomeroom/workshop-spawner:7.0.0",
             "required": true
         },
         {
