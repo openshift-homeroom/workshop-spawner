@@ -290,11 +290,13 @@ class RestartRedirectHandler(BaseHandler):
     @gen.coroutine
     def get(self, *args):
         user = yield self.get_current_user()
+
         if user.running:
             status = yield user.spawner.poll_and_notify()
             if status is None:
                 yield self.stop_single_user(user)
-        self.redirect('/hub/spawn')
+        self.clear_login_cookie()
+        self.redirect(homeroom_link or '/hub/spawn')
 
 c.JupyterHub.extra_handlers.extend([
     (r'/restart$', RestartRedirectHandler),
