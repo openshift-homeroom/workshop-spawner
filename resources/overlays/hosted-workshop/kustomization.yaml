@@ -25,6 +25,6 @@ configMapGenerator:
   behavior: merge
   literals:
   - CONFIGURATION_TYPE="hosted-workshop"
-  - OAUTH_CLIENT_SECRET="hosted-workshop"
+  - OAUTH_CLIENT_SECRET="0123456789abcdef0123456789abcdef"
   - RESOURCE_BUDGET="default"
   - IDLE_TIMEOUT="7200"

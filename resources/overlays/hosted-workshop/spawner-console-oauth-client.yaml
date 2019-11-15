@@ -2,7 +2,7 @@ kind: OAuthClient
 apiVersion: oauth.openshift.io/v1
 metadata:
   name: console
-secret: hosted-workshop
+secret: 0123456789abcdef0123456789abcdef
 grantMethod: auto
 redirectURIs:
 - https://spawner.svc/hub/oauth_callback
