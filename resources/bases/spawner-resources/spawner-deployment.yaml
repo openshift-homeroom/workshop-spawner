@@ -32,14 +32,8 @@ spec:
         volumeMounts:
         - mountPath: /opt/app-root/configs
           name: configs
-        - mountPath: /opt/app-root/resources
-          name: resources
       volumes:
       - name: configs
         configMap:
           defaultMode: 420
           name: spawner-configs
-      - name: resources
-        configMap:
-          defaultMode: 420
-          name: session-resources

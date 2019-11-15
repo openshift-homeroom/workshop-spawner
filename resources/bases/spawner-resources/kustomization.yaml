@@ -6,16 +6,9 @@ commonLabels:
 
 resources:
 - spawner-service-account.yaml
-- spawner-basic-cluster-role-binding.yaml
-- spawner-extra-cluster-role.yaml
-- spawner-extra-cluster-role-binding.yaml
-- spawner-rules-cluster-role.yaml
-- spawner-rules-cluster-role-binding.yaml
+- spawner-basic-role-binding.yaml
 - spawner-environ-config-map.yaml
 - spawner-configs-config-map.yaml
-- session-rules-cluster-role.yaml
-- session-rules-cluster-role-binding.yaml
-- session-resources-config-map.yaml
 - session-envvars-config-map.yaml
 - spawner-deployment.yaml
 - spawner-service.yaml

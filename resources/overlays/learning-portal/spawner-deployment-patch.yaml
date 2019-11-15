@@ -1,0 +1,12 @@
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value:
+    mountPath: /opt/app-root/resources
+    name: resources
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: resources
+    configMap:
+      defaultMode: 420
+      name: session-resources
