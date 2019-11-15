@@ -22,7 +22,7 @@ c.Authenticator.enable_auth_state = True
 c.CryptKeeper.keys = [ client_secret.encode('utf-8') ]
 
 c.OpenShiftOAuthenticator.oauth_callback_url = (
-        'https://%s/hub/oauth_callback' % public_hostname)
+        '%s://%s/hub/oauth_callback' % (public_protocol, public_hostname))
 
 c.Authenticator.auto_login = True
 
@@ -134,7 +134,7 @@ c.KubeSpawner.extra_containers.extend([
             },
             {
                 "name": "BRIDGE_BASE_ADDRESS",
-                "value": "https://%s/" % public_hostname
+                "value": "%s://%s/" % (public_protocol, public_hostname)
             },
             {
                 "name": "BRIDGE_BASE_PATH",

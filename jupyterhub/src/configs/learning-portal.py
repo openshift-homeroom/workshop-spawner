@@ -188,7 +188,7 @@ c.KubeSpawner.extra_containers.extend([
             },
             {
                 "name": "BRIDGE_BASE_ADDRESS",
-                "value": "https://%s/" % public_hostname
+                "value": "%s://%s/" % (public_protocol, public_hostname)
             },
             {
                 "name": "BRIDGE_BASE_PATH",

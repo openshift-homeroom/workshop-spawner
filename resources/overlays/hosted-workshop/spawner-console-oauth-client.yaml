@@ -5,4 +5,4 @@ metadata:
 secret: 0123456789abcdef0123456789abcdef
 grantMethod: auto
 redirectURIs:
-- https://spawner.svc/hub/oauth_callback
+- http://spawner.svc/hub/oauth_callback

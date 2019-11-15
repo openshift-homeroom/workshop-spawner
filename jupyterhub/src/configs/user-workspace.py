@@ -12,7 +12,8 @@ c.JupyterHub.authenticator_class = "generic-oauth"
 
 c.OAuthenticator.login_service = "KeyCloak"
 
-c.OAuthenticator.oauth_callback_url = 'https://%s/hub/oauth_callback' % public_hostname
+c.OAuthenticator.oauth_callback_url = (
+        '%s://%s/hub/oauth_callback' % (public_protocol, public_hostname))
 
 c.OAuthenticator.client_id = 'homeroom'
 c.OAuthenticator.client_secret = os.environ.get('OAUTH_CLIENT_SECRET')
@@ -135,7 +136,7 @@ c.KubeSpawner.extra_containers.extend([
             },
             {
                 "name": "BRIDGE_BASE_ADDRESS",
-                "value": "https://%s/" % public_hostname
+                "value": "%s://%s/" % (public_protocol, public_hostname)
             },
             {
                 "name": "BRIDGE_BASE_PATH",
