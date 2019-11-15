@@ -4,5 +4,4 @@ metadata:
   name: spawner-configs
 data:
   jupyterhub_config.sh: ""
-  jupyterhub_config.py: |-
-      c.KubeSpawner.events_enabled = False
+  jupyterhub_config.py: ""
