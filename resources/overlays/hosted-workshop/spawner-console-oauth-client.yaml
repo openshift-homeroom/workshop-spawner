@@ -1,0 +1,8 @@
+kind: OAuthClient
+apiVersion: oauth.openshift.io/v1
+metadata:
+  name: console
+secret: 0123456789abcdef0123456789abcdef
+grantMethod: auto
+redirectURIs:
+- http://spawner.svc/hub/oauth_callback

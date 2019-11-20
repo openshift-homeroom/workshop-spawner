@@ -6,7 +6,8 @@ metadata:
     homeroom/group: homeroom
 spec:
   rules:
-  - http:
+  - host: spawner.svc
+    http:
       paths:
       - path: "/"
         backend:

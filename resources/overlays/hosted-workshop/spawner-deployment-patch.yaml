@@ -1,0 +1,11 @@
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value:
+    mountPath: /opt/app-root/data
+    name: data
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: data
+    persistentVolumeClaim:
+      claimName: spawner-data
