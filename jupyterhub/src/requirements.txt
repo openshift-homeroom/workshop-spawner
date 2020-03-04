@@ -1,8 +1,7 @@
 #kubernetes==9.0.1
 kubernetes==10.0.1
 jupyterhub==1.0.0
-#jupyterhub-kubespawner==0.10.1
-git+https://github.com/jupyterhub/kubespawner.git@a945ef01410867b39e0c174d362a8702bbaa15e9#egg=jupyterhub-kubespawner
+jupyterhub-kubespawner==0.11.1
 jupyterhub-tmpauthenticator==0.6
 oauthenticator==0.9.0
 #openshift==0.9.2
