@@ -3,7 +3,7 @@ kubernetes==11.0.0
 jupyterhub==1.1.0
 jupyterhub-kubespawner==0.13.0
 jupyterhub-tmpauthenticator==0.6
-oauthenticator==0.11.0
+oauthenticator==0.10.0
 #openshift==0.9.2
 openshift==0.11.2
 wrapt==1.12.1
