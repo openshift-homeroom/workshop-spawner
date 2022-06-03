@@ -123,7 +123,7 @@ except ResourceNotFoundError:
     route_resource = None
 
 ingress_resource = api_client.resources.get(
-     api_version='extensions/v1beta1', kind='Ingress')
+     api_version='networking.k8s.io/v1', kind='Ingress')
 
 # Create a background thread to dynamically calculate back link to the
 # Homeroom workshop picker if no explicit link is provided, but group is.
